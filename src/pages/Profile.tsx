@@ -103,6 +103,8 @@ const Profile: React.FC = () => {
 
   const handleProfileSave = (profileData: any) => {
     setProfile(profileData)
+    // Force reload profile data to get latest avatar
+    loadProfileData()
   }
 
   const handleDocumentUpload = (filePath: string, fileName: string) => {
@@ -189,17 +191,21 @@ const Profile: React.FC = () => {
             >
               <div className="text-center mb-6">
                 <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 bg-gray-100">
-                  {profile?.avatar_url || user?.user_metadata?.avatar_url ? (
+                  {profile?.avatar_url ? (
                     <img
-                      src={
-                        user?.user_metadata?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
-                      }
+                      src={profile.avatar_url}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : user?.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-blue-100 flex items-center justify-center">
-                      <User className="h-12 w-12 text-blue-600" />
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                      {(profile?.full_name || user?.email || 'U').charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>

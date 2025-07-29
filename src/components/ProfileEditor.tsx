@@ -86,7 +86,27 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
       const publicUrl = getFileUrl(STORAGE_BUCKETS.AVATARS, filePath)
       
       if (publicUrl) {
-        setFormData(prev => ({ ...prev, avatar_url: publicUrl }))
+        // Update form data
+        const newFormData = { ...formData, avatar_url: publicUrl }
+        setFormData(newFormData)
+        
+        // Save to database immediately
+        const { error: dbError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            ...newFormData,
+            updated_at: new Date().toISOString()
+          })
+
+        if (dbError) {
+          console.error('Database update error:', dbError)
+          toast.error('Profilni yangilashda xatolik')
+        } else {
+          // Notify parent component
+          onSave(newFormData)
+        }
+        
         toast.success('Surat muvaffaqiyatli yuklandi!')
       } else {
         toast.error('Surat URL olishda xatolik')
@@ -170,8 +190,16 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
+                ) : user?.user_metadata?.avatar_url ? (
+                  <img
+                    src={user.user_metadata.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <User className="h-12 w-12 text-gray-400" />
+                  <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl">
+                    {(formData.full_name || user?.email || 'U').charAt(0).toUpperCase()}
+                  </div>
                 )}
               </div>
               <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
@@ -192,7 +220,12 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
                 </div>
               )}
             </div>
-            <p className="text-sm text-gray-500">Rasmni o'zgartirish uchun bosing</p>
+            <p className="text-sm text-gray-500">
+              {formData.avatar_url || user?.user_metadata?.avatar_url 
+                ? "Yangi rasm yuklash uchun bosing" 
+                : "Rasm yuklash uchun bosing"
+              }
+            </p>
           </div>
 
           {/* Form Fields */}
