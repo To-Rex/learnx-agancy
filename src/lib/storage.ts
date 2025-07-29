@@ -6,27 +6,11 @@ export const STORAGE_BUCKETS = {
   CERTIFICATES: 'certificates'
 }
 
-// Create storage buckets if they don't exist
+// Initialize storage (buckets should be created manually in Supabase dashboard)
 export const initializeStorage = async () => {
-  try {
-    // Check and create buckets
-    const buckets = Object.values(STORAGE_BUCKETS)
-    
-    for (const bucketName of buckets) {
-      const { data: existingBucket } = await supabase.storage.getBucket(bucketName)
-      
-      if (!existingBucket) {
-        await supabase.storage.createBucket(bucketName, {
-          public: bucketName === STORAGE_BUCKETS.AVATARS,
-          allowedMimeTypes: bucketName === STORAGE_BUCKETS.AVATARS 
-            ? ['image/jpeg', 'image/png', 'image/webp']
-            : ['application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
-        })
-      }
-    }
-  } catch (error) {
-    console.error('Error initializing storage:', error)
-  }
+  // Storage buckets (documents, avatars, certificates) should be created manually
+  // in your Supabase project dashboard under Storage section
+  console.log('Storage initialized - ensure buckets exist in Supabase dashboard')
 }
 
 // Upload file to storage
