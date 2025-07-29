@@ -37,11 +37,16 @@ export const uploadFile = async (
 
 // Get file URL
 export const getFileUrl = (bucket: string, path: string) => {
-  const { data } = supabase.storage
-    .from(bucket)
-    .getPublicUrl(path)
-  
-  return data.publicUrl
+  try {
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path)
+    
+    return data.publicUrl
+  } catch (error) {
+    console.warn(`Storage bucket '${bucket}' not found. Please create it in Supabase dashboard.`)
+    return null
+  }
 }
 
 // Delete file

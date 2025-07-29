@@ -33,7 +33,21 @@ const Profile: React.FC = () => {
       const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
-        .eq('id', user.id)
+        if (profile) {
+          setProfile(profile)
+        } else {
+          // Create default profile if none exists
+          const defaultProfile = {
+            id: user.id,
+            full_name: user.user_metadata?.full_name || '',
+            avatar_url: user.user_metadata?.avatar_url || null,
+            phone: '',
+            address: '',
+            birth_date: null,
+            bio: ''
+          }
+          setProfile(defaultProfile)
+        }
         .maybeSingle()
 
       setProfile(profileData)
