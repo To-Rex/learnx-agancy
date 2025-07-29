@@ -6,6 +6,9 @@ import { Upload, FileText, User, Mail, Phone, MapPin, Calendar, GraduationCap, B
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
+import FileUpload from '../components/FileUpload'
+import { STORAGE_BUCKETS } from '../lib/storage'
 
 const schema = yup.object({
   firstName: yup.string().required('Ism majburiy'),
@@ -22,6 +25,7 @@ const schema = yup.object({
 })
 
 const Apply: React.FC = () => {
+  const { user } = useAuth()
   const [files, setFiles] = useState<{ [key: string]: File | null }>({
     passport: null,
     photo: null,
@@ -32,6 +36,7 @@ const Apply: React.FC = () => {
   })
   const [uploading, setUploading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
+  const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: string }>({})
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm({
     resolver: yupResolver(schema)
@@ -66,46 +71,41 @@ const Apply: React.FC = () => {
     { key: 'motivation', label: 'Motivatsiya xati', required: false }
   ]
 
-  const handleFileUpload = (key: string, file: File) => {
-    setFiles(prev => ({ ...prev, [key]: file }))
-    toast.success(`${file.name} yuklandi`)
+  const handleFileUpload = (key: string) => (filePath: string, fileName: string) => {
+    if (filePath) {
+      setUploadedFiles(prev => ({ ...prev, [key]: filePath }))
+      toast.success(`${fileName} muvaffaqiyatli yuklandi`)
+    }
   }
 
   const removeFile = (key: string) => {
-    setFiles(prev => ({ ...prev, [key]: null }))
+    setUploadedFiles(prev => ({ ...prev, [key]: '' }))
     toast.success('Fayl o\'chirildi')
   }
 
-  const uploadToSupabase = async (file: File, path: string) => {
-    const { data, error } = await supabase.storage
-      .from('documents')
-      .upload(path, file)
-    
-    if (error) throw error
-    return data
-  }
-
   const onSubmit = async (data: any) => {
+    if (!user) {
+      toast.error('Ariza topshirish uchun tizimga kiring')
+      return
+    }
+
     setUploading(true)
     
     try {
-      // Upload files to Supabase Storage
-      const uploadedFiles: { [key: string]: string } = {}
-      
-      for (const [key, file] of Object.entries(files)) {
-        if (file) {
-          const path = `applications/${Date.now()}-${key}-${file.name}`
-          await uploadToSupabase(file, path)
-          uploadedFiles[key] = path
-        }
-      }
-
       // Save application to database
       const { error } = await supabase
         .from('applications')
         .insert({
+          user_id: user.id,
+          full_name: `${data.firstName} ${data.lastName}`,
+          email: data.email,
+          phone: data.phone,
+          birth_date: data.birthDate,
+          education_level: data.education,
+          program_type: data.program,
+          country_preference: data.country,
+          documents: uploadedFiles,
           ...data,
-          files: uploadedFiles,
           status: 'pending',
           created_at: new Date().toISOString()
         })
@@ -116,14 +116,7 @@ const Apply: React.FC = () => {
       
       // Reset form
       setCurrentStep(1)
-      setFiles({
-        passport: null,
-        photo: null,
-        diploma: null,
-        transcript: null,
-        cv: null,
-        motivation: null
-      })
+      setUploadedFiles({})
       
     } catch (error) {
       toast.error('Xatolik yuz berdi. Qayta urinib ko\'ring.')
@@ -343,61 +336,22 @@ const Apply: React.FC = () => {
             <div className="bg-blue-50 p-4 rounded-lg">
               <h3 className="font-semibold text-blue-900 mb-2">Hujjatlar haqida</h3>
               <p className="text-blue-700 text-sm">
-                Barcha hujjatlar PDF, JPG yoki PNG formatida bo'lishi kerak. 
-                Maksimal fayl hajmi: 5MB
+                Barcha hujjatlar PDF, JPG, PNG, DOC yoki DOCX formatida bo'lishi kerak. 
+                Maksimal fayl hajmi: 10MB
               </p>
             </div>
 
             {requiredDocuments.map(doc => (
               <div key={doc.key} className="border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h4 className="font-medium text-gray-900">
-                      {doc.label} {doc.required && <span className="text-red-500">*</span>}
-                    </h4>
-                  </div>
-                  {files[doc.key] && (
-                    <button
-                      type="button"
-                      onClick={() => removeFile(doc.key)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      <X className="h-5 w-5" />
-                    </button>
-                  )}
-                </div>
-
-                {files[doc.key] ? (
-                  <div className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
-                    <CheckCircle className="h-5 w-5 text-green-500" />
-                    <span className="text-green-700 font-medium">{files[doc.key]?.name}</span>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100">
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <Upload className="w-8 h-8 mb-4 text-gray-500" />
-                      <p className="mb-2 text-sm text-gray-500">
-                        <span className="font-semibold">Faylni tanlash</span> yoki shu yerga tashlang
-                      </p>
-                      <p className="text-xs text-gray-500">PDF, JPG, PNG (MAX. 5MB)</p>
-                    </div>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0]
-                        if (file) {
-                          if (file.size > 5 * 1024 * 1024) {
-                            toast.error('Fayl hajmi 5MB dan katta bo\'lmasligi kerak')
-                            return
-                          }
-                          handleFileUpload(doc.key, file)
-                        }
-                      }}
-                    />
-                  </label>
-                )}
+                <FileUpload
+                  label={`${doc.label} ${doc.required ? '*' : ''}`}
+                  onFileUploaded={handleFileUpload(doc.key)}
+                  bucket={STORAGE_BUCKETS.DOCUMENTS}
+                  acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                  maxSize={10}
+                  required={doc.required}
+                  currentFile={uploadedFiles[doc.key]}
+                />
               </div>
             ))}
           </div>

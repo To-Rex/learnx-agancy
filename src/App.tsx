@@ -3,6 +3,7 @@ import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import { supabase } from './lib/supabase'
+import { initializeStorage } from './lib/storage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -22,6 +23,9 @@ const AppContent = () => {
   const location = useLocation()
 
   useEffect(() => {
+    // Initialize storage buckets
+    initializeStorage()
+    
     // Handle OAuth callback - check for tokens in URL hash
     const handleAuthCallback = async () => {
       // Check both hash and search params
