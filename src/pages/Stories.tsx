@@ -1,0 +1,300 @@
+import React, { useState, useEffect } from 'react'
+import { Star, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { supabase } from '../lib/supabase'
+
+const Stories: React.FC = () => {
+  const [stories, setStories] = useState([])
+  const [filteredStories, setFilteredStories] = useState([])
+  const [selectedCountry, setSelectedCountry] = useState('all')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadStories()
+  }, [])
+
+  useEffect(() => {
+    filterStories()
+  }, [selectedCountry, stories])
+
+  const loadStories = async () => {
+    try {
+      const { data } = await supabase
+        .from('stories')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (data) {
+        setStories(data)
+      }
+    } catch (error) {
+      // Fallback data
+      setStories([
+        {
+          id: 1,
+          name: "Aziz Karimov",
+          country: "AQSh",
+          program: "Work & Travel",
+          text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Amerika'da ishlash va sayohat qilish imkoniyati hayotimni o'zgartirdi. Ingliz tilimni yaxshiladim va ko'plab do'stlar orttirdim.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2024-01-15",
+          duration: "4 oy",
+          city: "New York"
+        },
+        {
+          id: 2,
+          name: "Malika Saidova",
+          country: "Germaniya",
+          program: "Talaba vizasi",
+          text: "Germaniyada magistratura o'qish uchun visa olishda LearnX katta yordam berdi. Hujjatlar tayyorlashdan tortib, intervyugacha barcha bosqichlarda qo'llab-quvvatladilar.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2023-12-10",
+          duration: "2 yil",
+          city: "Berlin"
+        },
+        {
+          id: 3,
+          name: "Bobur Rahimov",
+          country: "Kanada",
+          program: "Ta'lim granti",
+          text: "Kanadada bepul ta'lim olish uchun grant yutishda LearnX professional yordami juda muhim bo'ldi. Endi Toronto universitetida o'qiyapman va kelajagim uchun ishonchim komil.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2023-11-20",
+          duration: "4 yil",
+          city: "Toronto"
+        },
+        {
+          id: 4,
+          name: "Dilnoza Abdullayeva",
+          country: "Buyuk Britaniya",
+          program: "Magistratura",
+          text: "Oxforddagi magistratura dasturiga qabul qilinish uchun LearnX jamoasi bilan ishlash juda samarali bo'ldi. Ular har bir bosqichda professional maslahat berishdi.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2023-10-05",
+          duration: "1 yil",
+          city: "Oxford"
+        },
+        {
+          id: 5,
+          name: "Sardor Toshmatov",
+          country: "Avstraliya",
+          program: "Ish vizasi",
+          text: "Avstraliyada IT sohasida ishlash uchun visa olishda LearnX yordami bebaho bo'ldi. Endi Sidneyda dasturchi sifatida ishlayapman va hayotimdan mamnunman.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2023-09-12",
+          duration: "Doimiy",
+          city: "Sidney"
+        },
+        {
+          id: 6,
+          name: "Nigora Ismoilova",
+          country: "Fransiya",
+          program: "Talaba vizasi",
+          text: "Parij universitetida o'qish uchun visa olish jarayoni LearnX yordami bilan juda oson bo'ldi. Ular barcha hujjatlarni to'g'ri tayyorlashga yordam berishdi.",
+          rating: 5,
+          image: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=300",
+          date: "2023-08-18",
+          duration: "3 yil",
+          city: "Parij"
+        }
+      ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const filterStories = () => {
+    if (selectedCountry === 'all') {
+      setFilteredStories(stories)
+    } else {
+      setFilteredStories(stories.filter((story: any) => story.country === selectedCountry))
+    }
+  }
+
+  const countries = ['all', ...Array.from(new Set(stories.map((story: any) => story.country)))]
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-16"
+        >
+          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+            Muvaffaqiyat hikoyalari
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+            Bizga ishongan va chet davlatlarda muvaffaqiyatga erishgan 
+            talabalarimizning haqiqiy hikoyalari
+          </p>
+        </motion.div>
+
+        {/* Filter */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+          className="flex flex-wrap items-center justify-center gap-4 mb-12"
+        >
+          <div className="flex items-center space-x-2">
+            <Filter className="h-5 w-5 text-gray-500" />
+            <span className="text-gray-700 font-medium">Davlat bo'yicha:</span>
+          </div>
+          {countries.map((country) => (
+            <button
+              key={country}
+              onClick={() => setSelectedCountry(country)}
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${
+                selectedCountry === country
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
+              }`}
+            >
+              {country === 'all' ? 'Barchasi' : country}
+            </button>
+          ))}
+        </motion.div>
+
+        {/* Stories Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+          {filteredStories.map((story: any, index) => (
+            <motion.div
+              key={story.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.6 }}
+              whileHover={{ y: -5 }}
+              className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden group"
+            >
+              {/* Image */}
+              <div className="relative h-48 overflow-hidden">
+                <img 
+                  src={story.image} 
+                  alt={story.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
+                  {story.country}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="p-6">
+                {/* Rating */}
+                <div className="flex items-center mb-4">
+                  {[...Array(story.rating)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+
+                {/* Text */}
+                <p className="text-gray-700 mb-6 leading-relaxed line-clamp-4">
+                  "{story.text}"
+                </p>
+
+                {/* Info */}
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4" />
+                    <span>{story.city}, {story.country}</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Davomiyligi: {story.duration}</span>
+                  </div>
+                </div>
+
+                {/* Author */}
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div>
+                    <div className="font-bold text-gray-900">{story.name}</div>
+                    <div className="text-sm text-gray-500">{story.program}</div>
+                  </div>
+                  <button className="text-blue-600 hover:text-blue-700 transition-colors">
+                    <ArrowRight className="h-5 w-5" />
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Stats */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="bg-gradient-to-r from-blue-600 to-purple-600 p-12 rounded-2xl text-white mb-16"
+        >
+          <div className="text-center mb-8">
+            <h2 className="text-3xl font-bold mb-4">Bizning natijalarimiz</h2>
+            <p className="text-blue-100 text-lg">Raqamlar o'z-o'zidan gapiradi</p>
+          </div>
+          
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              { number: "2000+", label: "Muvaffaqiyatli talabalar" },
+              { number: "50+", label: "Hamkor davlatlar" },
+              { number: "98%", label: "Muvaffaqiyat foizi" },
+              { number: "5+", label: "Yillik tajriba" }
+            ].map((stat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, scale: 0.8 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+                className="text-center"
+              >
+                <div className="text-4xl font-bold mb-2">{stat.number}</div>
+                <div className="text-blue-100">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* CTA */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center"
+        >
+          <div className="bg-white p-12 rounded-2xl shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Sizning hikoyangiz keyingi bo'lsin!
+            </h2>
+            <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+              Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+                Ariza topshirish
+              </button>
+              <button className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                Bepul maslahat
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+export default Stories
