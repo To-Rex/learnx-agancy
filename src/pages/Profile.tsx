@@ -1,5 +1,5 @@
 import React from 'react'
-import { User, Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus } from 'lucide-react'
+import { User, Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../contexts/AuthContext'
@@ -283,7 +283,6 @@ const Profile: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
                   ))}
                 </div>
               ) : (
@@ -473,55 +472,6 @@ const Profile: React.FC = () => {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
-  )
-}
-
-export default Profile
-                          <CheckCircle className="h-5 w-5 text-green-500" />
-                          <span className="text-sm text-green-600">Yuklangan</span>
-                        </>
-                      ) : (
-                        <button className="text-blue-600 hover:text-blue-700 text-sm font-medium">
-                          Yuklash
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Recent Activity */}
-            <div className="bg-white p-6 rounded-xl shadow-lg">
-              <h3 className="text-xl font-bold text-gray-900 mb-6">So'nggi faoliyat</h3>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-gray-900">Turist vizasi uchun ariza topshirildi</p>
-                    <p className="text-sm text-gray-500">2 soat oldin</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-gray-900">Work & Travel arizasi tasdiqlandi</p>
-                    <p className="text-sm text-gray-500">1 kun oldin</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-2 h-2 bg-orange-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="text-gray-900">Yangi hujjat yuklandi</p>
-                    <p className="text-sm text-gray-500">3 kun oldin</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
