@@ -173,7 +173,13 @@ const Profile: React.FC = () => {
                 <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-4 bg-gray-100">
                   {profile?.avatar_url || user?.user_metadata?.avatar_url ? (
                     <img
-                      src={profile?.avatar_url || user?.user_metadata?.avatar_url}
+                      src={
+                        profile?.avatar_url && profile.avatar_url.startsWith('http') 
+                          ? profile.avatar_url 
+                          : profile?.avatar_url 
+                          ? getFileUrl(STORAGE_BUCKETS.AVATARS, profile.avatar_url) || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+                          : user?.user_metadata?.avatar_url || 'https://images.pexels.com/photos/771742/pexels-photo-771742.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop'
+                      }
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
