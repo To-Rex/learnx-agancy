@@ -2,15 +2,35 @@ import { supabase } from './supabase'
 
 export const STORAGE_BUCKETS = {
   DOCUMENTS: 'documents',
-  AVATARS: 'avatars',
-  CERTIFICATES: 'certificates'
+  AVATARS: 'avatars'
 }
 
-// Initialize storage (buckets should be created manually in Supabase dashboard)
+// Initialize storage buckets
 export const initializeStorage = async () => {
-  // Storage buckets (documents, avatars, certificates) should be created manually
-  // in your Supabase project dashboard under Storage section
-  console.log('Storage initialized - ensure buckets exist in Supabase dashboard')
+  try {
+    // Check if buckets exist, if not they should be created via migration
+    const { data: buckets, error } = await supabase.storage.listBuckets()
+    
+    if (error) {
+      console.log('Storage buckets not accessible:', error.message)
+      return false
+    }
+    
+    const bucketNames = buckets?.map(b => b.name) || []
+    const hasAvatars = bucketNames.includes('avatars')
+    const hasDocuments = bucketNames.includes('documents')
+    
+    if (hasAvatars && hasDocuments) {
+      console.log('✅ Storage buckets initialized successfully')
+      return true
+    } else {
+      console.log('⚠️ Some storage buckets missing. Run migration to create them.')
+      return false
+    }
+  } catch (error) {
+    console.log('Storage initialization error:', error)
+    return false
+  }
 }
 
 // Upload file to storage
@@ -21,9 +41,12 @@ export const uploadFile = async (
   options?: { upsert?: boolean }
 ) => {
   try {
+    // Ensure file path includes user ID for RLS
+    const finalPath = path.startsWith('auth.uid()') ? path : path
+    
     const { data, error } = await supabase.storage
       .from(bucket)
-      .upload(path, file, {
+      .upload(finalPath, file, {
         cacheControl: '3600',
         upsert: options?.upsert || false
       })
@@ -31,6 +54,7 @@ export const uploadFile = async (
     if (error) throw error
     return { data, error: null }
   } catch (error) {
+    console.error('Upload error:', error)
     return { data: null, error }
   }
 }
@@ -38,10 +62,13 @@ export const uploadFile = async (
 // Get file URL
 export const getFileUrl = (bucket: string, path: string) => {
   try {
-    // Don't attempt to get URL if bucket doesn't exist
-    // This prevents 404 errors when buckets haven't been created yet
-    return null
+    const { data } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(path)
+    
+    return data.publicUrl
   } catch (error) {
+    console.error('Get URL error:', error)
     return null
   }
 }

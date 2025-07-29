@@ -69,15 +69,31 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
     setAvatarUploading(true)
 
     try {
-      // Create a data URL for immediate preview
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-        setFormData(prev => ({ ...prev, avatar_url: dataUrl }))
-        toast.success('Surat muvaffaqiyatli yuklandi!')
+      // Upload to Supabase storage
+      const timestamp = Date.now()
+      const fileName = `avatar-${timestamp}.${file.name.split('.').pop()}`
+      const filePath = `${user.id}/${fileName}`
+
+      const { data, error } = await uploadFile(STORAGE_BUCKETS.AVATARS, filePath, file, { upsert: true })
+
+      if (error) {
+        console.error('Upload error:', error)
+        toast.error('Surat yuklashda xatolik: ' + error.message)
+        return
       }
-      reader.readAsDataURL(file)
+
+      // Get the public URL
+      const publicUrl = getFileUrl(STORAGE_BUCKETS.AVATARS, filePath)
+      
+      if (publicUrl) {
+        setFormData(prev => ({ ...prev, avatar_url: publicUrl }))
+        toast.success('Surat muvaffaqiyatli yuklandi!')
+      } else {
+        toast.error('Surat URL olishda xatolik')
+      }
+      
     } catch (error) {
+      console.error('Avatar upload error:', error)
       toast.error('Surat yuklashda xatolik yuz berdi')
     } finally {
       setAvatarUploading(false)
