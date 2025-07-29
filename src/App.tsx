@@ -22,19 +22,36 @@ const AppContent = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Handle OAuth callback
+    // Handle OAuth callback - check for tokens in URL
     const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession()
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const accessToken = hashParams.get('access_token')
       
-      if (data.session && window.location.hash) {
+      if (accessToken) {
         // Clear the hash from URL
-        window.history.replaceState(null, '', window.location.pathname)
+        window.history.replaceState(null, '', window.location.pathname + window.location.search)
         // Navigate to profile
+        navigate('/profile')
+        return
+      }
+      
+      // Also check current session
+      const { data } = await supabase.auth.getSession()
+      if (data.session && window.location.pathname === '/login') {
         navigate('/profile')
       }
     }
 
     handleAuthCallback()
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        navigate('/profile')
+      }
+    })
+    
+    return () => subscription.unsubscribe()
   }, [navigate])
 
   return (
