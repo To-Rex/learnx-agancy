@@ -82,9 +82,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
       if (error) {
         toast.error('Avatar yuklashda xatolik')
       } else {
-        const avatarUrl = getFileUrl(STORAGE_BUCKETS.AVATARS, fileName)
-        setFormData(prev => ({ ...prev, avatar_url: avatarUrl }))
-        toast.success('Avatar muvaffaqiyatli yuklandi')
+        // For now, just store the file path since buckets need to be created manually
+        setFormData(prev => ({ ...prev, avatar_url: fileName }))
+        toast.success('Avatar muvaffaqiyatli yuklandi (bucket yaratilgandan keyin ko\'rinadi)')
       }
     } catch (error) {
       toast.error('Avatar yuklashda xatolik yuz berdi')
