@@ -64,17 +64,22 @@ const Profile: React.FC = () => {
       }
 
       // Load documents
-      const { data: filesData } = await getUserFiles(user.id, STORAGE_BUCKETS.DOCUMENTS)
-      if (filesData) {
-        const documentsWithUrls = filesData.map(file => ({
-          name: file.name,
-          path: `${user.id}/${file.name}`,
-          uploaded: true,
-          date: file.created_at,
-          size: file.metadata?.size,
-          url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, `${user.id}/${file.name}`)
-        }))
-        setDocuments(documentsWithUrls)
+      try {
+        const { data: filesData } = await getUserFiles(user.id, STORAGE_BUCKETS.DOCUMENTS)
+        if (filesData) {
+          const documentsWithUrls = filesData.map(file => ({
+            name: file.name,
+            path: `${user.id}/${file.name}`,
+            uploaded: true,
+            date: file.created_at,
+            size: file.metadata?.size,
+            url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, `${user.id}/${file.name}`)
+          }))
+          setDocuments(documentsWithUrls)
+        }
+      } catch (error) {
+        console.log('Storage bucket mavjud emas, hujjatlar yuklanmadi')
+        setDocuments([])
       }
     } catch (error) {
       console.error('Error loading profile data:', error)

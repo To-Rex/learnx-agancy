@@ -66,9 +66,17 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
   const handleAvatarUpload = async (file: File) => {
     if (!user) return
 
-    // Storage buckets need to be created manually in Supabase dashboard
-    // with proper RLS policies before file upload will work
-    toast.error('Avatar yuklash uchun avval Supabase dashboard da storage bucket yarating')
+    toast.error('❌ Surat yuklash ishlamayapti!\n\nSabab: Supabase storage bucket yaratilmagan.\n\nHal qilish:\n1. Supabase dashboard ga kiring\n2. Storage bo\'limiga o\'ting\n3. "avatars" nomli bucket yarating\n4. RLS policy sozlang', {
+      duration: 8000,
+      style: {
+        background: '#fee2e2',
+        color: '#dc2626',
+        fontSize: '14px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '2px solid #fca5a5'
+      }
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

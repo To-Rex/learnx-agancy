@@ -33,6 +33,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       return
     }
 
+    // Storage bucket mavjudligini tekshirish
+    toast.error('📁 Fayl yuklash ishlamayapti!\n\nSabab: Storage bucket yaratilmagan.\n\nYechim:\n1. Supabase dashboard ga kiring\n2. Storage > Buckets\n3. "documents" bucket yarating\n4. Public/Private sozlang', {
+      duration: 6000,
+      style: {
+        background: '#fef3c7',
+        color: '#d97706',
+        fontSize: '14px',
+        padding: '16px',
+        borderRadius: '12px',
+        border: '2px solid #fbbf24'
+      }
+    })
+    return
+
     // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
       toast.error(`Fayl hajmi ${maxSize}MB dan katta bo'lmasligi kerak`)
