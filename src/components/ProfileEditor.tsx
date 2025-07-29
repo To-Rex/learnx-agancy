@@ -66,31 +66,9 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
   const handleAvatarUpload = async (file: File) => {
     if (!user) return
 
-    setAvatarUploading(true)
-
-    try {
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}/avatar.${fileExt}`
-
-      const { data, error } = await uploadFile(
-        STORAGE_BUCKETS.AVATARS,
-        fileName,
-        file,
-        { upsert: true }
-      )
-
-      if (error) {
-        toast.error('Avatar yuklashda xatolik')
-      } else {
-        // For now, just store the file path since buckets need to be created manually
-        setFormData(prev => ({ ...prev, avatar_url: fileName }))
-        toast.success('Avatar muvaffaqiyatli yuklandi (bucket yaratilgandan keyin ko\'rinadi)')
-      }
-    } catch (error) {
-      toast.error('Avatar yuklashda xatolik yuz berdi')
-    } finally {
-      setAvatarUploading(false)
-    }
+    // Storage buckets need to be created manually in Supabase dashboard
+    // with proper RLS policies before file upload will work
+    toast.error('Avatar yuklash uchun avval Supabase dashboard da storage bucket yarating')
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
