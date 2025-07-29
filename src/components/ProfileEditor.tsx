@@ -46,7 +46,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       if (data) {
         setFormData({
