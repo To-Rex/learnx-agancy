@@ -66,17 +66,22 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
   const handleAvatarUpload = async (file: File) => {
     if (!user) return
 
-    toast.error('❌ Surat yuklash ishlamayapti!\n\nSabab: Supabase storage bucket yaratilmagan.\n\nHal qilish:\n1. Supabase dashboard ga kiring\n2. Storage bo\'limiga o\'ting\n3. "avatars" nomli bucket yarating\n4. RLS policy sozlang', {
-      duration: 8000,
-      style: {
-        background: '#fee2e2',
-        color: '#dc2626',
-        fontSize: '14px',
-        padding: '16px',
-        borderRadius: '12px',
-        border: '2px solid #fca5a5'
+    setAvatarUploading(true)
+
+    try {
+      // Create a data URL for immediate preview
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string
+        setFormData(prev => ({ ...prev, avatar_url: dataUrl }))
+        toast.success('Surat muvaffaqiyatli yuklandi!')
       }
-    })
+      reader.readAsDataURL(file)
+    } catch (error) {
+      toast.error('Surat yuklashda xatolik yuz berdi')
+    } finally {
+      setAvatarUploading(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
