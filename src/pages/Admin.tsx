@@ -63,14 +63,13 @@ const Admin: React.FC = () => {
       
       if (appsData) setApplications(appsData)
 
-      // Load auth users
-      const { data: authUsers } = await supabase.auth.admin.listUsers()
-      if (authUsers?.users) setUsers(authUsers.users)
-
-      // Load profiles
+      // Get profiles with user info
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('*')
+        .select(`
+          *,
+          applications(count)
+        `)
         .order('created_at', { ascending: false })
       
       if (profilesData) setProfiles(profilesData)
