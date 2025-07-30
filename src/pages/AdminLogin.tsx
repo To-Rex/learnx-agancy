@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Lock, User, Shield, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { verifyPassword } from '../lib/auth'
 import toast, { Toaster } from 'react-hot-toast'
 
 const AdminLogin: React.FC = () => {
@@ -31,13 +32,14 @@ const AdminLogin: React.FC = () => {
         return
       }
 
-      // Simple password check - compare directly with password_hash field
-      if (data.password_hash === password) {
+      // Professional password verification using bcrypt
+      const isPasswordValid = await verifyPassword(password, data.password_hash)
+      
+      if (isPasswordValid) {
         localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
         navigate('/admin/dashboard')
       } else {
-        console.log('Password mismatch:', { entered: password, stored: data.password_hash })
         toast.error('Noto\'g\'ri parol')
       }
     } catch (err) {

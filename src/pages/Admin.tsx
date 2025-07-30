@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { hashPassword } from '../lib/auth'
 import toast, { Toaster } from 'react-hot-toast'
 
 interface AdminUser {
@@ -510,11 +511,14 @@ const Admin: React.FC = () => {
       e.preventDefault()
       
       try {
+        // Hash the password before storing
+        const hashedPassword = await hashPassword(formData.password)
+        
         const { error } = await supabase
           .from('admin_users')
           .insert({
             username: formData.username,
-            password_hash: formData.password, // In production, hash this
+            password_hash: hashedPassword,
             role: formData.role
           })
 
