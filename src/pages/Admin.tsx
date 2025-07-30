@@ -140,7 +140,7 @@ const Admin: React.FC = () => {
       if (appsData) setApplications(appsData)
 
       // Load users from profiles table
-      const { data: profilesData, error: profilesError } = await supabase
+      const { data: profilesData, error: profilesQueryError } = await supabase
         .from('profiles')
         .select(`
           *,
@@ -148,8 +148,8 @@ const Admin: React.FC = () => {
         `)
         .order('created_at', { ascending: false })
 
-      if (profilesError) {
-        console.error('Profiles error:', profilesError)
+      if (profilesQueryError) {
+        console.error('Profiles error:', profilesQueryError)
         // Fallback: load profiles without applications count
         const { data: fallbackProfiles } = await supabase
           .from('profiles')
