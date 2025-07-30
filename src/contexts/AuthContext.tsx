@@ -31,6 +31,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
+    // Check for stored admin user data
+    const storedAdminUser = localStorage.getItem('admin_user')
+    if (storedAdminUser) {
+      setIsAdmin(true)
+      setLoading(false)
+      return
+    }
+
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       console.log('Initial session:', session)
@@ -102,18 +110,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const adminSignIn = async (username: string, password: string) => {
-    // Simple admin check - in production, use proper authentication
-    if (username === 'admin' && password === 'admin') {
-      // Create a mock admin session
-      setIsAdmin(true)
-      return { data: { user: { email: 'admin@learnx.uz', role: 'admin' } }, error: null }
+    try {
+      // First verify admin credentials
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('username', username)
+        .maybeSingle()
+
+      if (error || !data) {
+        return { data: null, error: { message: 'Noto\'g\'ri login yoki parol' } }
+      }
+
+      // Verify password
+      const { data: passwordCheck, error: passwordError } = await supabase
+        .rpc('verify_admin_password', {
+          input_username: username,
+          input_password: password
+        })
+      
+      if (passwordError) {
+        console.error('Password verification error:', passwordError)
+        return { data: null, error: { message: 'Parol tekshirishda xatolik' } }
+      }
+
+      if (passwordCheck) {
+        // Set admin state and store in localStorage
+        setIsAdmin(true)
+        localStorage.setItem('admin_user', JSON.stringify(data))
+        return { data: { user: { email: `${username}@admin.local`, role: data.role } }, error: null }
+      } else {
+        return { data: null, error: { message: 'Noto\'g\'ri parol' } }
+      }
+    } catch (err) {
+      console.error('Admin login error:', err)
+      return { data: null, error: { message: 'Kirish jarayonida xatolik yuz berdi' } }
     }
-    return { data: null, error: { message: 'Invalid admin credentials' } }
   }
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
     setIsAdmin(false)
+    localStorage.removeItem('admin_user')
     return { error }
   }
 

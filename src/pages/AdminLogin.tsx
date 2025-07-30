@@ -12,7 +12,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   
-  const { signIn } = useAuth()
+  const { adminSignIn } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,72 +20,17 @@ const AdminLogin: React.FC = () => {
     setLoading(true)
     
     try {
-      // First verify admin credentials
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle()
-
-      if (error || !data) {
-        toast.error('Noto\'g\'ri login yoki parol')
-        setLoading(false)
-        return
-      }
-
-      // Verify password
-      const { data: passwordCheck, error: passwordError } = await supabase
-        .rpc('verify_admin_password', {
-          input_username: username,
-          input_password: password
-        })
+      const { data, error } = await adminSignIn(username, password)
       
-      if (passwordError) {
-        console.error('Password verification error:', passwordError)
-        toast.error('Parol tekshirishda xatolik')
-        setLoading(false)
-        return
-      }
-
-      if (passwordCheck) {
-        // Sign in with Supabase Auth using username as email
-        await signIn(`${username}@admin.local`, password)
-        localStorage.setItem('admin_user', JSON.stringify(data))
+      if (error) {
+        toast.error(error.message)
+      } else if (data) {
         toast.success('Admin panelga xush kelibsiz!')
         navigate('/admin/dashboard')
-      } else {
-        toast.error('Noto\'g\'ri parol')
       }
     } catch (err) {
       console.error('Login error:', err)
-      // If Supabase auth fails, still allow admin login for local verification
-      try {
-        const { data, error } = await supabase
-          .from('admin_users')
-          .select('*')
-          .eq('username', username)
-          .maybeSingle()
-
-        if (data) {
-          const { data: passwordCheck } = await supabase
-            .rpc('verify_admin_password', {
-              input_username: username,
-              input_password: password
-            })
-          
-          if (passwordCheck) {
-            localStorage.setItem('admin_user', JSON.stringify(data))
-            toast.success('Admin panelga xush kelibsiz!')
-            navigate('/admin/dashboard')
-          } else {
-            toast.error('Noto\'g\'ri parol')
-          }
-        } else {
-          toast.error('Kirish jarayonida xatolik yuz berdi')
-        }
-      } catch (fallbackErr) {
-        toast.error('Kirish jarayonida xatolik yuz berdi')
-      }
+      toast.error('Kirish jarayonida xatolik yuz berdi')
     } finally {
       setLoading(false)
     }
