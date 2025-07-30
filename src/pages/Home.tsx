@@ -13,68 +13,104 @@ const Home: React.FC = () => {
   const [certificates, setCertificates] = useState([])
 
   useEffect(() => {
-    // Use fallback data until database tables are created
-    setServices([
-      {
-        id: 1,
-        title: "Visa olishga yordam",
-        description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
-        icon: "FileText",
-        color: "blue"
-      },
-      {
-        id: 2,
-        title: "Work & Travel",
-        description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
-        icon: "Plane",
-        color: "green"
-      },
-      {
-        id: 3,
-        title: "Ta'lim granti",
-        description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
-        icon: "BookOpen",
-        color: "purple"
-      }
-    ])
-
-    setTestimonials([
-      {
-        id: 1,
-        name: "Aziz Karimov",
-        country: "AQSh",
-        text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.",
-        rating: 5,
-        image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150"
-      },
-      {
-        id: 2,
-        name: "Malika Saidova",
-        country: "Germaniya",
-        text: "Vizani olishda ko'rsatilgan yordam uchun juda minnatdorman. Professional yondashuv va tez natija.",
-        rating: 5,
-        image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150"
-      },
-      {
-        id: 3,
-        name: "Bobur Rahimov",
-        country: "Kanada",
-        text: "Ta'lim grantini olishda LearnX jamoasi katta yordam berdi. Endi Kanadada o'qiyapman!",
-        rating: 5,
-        image: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=150"
-      }
-    ])
-
-    setPartners([
-      { id: 1, name: "Harvard University", logo: "https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=200" },
-      { id: 2, name: "MIT", logo: "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=200" },
-      { id: 3, name: "Stanford", logo: "https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=200" },
-      { id: 4, name: "Oxford", logo: "https://images.pexels.com/photos/1205651/pexels-photo-1205651.jpeg?auto=compress&cs=tinysrgb&w=200" },
-      { id: 5, name: "Cambridge", logo: "https://images.pexels.com/photos/1438072/pexels-photo-1438072.jpeg?auto=compress&cs=tinysrgb&w=200" },
-      { id: 6, name: "Yale", logo: "https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=200" }
-    ])
+    loadData()
   }, [])
 
+  const loadData = async () => {
+    try {
+      // Load services from database
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6)
+      
+      if (servicesData && servicesData.length > 0) {
+        setServices(servicesData)
+      } else {
+        // Fallback data if no services in database
+        setServices([
+          {
+            id: 1,
+            title: "Visa olishga yordam",
+            description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
+            icon: "FileText",
+            color: "blue"
+          },
+          {
+            id: 2,
+            title: "Work & Travel",
+            description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
+            icon: "Plane",
+            color: "green"
+          },
+          {
+            id: 3,
+            title: "Ta'lim granti",
+            description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
+            icon: "BookOpen",
+            color: "purple"
+          }
+        ])
+      }
+
+      // Load testimonials from database
+      const { data: storiesData } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('featured', true)
+        .order('created_at', { ascending: false })
+        .limit(3)
+      
+      if (storiesData && storiesData.length > 0) {
+        setTestimonials(storiesData)
+      } else {
+        // Fallback data
+        setTestimonials([
+          {
+            id: 1,
+            name: "Aziz Karimov",
+            country: "AQSh",
+            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.",
+            rating: 5,
+            image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150"
+          }
+        ])
+      }
+
+      // Load partners from database
+      const { data: partnersData } = await supabase
+        .from('partners')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6)
+      
+      if (partnersData && partnersData.length > 0) {
+        setPartners(partnersData)
+      } else {
+        // Fallback data
+        setPartners([
+          { id: 1, name: "Harvard University", logo: "https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=200" },
+          { id: 2, name: "MIT", logo: "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=200" },
+          { id: 3, name: "Stanford", logo: "https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=200" }
+        ])
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+      // Use fallback data on error
+      setServices([
+        {
+          id: 1,
+          title: "Visa olishga yordam",
+          description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
+          icon: "FileText",
+          color: "blue"
+        }
+      ])
+      setTestimonials([])
+      setPartners([])
+    }
+  }
 
   const stats = [
     { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },

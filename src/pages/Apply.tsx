@@ -81,20 +81,30 @@ const Apply: React.FC = () => {
   }
 
   const onSubmit = async (data: any) => {
-    console.log('Form submitted with data:', data)
+    console.log('🚀 Form submitted with data:', data)
+    console.log('🔐 User:', user)
     
     if (!user) {
-      toast.error('Please login to submit application')
+      toast.error('Ariza topshirish uchun tizimga kiring')
+      navigate('/login')
       return
     }
 
-    // Store form data for all steps
-    setFormData(prev => ({ ...prev, ...data }))
+    // Validate required fields
+    if (!data.firstName || !data.lastName || !data.email || !data.phone) {
+      toast.error('Barcha majburiy maydonlarni to\'ldiring')
+      return
+    }
+
+    if (!data.program || !data.country) {
+      toast.error('Dastur va davlatni tanlang')
+      return
+    }
     
     setUploading(true)
     
     try {
-      console.log('Saving to database...')
+      console.log('💾 Saving to database...')
       
       // Save application to database
       const { data: result, error } = await supabase
@@ -105,11 +115,7 @@ const Apply: React.FC = () => {
           email: data.email,
           phone: data.phone,
           birth_date: data.birthDate,
-          passport_number: null,
           education_level: data.education,
-          university: data.university || null,
-          major: null,
-          english_level: null,
           program_type: data.program,
           country_preference: data.country,
           documents: uploadedFiles,
@@ -118,25 +124,26 @@ const Apply: React.FC = () => {
         })
 
       if (error) {
-        console.error('Database error:', error)
+        console.error('❌ Database error:', error)
         throw error
       }
 
-      console.log('Application saved successfully:', result)
-      toast.success('Application submitted successfully!')
+      console.log('✅ Application saved successfully:', result)
+      toast.success('Ariza muvaffaqiyatli topshirildi!')
       
       // Reset form
       setCurrentStep(1)
       setUploadedFiles({})
+      setFormData({})
       
       // Redirect to profile after successful submission
       setTimeout(() => {
         navigate('/profile')
-      }, 2000)
+      }, 1500)
       
     } catch (error) {
-      toast.error('Error submitting application. Please try again.')
-      console.error('Error:', error)
+      console.error('❌ Submit error:', error)
+      toast.error('Ariza topshirishda xatolik. Qaytadan urinib ko\'ring.')
     } finally {
       setUploading(false)
     }
