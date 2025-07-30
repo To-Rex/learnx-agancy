@@ -17,7 +17,7 @@ const Admin: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null)
   const [applications, setApplications] = useState([])
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<any[]>([])
   const [filteredUsers, setFilteredUsers] = useState([])
   const [userSearchTerm, setUserSearchTerm] = useState('')
   const [userFilter, setUserFilter] = useState('all')
@@ -59,6 +59,74 @@ const Admin: React.FC = () => {
     const admin = JSON.parse(adminData)
     setCurrentAdmin(admin)
     loadData()
+  }
+
+  const loadUsers = async () => {
+    try {
+      // Get authenticated users from Supabase Auth
+      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers()
+      
+      if (authError) {
+        console.error('Error loading auth users:', authError)
+        // Fallback to empty array if auth admin access is not available
+        setUsers([])
+        return
+      }
+
+      if (!authUsers) {
+        setUsers([])
+        return
+      }
+
+      // Get profiles for all users
+      const userIds = authUsers.map(user => user.id)
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds)
+
+      // Get applications count for each user
+      const { data: applicationsData } = await supabase
+        .from('applications')
+        .select('user_id')
+        .in('user_id', userIds)
+
+      const applicationsCount = applicationsData?.reduce((acc: any, app: any) => {
+        acc[app.user_id] = (acc[app.user_id] || 0) + 1
+        return acc
+      }, {}) || {}
+
+      // Combine auth users with profiles and applications count
+      const usersWithStats = authUsers.map((authUser: any) => {
+        const profile = profilesData?.find(p => p.id === authUser.id)
+        return {
+          id: authUser.id,
+          email: authUser.email,
+          created_at: authUser.created_at,
+          last_sign_in_at: authUser.last_sign_in_at,
+          email_confirmed_at: authUser.email_confirmed_at,
+          phone: authUser.phone,
+          // Profile data
+          full_name: profile?.full_name || authUser.user_metadata?.full_name || '',
+          avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url || '',
+          phone_profile: profile?.phone || '',
+          address: profile?.address || '',
+          birth_date: profile?.birth_date || '',
+          bio: profile?.bio || '',
+          // Stats
+          applications_count: applicationsCount[authUser.id] || 0,
+          is_active: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : false,
+          // Provider info
+          providers: authUser.app_metadata?.providers || ['email'],
+          is_google_user: authUser.app_metadata?.providers?.includes('google') || false
+        }
+      })
+
+      setUsers(usersWithStats)
+    } catch (error) {
+      console.error('Error loading users:', error)
+      setUsers([])
+    }
   }
 
   const loadData = async () => {
@@ -467,6 +535,22 @@ const Admin: React.FC = () => {
     return matchesSearch && matchesFilter
   })
 
+  const filteredUsers = users.filter((user: any) => {
+    const matchesSearch = 
+      (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.phone_profile?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+
+    const matchesFilter = 
+      filterStatus === 'all' ||
+      (filterStatus === 'active' && user.is_active) ||
+      (filterStatus === 'inactive' && !user.is_active) ||
+      (filterStatus === 'recent' && new Date(user.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) ||
+      (filterStatus === 'google' && user.is_google_user)
+
+    return matchesSearch && matchesFilter
+  })
+
   const renderDashboard = () => (
     <div className="space-y-8">
       {/* Welcome Header */}
@@ -713,7 +797,8 @@ const Admin: React.FC = () => {
               <option value="all">Barchasi</option>
               <option value="active">Faol</option>
               <option value="inactive">Nofaol</option>
-              <option value="recent">Yangi</option>
+              <option value="recent">Yangi (7 kun)</option>
+              <option value="google">Google foydalanuvchilari</option>
             </select>
           </div>
         </div>
@@ -723,55 +808,70 @@ const Admin: React.FC = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foydalanuvchi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aloqa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arizalar</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ro'yxatdan o'tgan</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holat</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Oxirgi kirish</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredUsers.map((user: any) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                      <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 mr-3">
                         {user.avatar_url ? (
-                          <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
+                          <img
+                            src={user.avatar_url}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
-                          <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
                             {(user.full_name || user.email || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
-                      <div className="ml-4">
+                      <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {user.full_name || 'Noma\'lum foydalanuvchi'}
+                          {user.full_name || 'Ism kiritilmagan'}
                         </div>
-                        <div className="text-sm text-gray-500">ID: {user.id.slice(0, 8)}...</div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                        {user.is_google_user && (
+                          <div className="flex items-center mt-1">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                              Google
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{user.phone || 'Telefon yo\'q'}</div>
-                    <div className="text-sm text-gray-500">{user.address || 'Manzil yo\'q'}</div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {user.phone_profile || user.phone || 'Kiritilmagan'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {user.applications_count} ta
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(user.created_at).toLocaleDateString('uz-UZ')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                       user.applications_count > 0 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-gray-100 text-gray-800'
                     }`}>
-                      {user.applications_count > 0 ? 'Faol' : 'Nofaol'}
+                      {user.applications_count}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {user.is_active ? 'Faol' : 'Nofaol'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {user.last_sign_in_at 
+                      ? new Date(user.last_sign_in_at).toLocaleDateString('uz-UZ')
+                      : 'Hech qachon'
+                    }
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
@@ -1800,112 +1900,125 @@ const Admin: React.FC = () => {
 
               <div className="space-y-6">
                 {/* Profile Info */}
-                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="flex items-center space-x-4 mb-6">
+                  <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100">
                     {selectedUser.avatar_url ? (
-                      <img src={selectedUser.avatar_url} alt="" className="h-full w-full object-cover" />
+                      <img
+                        src={selectedUser.avatar_url}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
-                      <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
                         {(selectedUser.full_name || selectedUser.email || 'U').charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">
-                      {selectedUser.full_name || 'Noma\'lum foydalanuvchi'}
-                    </h4>
-                    <p className="text-gray-600">ID: {selectedUser.id}</p>
-                    <p className="text-sm text-gray-500">
-                      Ro'yxatdan o'tgan: {new Date(selectedUser.created_at).toLocaleDateString('uz-UZ')}
-                    </p>
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {selectedUser.full_name || 'Ism kiritilmagan'}
+                    </h3>
+                    <p className="text-gray-600">{selectedUser.email}</p>
+                    <div className="flex items-center space-x-2 mt-2">
+                      {selectedUser.is_google_user && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                          Google orqali ro'yxatdan o'tgan
+                        </span>
+                      )}
+                      {selectedUser.email_confirmed_at && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Email tasdiqlangan
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                {/* Contact Info */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">Telefon</span>
+                <div className="grid grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Shaxsiy ma'lumotlar</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Telefon:</span>
+                        <span className="text-gray-900">{selectedUser.phone_profile || selectedUser.phone || 'Kiritilmagan'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Manzil:</span>
+                        <span className="text-gray-900">{selectedUser.address || 'Kiritilmagan'}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Tug'ilgan sana:</span>
+                        <span className="text-gray-900">
+                          {selectedUser.birth_date 
+                            ? new Date(selectedUser.birth_date).toLocaleDateString('uz-UZ')
+                            : 'Kiritilmagan'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Ro'yxatdan o'tgan:</span>
+                        <span className="text-gray-900">
+                          {new Date(selectedUser.created_at).toLocaleDateString('uz-UZ')}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-gray-900">{selectedUser.phone || 'Kiritilmagan'}</p>
                   </div>
-                  
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">Manzil</span>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-3">Statistika</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Arizalar soni:</span>
+                        <span className="text-gray-900">{selectedUser.applications_count}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Holat:</span>
+                        <span className={selectedUser.is_active ? 'text-green-600' : 'text-red-600'}>
+                          {selectedUser.is_active ? 'Faol' : 'Nofaol'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Oxirgi kirish:</span>
+                        <span className="text-gray-900">
+                          {selectedUser.last_sign_in_at 
+                            ? new Date(selectedUser.last_sign_in_at).toLocaleDateString('uz-UZ')
+                            : 'Hech qachon'
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Ro'yxatdan o'tganiga:</span>
+                        <span className="text-gray-900">
+                          {Math.floor((Date.now() - new Date(selectedUser.created_at).getTime()) / (1000 * 60 * 60 * 24))} kun
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-gray-900">{selectedUser.address || 'Kiritilmagan'}</p>
-                  </div>
-                  
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Calendar className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">Tug'ilgan sana</span>
-                    </div>
-                    <p className="text-gray-900">
-                      {selectedUser.birth_date 
-                        ? new Date(selectedUser.birth_date).toLocaleDateString('uz-UZ')
-                        : 'Kiritilmagan'
-                      }
-                    </p>
-                  </div>
-                  
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <FileText className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">Arizalar soni</span>
-                    </div>
-                    <p className="text-gray-900">{selectedUser.applications_count} ta</p>
                   </div>
                 </div>
 
-                {/* Bio */}
                 {selectedUser.bio && (
-                  <div className="p-4 border border-gray-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <User className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm font-medium text-gray-700">O'zi haqida</span>
-                    </div>
-                    <p className="text-gray-900">{selectedUser.bio}</p>
+                  <div className="mb-6">
+                    <h4 className="font-semibold text-gray-900 mb-2">Bio</h4>
+                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
+                      {selectedUser.bio}
+                    </p>
                   </div>
                 )}
 
-                {/* Statistics */}
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-2xl font-bold text-blue-600">{selectedUser.applications_count}</div>
-                    <div className="text-sm text-blue-600">Arizalar</div>
-                  </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-2xl font-bold text-green-600">
-                      {selectedUser.applications_count > 0 ? '1' : '0'}
-                    </div>
-                    <div className="text-sm text-green-600">Faollik</div>
-                  </div>
-                  <div className="text-center p-4 bg-purple-50 rounded-lg">
-                    <div className="text-2xl font-bold text-purple-600">
-                      {Math.floor((new Date().getTime() - new Date(selectedUser.created_at).getTime()) / (1000 * 60 * 60 * 24))}
-                    </div>
-                    <div className="text-sm text-purple-600">Kunlar</div>
-                  </div>
+                <div className="flex justify-end space-x-3">
+                  <button
+                    onClick={() => setShowUserModal(false)}
+                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                  >
+                    Yopish
+                  </button>
+                  <button
+                    onClick={() => handleUserAction(selectedUser.id, 'delete')}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                  >
+                    Foydalanuvchini o'chirish
+                  </button>
                 </div>
-              </div>
-
-              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
-                <button
-                  onClick={() => setShowUserModal(false)}
-                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
-                >
-                  Yopish
-                </button>
-                <button
-                  onClick={() => handleUserAction(selectedUser.id, 'delete')}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                >
-                  Foydalanuvchini o'chirish
-                </button>
               </div>
             </motion.div>
           </motion.div>
