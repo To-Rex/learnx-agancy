@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Users, Award } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
+import { supabase } from '../lib/supabase'
 
 const Contact: React.FC = () => {
   const [formData, setFormData] = useState({
