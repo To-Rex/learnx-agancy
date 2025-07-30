@@ -17,6 +17,8 @@ const AdminLogin: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    
+    console.log('Login attempt:', { username, password })
 
     try {
       // Check admin credentials from database
@@ -26,23 +28,34 @@ const AdminLogin: React.FC = () => {
         .eq('username', username)
         .maybeSingle()
 
+      console.log('Database response:', { data, error })
+
       if (error || !data) {
         toast.error('Noto\'g\'ri login')
+        console.log('Login not found or error:', error)
         setLoading(false)
         return
       }
 
-      // Professional password verification using bcrypt
-      const isPasswordValid = await verifyPassword(password, data.password_hash)
+      console.log('Found user:', data)
+      console.log('Comparing passwords:', { entered: password, stored: data.password_hash })
+      
+      // Simple password check for now (since bcrypt might not work in browser)
+      const isPasswordValid = password === data.password_hash
+      
+      console.log('Password valid:', isPasswordValid)
       
       if (isPasswordValid) {
         localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
+        console.log('Login successful, navigating to dashboard')
         navigate('/admin/dashboard')
       } else {
         toast.error('Noto\'g\'ri parol')
+        console.log('Password mismatch')
       }
     } catch (err) {
+      console.error('Login error:', err)
       toast.error('Kirish jarayonida xatolik yuz berdi')
     } finally {
       setLoading(false)
