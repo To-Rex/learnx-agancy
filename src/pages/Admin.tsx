@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Lock, Unlock, Key, Star, Globe, Award, TrendingUp, Calendar, Mail, Phone, MapPin, Save, X } from 'lucide-react'
+import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Lock, Unlock, Key, Star, Globe, Award, TrendingUp, Calendar, Mail, Phone, MapPin, Save, X, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
@@ -18,6 +18,9 @@ const Admin: React.FC = () => {
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null)
   const [applications, setApplications] = useState([])
   const [users, setUsers] = useState([])
+  const [filteredUsers, setFilteredUsers] = useState([])
+  const [userSearchTerm, setUserSearchTerm] = useState('')
+  const [userFilter, setUserFilter] = useState('all')
   const [profiles, setProfiles] = useState([])
   const [adminUsers, setAdminUsers] = useState([])
   const [services, setServices] = useState([])
@@ -34,12 +37,17 @@ const Admin: React.FC = () => {
   const [selectedStory, setSelectedStory] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [showUserModal, setShowUserModal] = useState(false)
   
   const navigate = useNavigate()
 
   useEffect(() => {
     checkAdminAuth()
   }, [])
+
+  useEffect(() => {
+    filterUsers()
+  }, [users, userSearchTerm, userFilter])
 
   const checkAdminAuth = () => {
     const adminData = localStorage.getItem('admin_user')
@@ -63,13 +71,61 @@ const Admin: React.FC = () => {
       
       if (appsData) setApplications(appsData)
 
+      // Load users from profiles table
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          applications(count)
+        `)
+        .order('created_at', { ascending: false })
+
+      if (profilesError) {
+        console.error('Profiles error:', profilesError)
+        // Fallback: load profiles without applications count
+        const { data: fallbackProfiles } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
+        
+        if (fallbackProfiles) {
+          const usersWithCounts = fallbackProfiles.map(profile => ({
+            ...profile,
+            email: profile.id, // Use ID as fallback for email
+            applications_count: 0,
+            provider: 'email',
+            last_sign_in: profile.updated_at
+          }))
+          setUsers(usersWithCounts)
+        }
+      } else if (profilesData) {
+        const usersWithCounts = profilesData.map(profile => ({
+          ...profile,
+          email: profile.id, // Use ID as fallback for email
+          applications_count: profile.applications?.[0]?.count || 0,
+          provider: 'email',
+          last_sign_in: profile.updated_at
+        }))
+        setUsers(usersWithCounts)
+      }
+
+      // Load applications
+      const { data: applicationsData, error: appsError } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (!appsError && applicationsData) {
+        setApplications(applicationsData)
+      }
+
       // Fetch profiles separately
-      const { data: profiles, error: profilesError } = await supabase
+      const { data: profiles, error: profilesError2 } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (profilesError) throw profilesError
+      if (profilesError2) throw profilesError2
 
       // Fetch applications count for each user
       const { data: applications, error: applicationsError } = await supabase
@@ -133,6 +189,64 @@ const Admin: React.FC = () => {
       console.error('Error loading data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const filterUsers = () => {
+    let filtered = users
+
+    // Filter by search term
+    if (userSearchTerm) {
+      filtered = filtered.filter(user => 
+        user.full_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        user.phone?.toLowerCase().includes(userSearchTerm.toLowerCase())
+      )
+    }
+
+    // Filter by type
+    if (userFilter !== 'all') {
+      filtered = filtered.filter(user => {
+        switch (userFilter) {
+          case 'active':
+            return user.applications_count > 0
+          case 'inactive':
+            return user.applications_count === 0
+          case 'recent':
+            const oneWeekAgo = new Date()
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+            return new Date(user.created_at) > oneWeekAgo
+          default:
+            return true
+        }
+      })
+    }
+
+    setFilteredUsers(filtered)
+  }
+
+  const handleUserAction = async (userId: string, action: string) => {
+    try {
+      if (action === 'view') {
+        const user = users.find(u => u.id === userId)
+        setSelectedUser(user)
+        setShowUserModal(true)
+      } else if (action === 'delete') {
+        if (confirm('Foydalanuvchini o\'chirmoqchimisiz?')) {
+          const { error } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId)
+
+          if (error) throw error
+          
+          toast.success('Foydalanuvchi o\'chirildi')
+          loadData()
+        }
+      }
+    } catch (error) {
+      toast.error('Xatolik yuz berdi')
+      console.error('User action error:', error)
     }
   }
 
@@ -576,132 +690,119 @@ const Admin: React.FC = () => {
 
     return (
       <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <h3 className="text-xl font-bold text-gray-900">Foydalanuvchilar ({users.length})</h3>
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              <span className="font-medium">{profiles.length}</span> profil to'ldirilgan
+          
+          <div className="flex flex-col sm:flex-row gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Qidirish..."
+                value={userSearchTerm}
+                onChange={(e) => setUserSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+              />
             </div>
+            
+            <select
+              value={userFilter}
+              onChange={(e) => setUserFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            >
+              <option value="all">Barchasi</option>
+              <option value="active">Faol</option>
+              <option value="inactive">Nofaol</option>
+              <option value="recent">Yangi</option>
+            </select>
           </div>
         </div>
         
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Foydalanuvchi</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Telefon</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Kirish usuli</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Arizalar</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Ro'yxatdan o'tgan</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foydalanuvchi</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aloqa</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arizalar</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ro'yxatdan o'tgan</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holat</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
               </tr>
             </thead>
-            <tbody>
-              {combinedUsers.map((user: any) => (
-                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
-                        {user.user_metadata?.avatar_url || user.profile?.avatar_url ? (
-                          <img
-                            src={user.user_metadata?.avatar_url || user.profile?.avatar_url}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                          />
+            <tbody className="bg-white divide-y divide-gray-200">
+              {filteredUsers.map((user: any) => (
+                <tr key={user.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                        {user.avatar_url ? (
+                          <img src={user.avatar_url} alt="" className="h-full w-full object-cover" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                            {(user.profile?.full_name || user.email || 'U').charAt(0).toUpperCase()}
+                          <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                            {(user.full_name || user.email || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {user.profile?.full_name || user.user_metadata?.full_name || 'Kiritilmagan'}
-                        </p>
-                        {user.profile && (
-                          <p className="text-xs text-green-600">Profil to'ldirilgan</p>
-                        )}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.full_name || 'Noma\'lum foydalanuvchi'}
+                        </div>
+                        <div className="text-sm text-gray-500">ID: {user.id.slice(0, 8)}...</div>
                       </div>
                     </div>
                   </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="text-sm">{user.email}</span>
-                      {user.email_confirmed_at && (
-                        <CheckCircle className="h-4 w-4 text-green-500" title="Tasdiqlangan" />
-                      )}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">{user.phone || 'Telefon yo\'q'}</div>
+                    <div className="text-sm text-gray-500">{user.address || 'Manzil yo\'q'}</div>
                   </td>
-                  <td className="py-3 px-4">
-                    {user.profile?.phone ? (
-                      <div className="flex items-center space-x-2">
-                        <Phone className="h-4 w-4 text-gray-400" />
-                        <span className="text-sm">{user.profile.phone}</span>
-                      </div>
-                    ) : (
-                      <span className="text-gray-400 text-sm">Kiritilmagan</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex items-center space-x-2">
-                      {user.app_metadata?.provider === 'google' ? (
-                        <>
-                          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
-                            <span className="text-white text-xs">G</span>
-                          </div>
-                          <span className="text-sm">Google</span>
-                        </>
-                      ) : (
-                        <>
-                          <Mail className="h-4 w-4 text-blue-500" />
-                          <span className="text-sm">Email</span>
-                        </>
-                      )}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
-                      {user.applications_count}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {user.applications_count} ta
                     </span>
                   </td>
-                  <td className="py-3 px-4 text-sm">{new Date(user.created_at).toLocaleDateString('uz-UZ')}</td>
-                  <td className="py-3 px-4">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(user.created_at).toLocaleDateString('uz-UZ')}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      user.applications_count > 0 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {user.applications_count > 0 ? 'Faol' : 'Nofaol'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex space-x-2">
                       <button 
-                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        onClick={() => handleUserAction(user.id, 'view')}
+                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                         title="Ko'rish"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button 
-                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                        title="Tahrirlash"
+                        onClick={() => handleUserAction(user.id, 'delete')}
+                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
+                        title="O'chirish"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
-                      {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'admin') && (
-                        <button 
-                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                          title="Bloklash"
-                        >
-                          <Lock className="h-4 w-4" />
-                        </button>
-                      )}
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                    <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                    <p>Foydalanuvchilar topilmadi</p>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
-          {combinedUsers.length === 0 && (
-            <div className="text-center py-8">
-              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Foydalanuvchilar topilmadi</p>
-            </div>
-          )}
         </div>
       </div>
     )
@@ -1668,6 +1769,147 @@ const Admin: React.FC = () => {
         {showEditUser && <EditUserModal />}
         {showCreateService && <CreateServiceModal />}
         {showCreateStory && <CreateStoryModal />}
+      </AnimatePresence>
+
+      {/* User Details Modal */}
+      <AnimatePresence>
+        {showUserModal && selectedUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowUserModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-bold text-gray-900">Foydalanuvchi ma'lumotlari</h3>
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Profile Info */}
+                <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                    {selectedUser.avatar_url ? (
+                      <img src={selectedUser.avatar_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="h-full w-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
+                        {(selectedUser.full_name || selectedUser.email || 'U').charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      {selectedUser.full_name || 'Noma\'lum foydalanuvchi'}
+                    </h4>
+                    <p className="text-gray-600">ID: {selectedUser.id}</p>
+                    <p className="text-sm text-gray-500">
+                      Ro'yxatdan o'tgan: {new Date(selectedUser.created_at).toLocaleDateString('uz-UZ')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Contact Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">Telefon</span>
+                    </div>
+                    <p className="text-gray-900">{selectedUser.phone || 'Kiritilmagan'}</p>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">Manzil</span>
+                    </div>
+                    <p className="text-gray-900">{selectedUser.address || 'Kiritilmagan'}</p>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">Tug'ilgan sana</span>
+                    </div>
+                    <p className="text-gray-900">
+                      {selectedUser.birth_date 
+                        ? new Date(selectedUser.birth_date).toLocaleDateString('uz-UZ')
+                        : 'Kiritilmagan'
+                      }
+                    </p>
+                  </div>
+                  
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <FileText className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">Arizalar soni</span>
+                    </div>
+                    <p className="text-gray-900">{selectedUser.applications_count} ta</p>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                {selectedUser.bio && (
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm font-medium text-gray-700">O'zi haqida</span>
+                    </div>
+                    <p className="text-gray-900">{selectedUser.bio}</p>
+                  </div>
+                )}
+
+                {/* Statistics */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-4 bg-blue-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">{selectedUser.applications_count}</div>
+                    <div className="text-sm text-blue-600">Arizalar</div>
+                  </div>
+                  <div className="text-center p-4 bg-green-50 rounded-lg">
+                    <div className="text-2xl font-bold text-green-600">
+                      {selectedUser.applications_count > 0 ? '1' : '0'}
+                    </div>
+                    <div className="text-sm text-green-600">Faollik</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      {Math.floor((new Date().getTime() - new Date(selectedUser.created_at).getTime()) / (1000 * 60 * 60 * 24))}
+                    </div>
+                    <div className="text-sm text-purple-600">Kunlar</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                >
+                  Yopish
+                </button>
+                <button
+                  onClick={() => handleUserAction(selectedUser.id, 'delete')}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+                >
+                  Foydalanuvchini o'chirish
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )
