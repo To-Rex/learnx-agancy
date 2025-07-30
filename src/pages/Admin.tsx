@@ -187,20 +187,37 @@ const Admin: React.FC = () => {
         setApplications(applicationsData)
       }
 
-      // Fetch profiles separately
-      const { data: profiles, error: profilesError2 } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
+      // Load profiles with application counts
+      try {
+        // First get all profiles
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-      if (profilesError2) throw profilesError2
-
-      // Fetch applications count for each user
-      const { data: applications, error: applicationsError } = await supabase
-        .from('applications')
-        .select('user_id')
-
-      if (applicationsError) throw applicationsError
+        if (profilesError) {
+          console.error('Profiles error:', profilesError)
+        } else if (profilesData) {
+          // Get application counts for each profile
+          const profilesWithCounts = await Promise.all(
+            profilesData.map(async (profile) => {
+              const { count } = await supabase
+                .from('applications')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', profile.id)
+              
+              return {
+                ...profile,
+                applications_count: count || 0
+              }
+            })
+          )
+          
+          setProfiles(profilesWithCounts)
+        }
+      } catch (error) {
+        console.error('Profiles error:', error)
+      }
 
       // Count applications per user
       const applicationCounts = applications?.reduce((acc: any, app: any) => {
