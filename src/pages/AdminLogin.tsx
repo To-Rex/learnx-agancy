@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Lock, User, Shield, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-import { verifyPassword } from '../lib/auth'
+import { useAuth } from '../contexts/AuthContext'
 import toast, { Toaster } from 'react-hot-toast'
 
 const AdminLogin: React.FC = () => {
@@ -12,6 +12,7 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   
+  const { signIn } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -19,7 +20,7 @@ const AdminLogin: React.FC = () => {
     setLoading(true)
     
     try {
-      // Database check with proper password verification
+      // First verify admin credentials
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
@@ -32,7 +33,7 @@ const AdminLogin: React.FC = () => {
         return
       }
 
-      // Verify password using PostgreSQL crypt function
+      // Verify password
       const { data: passwordCheck, error: passwordError } = await supabase
         .rpc('verify_admin_password', {
           input_username: username,
@@ -47,6 +48,8 @@ const AdminLogin: React.FC = () => {
       }
 
       if (passwordCheck) {
+        // Sign in with Supabase Auth using username as email
+        await signIn(`${username}@admin.local`, password)
         localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
         navigate('/admin/dashboard')
@@ -55,7 +58,34 @@ const AdminLogin: React.FC = () => {
       }
     } catch (err) {
       console.error('Login error:', err)
-      toast.error('Kirish jarayonida xatolik yuz berdi')
+      // If Supabase auth fails, still allow admin login for local verification
+      try {
+        const { data, error } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('username', username)
+          .maybeSingle()
+
+        if (data) {
+          const { data: passwordCheck } = await supabase
+            .rpc('verify_admin_password', {
+              input_username: username,
+              input_password: password
+            })
+          
+          if (passwordCheck) {
+            localStorage.setItem('admin_user', JSON.stringify(data))
+            toast.success('Admin panelga xush kelibsiz!')
+            navigate('/admin/dashboard')
+          } else {
+            toast.error('Noto\'g\'ri parol')
+          }
+        } else {
+          toast.error('Kirish jarayonida xatolik yuz berdi')
+        }
+      } catch (fallbackErr) {
+        toast.error('Kirish jarayonida xatolik yuz berdi')
+      }
     } finally {
       setLoading(false)
     }
