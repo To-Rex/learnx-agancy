@@ -31,12 +31,13 @@ const AdminLogin: React.FC = () => {
         return
       }
 
-      // Simple password check (in production, use proper hashing)
+      // Simple password check - compare directly with password_hash field
       if (data.password_hash === password) {
         localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
         navigate('/admin/dashboard')
       } else {
+        console.log('Password mismatch:', { entered: password, stored: data.password_hash })
         toast.error('Noto\'g\'ri parol')
       }
     } catch (err) {
