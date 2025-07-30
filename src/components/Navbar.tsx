@@ -78,24 +78,31 @@ const Navbar: React.FC = () => {
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
             {/* Language Selector */}
-            <div className="relative">
+            <div className="relative" onMouseLeave={() => setShowLanguageMenu(false)}>
               <button
+                onMouseEnter={() => setShowLanguageMenu(true)}
                 onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all"
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
               >
-                <Globe className="h-4 w-4" />
-                <span className="text-sm font-medium">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                  <Globe className="h-3 w-3 text-white" />
+                </div>
+                <span className="text-2xl">
                   {languages.find(lang => lang.code === language)?.flag}
+                </span>
+                <span className="text-sm font-semibold text-gray-700">
+                  {languages.find(lang => lang.code === language)?.code.toUpperCase()}
                 </span>
               </button>
               
               <AnimatePresence>
                 {showLanguageMenu && (
                   <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-3 z-50 backdrop-blur-sm"
+                    style={{ boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' }}
                   >
                     {languages.map((lang) => (
                       <button
@@ -104,12 +111,20 @@ const Navbar: React.FC = () => {
                           setLanguage(lang.code as any)
                           setShowLanguageMenu(false)
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-3 ${
-                          language === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        className={`w-full text-left px-4 py-3 text-sm hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 flex items-center space-x-4 transition-all duration-200 ${
+                          language === lang.code 
+                            ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-l-4 border-blue-500' 
+                            : 'text-gray-700 hover:text-blue-600'
                         }`}
                       >
-                        <span className="text-lg">{lang.flag}</span>
-                        <span>{lang.name}</span>
+                        <span className="text-2xl">{lang.flag}</span>
+                        <div className="flex-1">
+                          <div className="font-semibold">{lang.name}</div>
+                          <div className="text-xs text-gray-500">{lang.code.toUpperCase()}</div>
+                        </div>
+                        {language === lang.code && (
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        )}
                       </button>
                     ))}
                   </motion.div>

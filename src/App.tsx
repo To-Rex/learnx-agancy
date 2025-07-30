@@ -101,7 +101,7 @@ const AppContent = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<AdminLogin />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/admin/dashboard" element={<Admin />} />
         </Routes>
       </main>
