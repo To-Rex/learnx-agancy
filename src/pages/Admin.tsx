@@ -1,1810 +1,440 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Lock, Unlock, Key, Star, Globe, Award, TrendingUp, Calendar, Mail, Phone, MapPin, Save, X, User } from 'lucide-react'
+import { 
+  Users, 
+  FileText, 
+  MessageSquare, 
+  Settings, 
+  BarChart3, 
+  Plus, 
+  Edit, 
+  Trash2, 
+  Eye,
+  Search,
+  Filter,
+  Download,
+  Upload,
+  Star,
+  MapPin,
+  Calendar,
+  Mail,
+  Phone,
+  User,
+  Shield,
+  ShieldOff,
+  LogOut,
+  Save,
+  X,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { useAuth } from '../contexts/AuthContext'
 import toast, { Toaster } from 'react-hot-toast'
 
-interface AdminUser {
-  id: string
-  username: string
-  role: 'super_admin' | 'admin' | 'manager' | 'sales'
-  is_active: boolean
-  created_at: string
-}
-
 const Admin: React.FC = () => {
+  const { user, isAdmin, signOut } = useAuth()
+  const navigate = useNavigate()
+  
+  // States
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    totalApplications: 0,
+    pendingApplications: 0,
+    approvedApplications: 0,
+    totalUsers: 0,
+    totalMessages: 0,
+    totalServices: 0
+  })
+  
+  // Data states
   const [applications, setApplications] = useState([])
-  const [users, setUsers] = useState<any[]>([])
-  const [filteredUsers, setFilteredUsers] = useState([])
-  const [userSearchTerm, setUserSearchTerm] = useState('')
-  const [userFilter, setUserFilter] = useState('all')
-  const [profiles, setProfiles] = useState([])
-  const [adminUsers, setAdminUsers] = useState([])
+  const [users, setUsers] = useState([])
+  const [messages, setMessages] = useState([])
   const [services, setServices] = useState([])
   const [stories, setStories] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showCreateUser, setShowCreateUser] = useState(false)
-  const [showEditUser, setShowEditUser] = useState(false)
-  const [showCreateService, setShowCreateService] = useState(false)
-  const [showEditService, setShowEditService] = useState(false)
-  const [showCreateStory, setShowCreateStory] = useState(false)
-  const [showEditStory, setShowEditStory] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<any>(null)
-  const [selectedService, setSelectedService] = useState<any>(null)
-  const [selectedStory, setSelectedStory] = useState<any>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [filterStatus, setFilterStatus] = useState('all')
-  const [showUserModal, setShowUserModal] = useState(false)
+  const [adminUsers, setAdminUsers] = useState([])
   
-  const navigate = useNavigate()
+  // Modal states
+  const [showServiceModal, setShowServiceModal] = useState(false)
+  const [showStoryModal, setShowStoryModal] = useState(false)
+  const [showUserModal, setShowUserModal] = useState(false)
+  const [editingItem, setEditingItem] = useState(null)
+  
+  // Form states
+  const [serviceForm, setServiceForm] = useState({
+    title: '',
+    description: '',
+    icon: 'FileText',
+    color: 'blue',
+    price: '',
+    features: [''],
+    featured: false
+  })
+  
+  const [storyForm, setStoryForm] = useState({
+    name: '',
+    country: '',
+    text: '',
+    rating: 5,
+    image: '',
+    featured: false
+  })
+
+  const [userForm, setUserForm] = useState({
+    username: '',
+    password: '',
+    role: 'admin',
+    is_active: true
+  })
 
   useEffect(() => {
-    checkAdminAuth()
-  }, [])
-
-  useEffect(() => {
-    filterUsers()
-  }, [users, userSearchTerm, userFilter])
-
-  const checkAdminAuth = () => {
-    const adminData = localStorage.getItem('admin_user')
-    if (!adminData) {
-      navigate('/admin')
+    if (!isAdmin) {
+      navigate('/admin/login')
       return
     }
-    
-    const admin = JSON.parse(adminData)
-    setCurrentAdmin(admin)
     loadData()
-  }
-
-  const loadUsers = async () => {
-    try {
-      // Get authenticated users from Supabase Auth
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers()
-      
-      if (authError) {
-        console.error('Error loading auth users:', authError)
-        // Fallback to empty array if auth admin access is not available
-        setUsers([])
-        return
-      }
-
-      if (!authUsers) {
-        setUsers([])
-        return
-      }
-
-      // Get profiles for all users
-      const userIds = authUsers.map(user => user.id)
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('id', userIds)
-
-      // Get applications count for each user
-      const { data: applicationsData } = await supabase
-        .from('applications')
-        .select('user_id')
-        .in('user_id', userIds)
-
-      const applicationsCount = applicationsData?.reduce((acc: any, app: any) => {
-        acc[app.user_id] = (acc[app.user_id] || 0) + 1
-        return acc
-      }, {}) || {}
-
-      // Combine auth users with profiles and applications count
-      const usersWithStats = authUsers.map((authUser: any) => {
-        const profile = profilesData?.find(p => p.id === authUser.id)
-        return {
-          id: authUser.id,
-          email: authUser.email,
-          created_at: authUser.created_at,
-          last_sign_in_at: authUser.last_sign_in_at,
-          email_confirmed_at: authUser.email_confirmed_at,
-          phone: authUser.phone,
-          // Profile data
-          full_name: profile?.full_name || authUser.user_metadata?.full_name || '',
-          avatar_url: profile?.avatar_url || authUser.user_metadata?.avatar_url || '',
-          phone_profile: profile?.phone || '',
-          address: profile?.address || '',
-          birth_date: profile?.birth_date || '',
-          bio: profile?.bio || '',
-          // Stats
-          applications_count: profile?.applications_count || 0,
-          is_active: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : false,
-          // Provider info
-          providers: authUser.app_metadata?.providers || ['email'],
-          is_google_user: authUser.app_metadata?.providers?.includes('google') || false
-        }
-      })
-
-      setUsers(usersWithStats)
-    } catch (error) {
-      console.error('Error loading users:', error)
-      setUsers([])
-    }
-  }
+  }, [isAdmin, navigate])
 
   const loadData = async () => {
+    setLoading(true)
     try {
-      // Load applications
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      // Load applications
-      const { data: applicationsData, error: appsError } = await supabase
-        .from('applications')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (!appsError && applicationsData) {
-        setApplications(applicationsData)
-      }
-
-      // Load users from profiles table
-      const { data: profilesData, error: profilesQueryError } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          applications(count)
-        `)
-        .order('created_at', { ascending: false })
-
-      if (profilesQueryError) {
-        console.error('Profiles error:', profilesQueryError)
-        // Fallback: load profiles without applications count
-        const { data: fallbackProfiles } = await supabase
-          .from('profiles')
-          .select('*')
-          .order('created_at', { ascending: false })
-        
-        if (fallbackProfiles) {
-          const usersWithCounts = fallbackProfiles.map(profile => ({
-            ...profile,
-            email: profile.id, // Use ID as fallback for email
-            applications_count: 0,
-            provider: 'email',
-            last_sign_in: profile.updated_at
-          }))
-          setUsers(usersWithCounts)
-        }
-      } else if (profilesData) {
-        const usersWithCounts = profilesData.map(profile => ({
-          ...profile,
-          email: profile.id, // Use ID as fallback for email
-          applications_count: profile.applications?.[0]?.count || 0,
-          provider: 'email',
-          last_sign_in: profile.updated_at
-        }))
-        setUsers(usersWithCounts)
-      }
-
-      // Fetch profiles separately
-      const { data: fetchedProfiles, error: profilesError2 } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (profilesError2) throw profilesError2
-
-      // Fetch applications count for each user
-      const { data: applications, error: applicationsError } = await supabase
-        .from('applications')
-        .select('*')
-
-      if (applicationsError) throw applicationsError
-
-      // Count applications per user
-      const applicationCounts = applications?.reduce((acc: any, app: any) => {
-        acc[app.user_id] = (acc[app.user_id] || 0) + 1
-        return acc
-      }, {}) || {}
-
-      // Get application counts for each profile
-      const profilesWithCounts = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { count } = await supabase
-            .from('applications')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', profile.id)
-          
-          return {
-            ...profile,
-            applications_count: count || 0
-          }
-        })
-      )
-
-      // Transform profiles to match expected user format
-      const transformedUsers = profiles?.map((profile: any) => ({
-        id: profile.id,
-        email: profile.email || 'Kiritilmagan',
-        user_metadata: {
-          full_name: profile.full_name,
-          avatar_url: profile.avatar_url
-        },
-        app_metadata: {
-          provider: 'email'
-        },
-        email_confirmed_at: profile.created_at,
-        last_sign_in_at: profile.updated_at,
-        created_at: profile.created_at,
-        applications_count: applicationCounts[profile.id] || 0
-      })) || []
-
-      setUsers(transformedUsers)
-      
-      if (profiles) setProfiles(profiles)
-
-      // Load admin users
-      const { data: adminData } = await supabase
-        .from('admin_users')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (adminData) setAdminUsers(adminData)
-
-      // Load services
-      const { data: servicesData } = await supabase
-        .from('services')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (servicesData) setServices(servicesData)
-
-      // Load stories
-      const { data: storiesData } = await supabase
-        .from('stories')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (storiesData) setStories(storiesData)
-
+      await Promise.all([
+        loadStats(),
+        loadApplications(),
+        loadUsers(),
+        loadMessages(),
+        loadServices(),
+        loadStories(),
+        loadAdminUsers()
+      ])
     } catch (error) {
       console.error('Error loading data:', error)
+      toast.error('Ma\'lumotlarni yuklashda xatolik')
     } finally {
       setLoading(false)
     }
   }
 
-  const filterUsers = () => {
-    let filtered = users
+  const loadStats = async () => {
+    try {
+      const [
+        { count: totalApplications },
+        { count: pendingApplications },
+        { count: approvedApplications },
+        { count: totalUsers },
+        { count: totalMessages },
+        { count: totalServices }
+      ] = await Promise.all([
+        supabase.from('applications').select('*', { count: 'exact', head: true }),
+        supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+        supabase.from('applications').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
+        supabase.from('profiles').select('*', { count: 'exact', head: true }),
+        supabase.from('contact_submissions').select('*', { count: 'exact', head: true }),
+        supabase.from('services').select('*', { count: 'exact', head: true })
+      ])
 
-    // Filter by search term
-    if (userSearchTerm) {
-      filtered = filtered.filter(user => 
-        user.full_name?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
-        user.phone?.toLowerCase().includes(userSearchTerm.toLowerCase())
-      )
-    }
-
-    // Filter by type
-    if (userFilter !== 'all') {
-      filtered = filtered.filter(user => {
-        switch (userFilter) {
-          case 'active':
-            return user.applications_count > 0
-          case 'inactive':
-            return user.applications_count === 0
-          case 'recent':
-            const oneWeekAgo = new Date()
-            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-            return new Date(user.created_at) > oneWeekAgo
-          default:
-            return true
-        }
+      setStats({
+        totalApplications: totalApplications || 0,
+        pendingApplications: pendingApplications || 0,
+        approvedApplications: approvedApplications || 0,
+        totalUsers: totalUsers || 0,
+        totalMessages: totalMessages || 0,
+        totalServices: totalServices || 0
       })
-    }
-
-    setFilteredUsers(filtered)
-  }
-
-  const handleUserAction = async (userId: string, action: string) => {
-    try {
-      if (action === 'view') {
-        const user = users.find(u => u.id === userId)
-        setSelectedUser(user)
-        setShowUserModal(true)
-      } else if (action === 'delete') {
-        if (confirm('Foydalanuvchini o\'chirmoqchimisiz?')) {
-          const { error } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', userId)
-
-          if (error) throw error
-          
-          toast.success('Foydalanuvchi o\'chirildi')
-          loadData()
-        }
-      }
     } catch (error) {
-      toast.error('Xatolik yuz berdi')
-      console.error('User action error:', error)
+      console.error('Stats loading error:', error)
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_user')
-    toast.success('Tizimdan chiqdingiz')
-    navigate('/admin')
-  }
-
-  const tabs = [
-    { id: 'dashboard', name: 'Dashboard', icon: BarChart3, roles: ['super_admin', 'admin', 'manager', 'sales'] },
-    { id: 'applications', name: 'Arizalar', icon: FileText, roles: ['super_admin', 'admin', 'manager'] },
-    { id: 'users', name: 'Foydalanuvchilar', icon: Users, roles: ['super_admin', 'admin', 'manager'] },
-    { id: 'staff', name: 'Xodimlar', icon: Shield, roles: ['super_admin'] },
-    { id: 'services', name: 'Xizmatlar', icon: Settings, roles: ['super_admin', 'admin'] },
-    { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, roles: ['super_admin', 'admin'] }
-  ]
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'super_admin': return <Crown className="h-4 w-4 text-yellow-500" />
-      case 'admin': return <Shield className="h-4 w-4 text-blue-500" />
-      case 'manager': return <Briefcase className="h-4 w-4 text-green-500" />
-      case 'sales': return <Users className="h-4 w-4 text-purple-500" />
-      default: return <Users className="h-4 w-4 text-gray-500" />
-    }
-  }
-
-  const getRoleName = (role: string) => {
-    switch (role) {
-      case 'super_admin': return 'Bosh Admin'
-      case 'admin': return 'Admin'
-      case 'manager': return 'Manager'
-      case 'sales': return 'Sotuvchi'
-      default: return 'Noma\'lum'
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return 'text-yellow-600 bg-yellow-100'
-      case 'approved': return 'text-green-600 bg-green-100'
-      case 'rejected': return 'text-red-600 bg-red-100'
-      default: return 'text-gray-600 bg-gray-100'
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return 'Kutilmoqda'
-      case 'approved': return 'Tasdiqlangan'
-      case 'rejected': return 'Rad etilgan'
-      default: return 'Noma\'lum'
-    }
-  }
-
-  const updateApplicationStatus = async (id: string, status: string) => {
+  const loadApplications = async () => {
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('applications')
-        .update({ status })
-        .eq('id', id)
-
-      if (error) throw error
-
-      setApplications(prev => 
-        prev.map((app: any) => 
-          app.id === id ? { ...app, status } : app
-        )
-      )
+        .select('*')
+        .order('created_at', { ascending: false })
       
-      toast.success('Status yangilandi')
+      if (error) throw error
+      setApplications(data || [])
     } catch (error) {
-      toast.error('Xatolik yuz berdi')
+      console.error('Applications loading error:', error)
     }
   }
 
-  const toggleAdminStatus = async (id: string, isActive: boolean) => {
+  const loadUsers = async () => {
     try {
-      const { error } = await supabase
-        .from('admin_users')
-        .update({ is_active: !isActive })
-        .eq('id', id)
-
-      if (error) throw error
-
-      setAdminUsers(prev => 
-        prev.map((admin: any) => 
-          admin.id === id ? { ...admin, is_active: !isActive } : admin
-        )
-      )
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
       
-      toast.success(isActive ? 'Xodim bloklandi' : 'Xodim aktivlashtirildi')
-    } catch (error) {
-      toast.error('Xatolik yuz berdi')
-    }
-  }
-
-  const deleteAdmin = async (id: string) => {
-    if (!confirm('Xodimni o\'chirmoqchimisiz?')) return
-
-    try {
-      const { error } = await supabase
-        .from('admin_users')
-        .delete()
-        .eq('id', id)
-
       if (error) throw error
+      setUsers(data || [])
+    } catch (error) {
+      console.error('Users loading error:', error)
+    }
+  }
 
-      setAdminUsers(prev => prev.filter((admin: any) => admin.id !== id))
-      toast.success('Xodim o\'chirildi')
+  const loadMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_submissions')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setMessages(data || [])
+    } catch (error) {
+      console.error('Messages loading error:', error)
+    }
+  }
+
+  const loadServices = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setServices(data || [])
+    } catch (error) {
+      console.error('Services loading error:', error)
+    }
+  }
+
+  const loadStories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('stories')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setStories(data || [])
+    } catch (error) {
+      console.error('Stories loading error:', error)
+    }
+  }
+
+  const loadAdminUsers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      setAdminUsers(data || [])
+    } catch (error) {
+      console.error('Admin users loading error:', error)
+    }
+  }
+
+  // Service CRUD operations
+  const handleSaveService = async () => {
+    try {
+      if (editingItem) {
+        const { error } = await supabase
+          .from('services')
+          .update(serviceForm)
+          .eq('id', editingItem.id)
+        
+        if (error) throw error
+        toast.success('Xizmat yangilandi')
+      } else {
+        const { error } = await supabase
+          .from('services')
+          .insert(serviceForm)
+        
+        if (error) throw error
+        toast.success('Yangi xizmat qo\'shildi')
+      }
+      
+      setShowServiceModal(false)
+      setEditingItem(null)
+      setServiceForm({
+        title: '',
+        description: '',
+        icon: 'FileText',
+        color: 'blue',
+        price: '',
+        features: [''],
+        featured: false
+      })
+      loadServices()
     } catch (error) {
       toast.error('Xatolik yuz berdi')
     }
   }
 
-  const deleteService = async (id: string) => {
+  const handleDeleteService = async (id: string) => {
     if (!confirm('Xizmatni o\'chirmoqchimisiz?')) return
-
+    
     try {
       const { error } = await supabase
         .from('services')
         .delete()
         .eq('id', id)
-
+      
       if (error) throw error
-
-      setServices(prev => prev.filter((service: any) => service.id !== id))
       toast.success('Xizmat o\'chirildi')
+      loadServices()
+    } catch (error) {
+      toast.error('O\'chirishda xatolik')
+    }
+  }
+
+  // Story CRUD operations
+  const handleSaveStory = async () => {
+    try {
+      if (editingItem) {
+        const { error } = await supabase
+          .from('stories')
+          .update(storyForm)
+          .eq('id', editingItem.id)
+        
+        if (error) throw error
+        toast.success('Hikoya yangilandi')
+      } else {
+        const { error } = await supabase
+          .from('stories')
+          .insert(storyForm)
+        
+        if (error) throw error
+        toast.success('Yangi hikoya qo\'shildi')
+      }
+      
+      setShowStoryModal(false)
+      setEditingItem(null)
+      setStoryForm({
+        name: '',
+        country: '',
+        text: '',
+        rating: 5,
+        image: '',
+        featured: false
+      })
+      loadStories()
     } catch (error) {
       toast.error('Xatolik yuz berdi')
     }
   }
 
-  const deleteStory = async (id: string) => {
+  const handleDeleteStory = async (id: string) => {
     if (!confirm('Hikoyani o\'chirmoqchimisiz?')) return
-
+    
     try {
       const { error } = await supabase
         .from('stories')
         .delete()
         .eq('id', id)
-
+      
       if (error) throw error
-
-      setStories(prev => prev.filter((story: any) => story.id !== id))
       toast.success('Hikoya o\'chirildi')
+      loadStories()
+    } catch (error) {
+      toast.error('O\'chirishda xatolik')
+    }
+  }
+
+  // Admin user CRUD operations
+  const handleSaveAdminUser = async () => {
+    try {
+      if (editingItem) {
+        const updateData = { ...userForm }
+        if (!updateData.password) {
+          delete updateData.password
+        }
+        
+        const { error } = await supabase
+          .from('admin_users')
+          .update(updateData)
+          .eq('id', editingItem.id)
+        
+        if (error) throw error
+        toast.success('Xodim ma\'lumotlari yangilandi')
+      } else {
+        const { error } = await supabase
+          .from('admin_users')
+          .insert(userForm)
+        
+        if (error) throw error
+        toast.success('Yangi xodim qo\'shildi')
+      }
+      
+      setShowUserModal(false)
+      setEditingItem(null)
+      setUserForm({
+        username: '',
+        password: '',
+        role: 'admin',
+        is_active: true
+      })
+      loadAdminUsers()
     } catch (error) {
       toast.error('Xatolik yuz berdi')
     }
   }
 
-  // Calculate accurate statistics
-  const todayApplications = applications.filter((app: any) => 
-    new Date(app.created_at).toDateString() === new Date().toDateString()
-  ).length
-
-  const thisWeekApplications = applications.filter((app: any) => {
-    const appDate = new Date(app.created_at)
-    const weekAgo = new Date()
-    weekAgo.setDate(weekAgo.getDate() - 7)
-    return appDate >= weekAgo
-  }).length
-
-  const thisMonthApplications = applications.filter((app: any) => {
-    const appDate = new Date(app.created_at)
-    const monthAgo = new Date()
-    monthAgo.setMonth(monthAgo.getMonth() - 1)
-    return appDate >= monthAgo
-  }).length
-
-  const successRate = applications.length > 0 
-    ? Math.round((applications.filter((app: any) => app.status === 'approved').length / applications.length) * 100)
-    : 0
-
-  const stats = [
-    { 
-      title: 'Jami arizalar', 
-      value: applications.length, 
-      color: 'blue',
-      icon: FileText,
-      change: `+${thisWeekApplications} (hafta)`,
-      trend: 'up'
-    },
-    { 
-      title: 'Kutilayotgan', 
-      value: applications.filter((app: any) => app.status === 'pending').length, 
-      color: 'yellow',
-      icon: Clock,
-      change: `${Math.round((applications.filter((app: any) => app.status === 'pending').length / Math.max(applications.length, 1)) * 100)}%`,
-      trend: 'neutral'
-    },
-    { 
-      title: 'Tasdiqlangan', 
-      value: applications.filter((app: any) => app.status === 'approved').length, 
-      color: 'green',
-      icon: CheckCircle,
-      change: `${successRate}% muvaffaqiyat`,
-      trend: 'up'
-    },
-    { 
-      title: 'Foydalanuvchilar', 
-      value: users.length, 
-      color: 'purple',
-      icon: Users,
-      change: `+${profiles.length} profil`,
-      trend: 'up'
-    }
-  ]
-
-  const filteredApplications = applications.filter((app: any) => {
-    const matchesSearch = app.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.program_type?.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleDeleteAdminUser = async (id: string) => {
+    if (!confirm('Xodimni o\'chirmoqchimisiz?')) return
     
-    const matchesFilter = filterStatus === 'all' || app.status === filterStatus
-    
-    return matchesSearch && matchesFilter
-  })
-
-  const currentFilteredUsers = users.filter((user: any) => {
-    const matchesSearch = 
-      (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (user.phone_profile?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-
-    const matchesFilter = 
-      filterStatus === 'all' ||
-      (filterStatus === 'active' && user.is_active) ||
-      (filterStatus === 'inactive' && !user.is_active) ||
-      (filterStatus === 'recent' && new Date(user.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)) ||
-      (filterStatus === 'google' && user.is_google_user)
-
-    return matchesSearch && matchesFilter
-  })
-
-  const renderDashboard = () => (
-    <div className="space-y-8">
-      {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-8 rounded-2xl text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">
-              Xush kelibsiz, {currentAdmin?.username}!
-            </h1>
-            <p className="text-blue-100 flex items-center space-x-2">
-              {getRoleIcon(currentAdmin?.role || '')}
-              <span>{getRoleName(currentAdmin?.role || '')}</span>
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-blue-100">Bugun</p>
-            <p className="text-2xl font-bold">{new Date().toLocaleDateString('uz-UZ')}</p>
-            <p className="text-blue-200 text-sm">{todayApplications} yangi ariza</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.6 }}
-            className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-${stat.color}-100`}>
-                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
-              </div>
-              <span className={`text-sm font-medium ${
-                stat.trend === 'up' ? 'text-green-500' : 
-                stat.trend === 'down' ? 'text-red-500' : 'text-gray-500'
-              }`}>
-                {stat.change}
-              </span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-            <p className="text-gray-600">{stat.title}</p>
-          </motion.div>
-        ))}
-      </div>
-
-      {/* Charts and Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">So'nggi arizalar</h3>
-          <div className="space-y-4">
-            {applications.slice(0, 5).map((app: any) => (
-              <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                <div>
-                  <p className="font-medium text-gray-900">{app.full_name}</p>
-                  <p className="text-sm text-gray-500">{app.program_type} - {app.country_preference}</p>
-                  <p className="text-xs text-gray-400">{new Date(app.created_at).toLocaleString('uz-UZ')}</p>
-                </div>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
-                  {getStatusText(app.status)}
-                </span>
-              </div>
-            ))}
-            {applications.length === 0 && (
-              <p className="text-gray-500 text-center py-4">Hali arizalar yo'q</p>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-lg">
-          <h3 className="text-lg font-bold text-gray-900 mb-4">Tizim statistikasi</h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-              <span className="text-gray-700 flex items-center space-x-2">
-                <Calendar className="h-4 w-4 text-blue-500" />
-                <span>Bugungi arizalar</span>
-              </span>
-              <span className="font-semibold text-blue-600">{todayApplications}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-              <span className="text-gray-700 flex items-center space-x-2">
-                <Users className="h-4 w-4 text-green-500" />
-                <span>Faol foydalanuvchilar</span>
-              </span>
-              <span className="font-semibold text-green-600">{users.length}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
-              <span className="text-gray-700 flex items-center space-x-2">
-                <Shield className="h-4 w-4 text-purple-500" />
-                <span>Xodimlar soni</span>
-              </span>
-              <span className="font-semibold text-purple-600">{adminUsers.length}</span>
-            </div>
-            <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-              <span className="text-gray-700 flex items-center space-x-2">
-                <TrendingUp className="h-4 w-4 text-orange-500" />
-                <span>Muvaffaqiyat foizi</span>
-              </span>
-              <span className="font-semibold text-orange-600">{successRate}%</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderApplications = () => (
-    <div className="space-y-6">
-      {/* Header with Search and Filters */}
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Barcha arizalar ({applications.length})</h3>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Qidirish..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
-            </div>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="all">Barchasi</option>
-              <option value="pending">Kutilmoqda</option>
-              <option value="approved">Tasdiqlangan</option>
-              <option value="rejected">Rad etilgan</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Ism</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Dastur</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Davlat</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Sana</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredApplications.map((app: any) => (
-                <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 font-medium">{app.full_name}</td>
-                  <td className="py-3 px-4">{app.email}</td>
-                  <td className="py-3 px-4">{app.program_type}</td>
-                  <td className="py-3 px-4">{app.country_preference}</td>
-                  <td className="py-3 px-4">
-                    <select
-                      value={app.status}
-                      onChange={(e) => updateApplicationStatus(app.id, e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="pending">Kutilmoqda</option>
-                      <option value="approved">Tasdiqlangan</option>
-                      <option value="rejected">Rad etilgan</option>
-                    </select>
-                  </td>
-                  <td className="py-3 px-4 text-sm">{new Date(app.created_at).toLocaleDateString('uz-UZ')}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button 
-                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
-                        title="Ko'rish"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button 
-                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                        title="Yuklab olish"
-                      >
-                        <Download className="h-4 w-4" />
-                      </button>
-                      {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'admin') && (
-                        <button 
-                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                          title="O'chirish"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filteredApplications.length === 0 && (
-            <div className="text-center py-8">
-              <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Arizalar topilmadi</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderUsers = () => {
-    // Combine auth users with profiles
-    const combinedUsers = users.map((user: any) => {
-      const profile = profiles.find((p: any) => p.id === user.id)
-      return {
-        ...user,
-        profile: profile || null,
-        applications_count: applications.filter((app: any) => app.user_id === user.id).length
-      }
-    })
-
-    return (
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Foydalanuvchilar ({users.length})</h3>
-          
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Qidirish..."
-                value={userSearchTerm}
-                onChange={(e) => setUserSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-              />
-            </div>
-            
-            <select
-              value={userFilter}
-              onChange={(e) => setUserFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-            >
-              <option value="all">Barchasi</option>
-              <option value="active">Faol</option>
-              <option value="inactive">Nofaol</option>
-              <option value="recent">Yangi (7 kun)</option>
-              <option value="google">Google foydalanuvchilari</option>
-            </select>
-          </div>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foydalanuvchi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Telefon</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Arizalar</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Holat</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Oxirgi kirish</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amallar</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentFilteredUsers.map((user: any) => (
-                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 mr-3">
-                        {user.avatar_url ? (
-                          <img
-                            src={user.avatar_url}
-                            alt="Avatar"
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                            {(user.full_name || user.email || 'U').charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.full_name || 'Ism kiritilmagan'}
-                        </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                        {user.is_google_user && (
-                          <div className="flex items-center mt-1">
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                              Google
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {user.phone_profile || user.phone || 'Kiritilmagan'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.applications_count > 0 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {user.applications_count}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.is_active ? 'Faol' : 'Nofaol'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {user.last_sign_in_at 
-                      ? new Date(user.last_sign_in_at).toLocaleDateString('uz-UZ')
-                      : 'Hech qachon'
-                    }
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => handleUserAction(user.id, 'view')}
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                        title="Ko'rish"
-                      >
-                        <Eye className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleUserAction(user.id, 'delete')}
-                        className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
-                        title="O'chirish"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {currentFilteredUsers.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>
-                      {searchTerm || filterStatus !== 'all' ? 'Filtr bo\'yicha foydalanuvchilar topilmadi' : 'Foydalanuvchilar topilmadi'}
-                    </p>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    )
-  }
-
-  const renderStaff = () => (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Xodimlar boshqaruvi ({adminUsers.length})</h3>
-          <button 
-            onClick={() => setShowCreateUser(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Yangi xodim</span>
-          </button>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Login</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Rol</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Yaratilgan</th>
-                <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
-              </tr>
-            </thead>
-            <tbody>
-              {adminUsers.map((admin: any) => (
-                <tr key={admin.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 flex items-center space-x-2">
-                    {getRoleIcon(admin.role)}
-                    <span className="font-medium">{admin.username}</span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">
-                      {getRoleName(admin.role)}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      admin.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}>
-                      {admin.is_active !== false ? 'Faol' : 'Bloklangan'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-sm">{new Date(admin.created_at).toLocaleDateString('uz-UZ')}</td>
-                  <td className="py-3 px-4">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => {
-                          setSelectedUser(admin)
-                          setShowEditUser(true)
-                        }}
-                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                        title="Tahrirlash"
-                      >
-                        <Edit className="h-4 w-4" />
-                      </button>
-                      <button 
-                        onClick={() => toggleAdminStatus(admin.id, admin.is_active !== false)}
-                        className={`p-1 rounded ${
-                          admin.is_active !== false 
-                            ? 'text-orange-600 hover:text-orange-800 hover:bg-orange-50' 
-                            : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
-                        }`}
-                        title={admin.is_active !== false ? 'Bloklash' : 'Aktivlashtirish'}
-                      >
-                        {admin.is_active !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
-                      </button>
-                      <button 
-                        className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
-                        title="Parolni o'zgartirish"
-                      >
-                        <Key className="h-4 w-4" />
-                      </button>
-                      {admin.role !== 'super_admin' && (
-                        <button 
-                          onClick={() => deleteAdmin(admin.id)}
-                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                          title="O'chirish"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {adminUsers.length === 0 && (
-            <div className="text-center py-8">
-              <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">Xodimlar topilmadi</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-
-  const renderServices = () => (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Xizmatlar ({services.length})</h3>
-          <button 
-            onClick={() => setShowCreateService(true)}
-            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Yangi xizmat</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {services.map((service: any) => (
-            <div key={service.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-${service.color || 'blue'}-100`}>
-                  <Settings className={`h-6 w-6 text-${service.color || 'blue'}-600`} />
-                </div>
-                <div className="flex space-x-2">
-                  <button 
-                    onClick={() => {
-                      setSelectedService(service)
-                      setShowEditService(true)
-                    }}
-                    className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </button>
-                  <button 
-                    onClick={() => deleteService(service.id)}
-                    className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-              <h4 className="text-lg font-bold text-gray-900 mb-2">{service.title}</h4>
-              <p className="text-gray-600 mb-4 line-clamp-3">{service.description}</p>
-              {service.price && (
-                <p className="text-lg font-bold text-blue-600 mb-2">{service.price}</p>
-              )}
-              {service.features && service.features.length > 0 && (
-                <div className="text-sm text-gray-500">
-                  {service.features.length} xususiyat
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        {services.length === 0 && (
-          <div className="text-center py-12">
-            <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Hali xizmatlar qo'shilmagan</p>
-            <button 
-              onClick={() => setShowCreateService(true)}
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
-            >
-              Birinchi xizmatni qo'shing
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  const renderStories = () => (
-    <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-lg">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Hikoyalar ({stories.length})</h3>
-          <button 
-            onClick={() => setShowCreateStory(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center space-x-2 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Yangi hikoya</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {stories.map((story: any) => (
-            <div key={story.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-              {story.image && (
-                <img 
-                  src={story.image} 
-                  alt={story.name}
-                  className="w-full h-48 object-cover"
-                />
-              )}
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-lg font-bold text-gray-900">{story.name}</h4>
-                    {story.featured && (
-                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
-                    )}
-                  </div>
-                  <div className="flex space-x-2">
-                    <button 
-                      onClick={() => {
-                        setSelectedStory(story)
-                        setShowEditStory(true)
-                      }}
-                      className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button 
-                      onClick={() => deleteStory(story.id)}
-                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">{story.country}</p>
-                <p className="text-gray-700 mb-4 line-clamp-3">{story.text}</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-1">
-                    {[...Array(story.rating || 5)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                    ))}
-                  </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(story.created_at).toLocaleDateString('uz-UZ')}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {stories.length === 0 && (
-          <div className="text-center py-12">
-            <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 mb-4">Hali hikoyalar qo'shilmagan</p>
-            <button 
-              onClick={() => setShowCreateStory(true)}
-              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
-            >
-              Birinchi hikoyani qo'shing
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  )
-
-  // Modal Components
-  const CreateUserModal = () => {
-    const [formData, setFormData] = useState({
-      username: '',
-      password: '',
-      role: 'sales'
-    })
-    const [loading, setLoading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setLoading(true)
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('id', id)
       
-      try {
-        const { error } = await supabase
-          .rpc('create_admin_user', {
-            input_username: formData.username,
-            input_password: formData.password,
-            input_role: formData.role
-          })
-
-        if (error) throw error
-
-        toast.success('Yangi xodim yaratildi')
-        setShowCreateUser(false)
-        setFormData({ username: '', password: '', role: 'sales' })
-        loadData()
-      } catch (error) {
-        toast.error('Xodim yaratishda xatolik')
-      } finally {
-        setLoading(false)
-      }
+      if (error) throw error
+      toast.success('Xodim o\'chirildi')
+      loadAdminUsers()
+    } catch (error) {
+      toast.error('O\'chirishda xatolik')
     }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={() => setShowCreateUser(false)}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-8 max-w-md w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Yangi xodim yaratish</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Login</label>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Parol</label>
-              <input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="sales">Sotuvchi</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            
-            <div className="flex space-x-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  'Yaratish'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateUser(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </motion.div>
-    )
   }
 
-  const EditUserModal = () => {
-    const [formData, setFormData] = useState({
-      username: selectedUser?.username || '',
-      role: selectedUser?.role || 'sales',
-      newPassword: ''
-    })
-    const [loading, setLoading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setLoading(true)
+  const handleToggleAdminUserStatus = async (id: string, currentStatus: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .update({ is_active: !currentStatus })
+        .eq('id', id)
       
-      try {
-        const updates: any = {
-          username: formData.username,
-          role: formData.role
-        }
-
-        if (formData.newPassword) {
-          const { error: passwordError } = await supabase
-            .rpc('update_admin_password', {
-              admin_id: selectedUser.id,
-              new_password: formData.newPassword
-            })
-          
-          if (passwordError) throw passwordError
-        }
-
-        const { error } = await supabase
-          .from('admin_users')
-          .update(updates)
-          .eq('id', selectedUser.id)
-
-        if (error) throw error
-
-        toast.success('Xodim ma\'lumotlari yangilandi')
-        setShowEditUser(false)
-        setSelectedUser(null)
-        loadData()
-      } catch (error) {
-        toast.error('Xodim yangilashda xatolik')
-      } finally {
-        setLoading(false)
-      }
+      if (error) throw error
+      toast.success(currentStatus ? 'Xodim bloklandi' : 'Xodim faollashtirildi')
+      loadAdminUsers()
+    } catch (error) {
+      toast.error('Status o\'zgartirishda xatolik')
     }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={() => setShowEditUser(false)}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-8 max-w-md w-full"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Xodimni tahrirlash</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Login</label>
-              <input
-                type="text"
-                value={formData.username}
-                onChange={(e) => setFormData({...formData, username: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({...formData, role: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="sales">Sotuvchi</option>
-                <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Yangi parol (bo'sh qoldirish mumkin)
-              </label>
-              <input
-                type="password"
-                value={formData.newPassword}
-                onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                placeholder="Yangi parol"
-              />
-            </div>
-            
-            <div className="flex space-x-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  'Saqlash'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowEditUser(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </motion.div>
-    )
   }
 
-  const CreateServiceModal = () => {
-    const [formData, setFormData] = useState({
-      title: '',
-      description: '',
-      icon: 'FileText',
-      color: 'blue',
-      price: '',
-      features: ['']
-    })
-    const [loading, setLoading] = useState(false)
-
-    const addFeature = () => {
-      setFormData({...formData, features: [...formData.features, '']})
-    }
-
-    const removeFeature = (index: number) => {
-      setFormData({...formData, features: formData.features.filter((_, i) => i !== index)})
-    }
-
-    const updateFeature = (index: number, value: string) => {
-      const newFeatures = [...formData.features]
-      newFeatures[index] = value
-      setFormData({...formData, features: newFeatures})
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setLoading(true)
+  const handleUpdateApplicationStatus = async (id: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('applications')
+        .update({ status })
+        .eq('id', id)
       
-      try {
-        const { error } = await supabase
-          .from('services')
-          .insert({
-            title: formData.title,
-            description: formData.description,
-            icon: formData.icon,
-            color: formData.color,
-            price: formData.price || null,
-            features: formData.features.filter(f => f.trim() !== '')
-          })
-
-        if (error) throw error
-
-        toast.success('Yangi xizmat qo\'shildi')
-        setShowCreateService(false)
-        setFormData({
-          title: '',
-          description: '',
-          icon: 'FileText',
-          color: 'blue',
-          price: '',
-          features: ['']
-        })
-        loadData()
-      } catch (error) {
-        toast.error('Xizmat qo\'shishda xatolik')
-      } finally {
-        setLoading(false)
-      }
+      if (error) throw error
+      toast.success('Ariza holati yangilandi')
+      loadApplications()
+      loadStats()
+    } catch (error) {
+      toast.error('Yangilashda xatolik')
     }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={() => setShowCreateService(false)}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Yangi xizmat qo'shish</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Nomi</label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({...formData, title: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Narx</label>
-                <input
-                  type="text"
-                  value={formData.price}
-                  onChange={(e) => setFormData({...formData, price: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="dan 150$"
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Tavsif</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({...formData, description: e.target.value})}
-                rows={3}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ikonka</label>
-                <select
-                  value={formData.icon}
-                  onChange={(e) => setFormData({...formData, icon: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="FileText">FileText</option>
-                  <option value="Plane">Plane</option>
-                  <option value="GraduationCap">GraduationCap</option>
-                  <option value="Briefcase">Briefcase</option>
-                  <option value="BookOpen">BookOpen</option>
-                  <option value="Users">Users</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rang</label>
-                <select
-                  value={formData.color}
-                  onChange={(e) => setFormData({...formData, color: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="blue">Ko'k</option>
-                  <option value="green">Yashil</option>
-                  <option value="purple">Binafsha</option>
-                  <option value="orange">To'q sariq</option>
-                  <option value="indigo">Indigo</option>
-                  <option value="pink">Pushti</option>
-                </select>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Xususiyatlar</label>
-              {formData.features.map((feature, index) => (
-                <div key={index} className="flex items-center space-x-2 mb-2">
-                  <input
-                    type="text"
-                    value={feature}
-                    onChange={(e) => updateFeature(index, e.target.value)}
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                    placeholder="Xususiyat"
-                  />
-                  {formData.features.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeFeature(index)}
-                      className="text-red-600 hover:text-red-800 p-2"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addFeature}
-                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Xususiyat qo'shish</span>
-              </button>
-            </div>
-            
-            <div className="flex space-x-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  'Qo\'shish'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateService(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </motion.div>
-    )
   }
 
-  const CreateStoryModal = () => {
-    const [formData, setFormData] = useState({
-      name: '',
-      country: '',
-      text: '',
-      rating: 5,
-      image: '',
-      featured: false
-    })
-    const [loading, setLoading] = useState(false)
-
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault()
-      setLoading(true)
-      
-      try {
-        const { error } = await supabase
-          .from('stories')
-          .insert(formData)
-
-        if (error) throw error
-
-        toast.success('Yangi hikoya qo\'shildi')
-        setShowCreateStory(false)
-        setFormData({
-          name: '',
-          country: '',
-          text: '',
-          rating: 5,
-          image: '',
-          featured: false
-        })
-        loadData()
-      } catch (error) {
-        toast.error('Hikoya qo\'shishda xatolik')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-        onClick={() => setShowCreateStory(false)}
-      >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <h3 className="text-xl font-bold text-gray-900 mb-6">Yangi hikoya qo'shish</h3>
-          
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ism</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Davlat</label>
-                <input
-                  type="text"
-                  value={formData.country}
-                  onChange={(e) => setFormData({...formData, country: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Hikoya</label>
-              <textarea
-                value={formData.text}
-                onChange={(e) => setFormData({...formData, text: e.target.value})}
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Reyting</label>
-                <select
-                  value={formData.rating}
-                  onChange={(e) => setFormData({...formData, rating: parseInt(e.target.value)})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value={5}>5 yulduz</option>
-                  <option value={4}>4 yulduz</option>
-                  <option value={3}>3 yulduz</option>
-                  <option value={2}>2 yulduz</option>
-                  <option value={1}>1 yulduz</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Rasm URL</label>
-                <input
-                  type="url"
-                  value={formData.image}
-                  onChange={(e) => setFormData({...formData, image: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="featured"
-                checked={formData.featured}
-                onChange={(e) => setFormData({...formData, featured: e.target.checked})}
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              />
-              <label htmlFor="featured" className="text-sm font-medium text-gray-700">
-                Asosiy hikoya sifatida belgilash
-              </label>
-            </div>
-            
-            <div className="flex space-x-4 pt-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {loading ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                ) : (
-                  'Qo\'shish'
-                )}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateStory(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
-              >
-                Bekor qilish
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </motion.div>
-    )
-  }
-
-  const renderContent = () => {
-    if (!currentAdmin) return null
-
-    const allowedTabs = tabs.filter(tab => tab.roles.includes(currentAdmin.role))
-    
-    if (!allowedTabs.find(tab => tab.id === activeTab)) {
-      setActiveTab('dashboard')
-      return null
-    }
-
-    switch (activeTab) {
-      case 'dashboard': return renderDashboard()
-      case 'applications': return renderApplications()
-      case 'users': return renderUsers()
-      case 'staff': return renderStaff()
-      case 'services': return renderServices()
-      case 'stories': return renderStories()
-      default: return renderDashboard()
-    }
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/admin/login')
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Ma'lumotlar yuklanmoqda...</p>
@@ -1813,82 +443,855 @@ const Admin: React.FC = () => {
     )
   }
 
-  if (!currentAdmin) {
-    return null
-  }
-
-  const allowedTabs = tabs.filter(tab => tab.roles.includes(currentAdmin.role))
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <Toaster position="top-right" />
       
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-lg min-h-screen">
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-                <Shield className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-gray-900">Admin Panel</h2>
-                <p className="text-xs text-gray-500 flex items-center space-x-1">
-                  {getRoleIcon(currentAdmin.role)}
-                  <span>{getRoleName(currentAdmin.role)}</span>
-                </p>
-              </div>
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-gray-600">Xush kelibsiz, Admin</span>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center space-x-2 text-red-600 hover:text-red-700 transition-colors"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Chiqish</span>
+              </button>
             </div>
           </div>
-          
-          <nav className="mt-6">
-            {allowedTabs.map((tab) => (
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Tabs */}
+        <div className="mb-8">
+          <nav className="flex space-x-8">
+            {[
+              { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
+              { id: 'applications', name: 'Arizalar', icon: FileText },
+              { id: 'users', name: 'Foydalanuvchilar', icon: Users },
+              { id: 'messages', name: 'Xabarlar', icon: MessageSquare },
+              { id: 'services', name: 'Xizmatlar', icon: Settings },
+              { id: 'stories', name: 'Hikoyalar', icon: Star },
+              { id: 'admin-users', name: 'Xodimlar', icon: Shield }
+            ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center space-x-3 px-6 py-3 text-left hover:bg-gray-50 transition-colors ${
-                  activeTab === tab.id ? 'bg-blue-50 text-blue-600 border-r-2 border-blue-600' : 'text-gray-700'
+                className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-medium transition-colors ${
+                  activeTab === tab.id
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <tab.icon className="h-5 w-5" />
+                <tab.icon className="h-4 w-4" />
                 <span>{tab.name}</span>
               </button>
             ))}
-            
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center space-x-3 px-6 py-3 text-left text-red-600 hover:bg-red-50 transition-colors mt-8 border-t border-gray-200"
-            >
-              <LogOut className="h-5 w-5" />
-              <span>Chiqish</span>
-            </button>
           </nav>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 p-8">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            {renderContent()}
-          </motion.div>
-        </div>
+        {/* Dashboard */}
+        {activeTab === 'dashboard' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <FileText className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Jami arizalar</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.totalApplications}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <AlertCircle className="h-6 w-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Kutilayotgan</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.pendingApplications}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Tasdiqlangan</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.approvedApplications}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Foydalanuvchilar</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.totalUsers}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <MessageSquare className="h-6 w-6 text-indigo-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Xabarlar</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.totalMessages}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white p-6 rounded-lg shadow">
+              <div className="flex items-center">
+                <div className="p-2 bg-pink-100 rounded-lg">
+                  <Settings className="h-6 w-6 text-pink-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Xizmatlar</p>
+                  <p className="text-2xl font-semibold text-gray-900">{stats.totalServices}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Applications */}
+        {activeTab === 'applications' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Arizalar boshqaruvi</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ism
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dastur
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Holat
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sana
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amallar
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {applications.map((app: any) => (
+                    <tr key={app.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {app.full_name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {app.email}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {app.program_type}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <select
+                          value={app.status}
+                          onChange={(e) => handleUpdateApplicationStatus(app.id, e.target.value)}
+                          className="text-sm border-gray-300 rounded-md"
+                        >
+                          <option value="pending">Kutilmoqda</option>
+                          <option value="approved">Tasdiqlangan</option>
+                          <option value="rejected">Rad etilgan</option>
+                        </select>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(app.created_at).toLocaleDateString('uz-UZ')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button className="text-blue-600 hover:text-blue-900 mr-3">
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Users */}
+        {activeTab === 'users' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Foydalanuvchilar</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ism
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Telefon
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Manzil
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ro'yxatdan o'tgan
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {users.map((user: any) => (
+                    <tr key={user.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {user.full_name || 'Noma\'lum'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.phone || 'Kiritilmagan'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {user.address || 'Kiritilmagan'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(user.created_at).toLocaleDateString('uz-UZ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Messages */}
+        {activeTab === 'messages' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h2 className="text-lg font-medium text-gray-900">Xabarlar</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ism
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Xabar
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sana
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {messages.map((message: any) => (
+                    <tr key={message.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {message.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {message.email}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                        {message.message}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(message.created_at).toLocaleDateString('uz-UZ')}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Services */}
+        {activeTab === 'services' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Xizmatlar boshqaruvi</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null)
+                  setServiceForm({
+                    title: '',
+                    description: '',
+                    icon: 'FileText',
+                    color: 'blue',
+                    price: '',
+                    features: [''],
+                    featured: false
+                  })
+                  setShowServiceModal(true)
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Yangi xizmat</span>
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Nomi
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Narx
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Mashhur
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amallar
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {services.map((service: any) => (
+                    <tr key={service.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {service.title}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {service.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {service.featured ? (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Ha
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Yo'q
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setEditingItem(service)
+                            setServiceForm(service)
+                            setShowServiceModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteService(service.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Stories */}
+        {activeTab === 'stories' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Hikoyalar boshqaruvi</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null)
+                  setStoryForm({
+                    name: '',
+                    country: '',
+                    text: '',
+                    rating: 5,
+                    image: '',
+                    featured: false
+                  })
+                  setShowStoryModal(true)
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Yangi hikoya</span>
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ism
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Davlat
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Reyting
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Mashhur
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amallar
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {stories.map((story: any) => (
+                    <tr key={story.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {story.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {story.country}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {story.rating}/5
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {story.featured ? (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Ha
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                            Yo'q
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setEditingItem(story)
+                            setStoryForm(story)
+                            setShowStoryModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteStory(story.id)}
+                          className="text-red-600 hover:text-red-900"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Admin Users */}
+        {activeTab === 'admin-users' && (
+          <div className="bg-white rounded-lg shadow">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h2 className="text-lg font-medium text-gray-900">Xodimlar boshqaruvi</h2>
+              <button
+                onClick={() => {
+                  setEditingItem(null)
+                  setUserForm({
+                    username: '',
+                    password: '',
+                    role: 'admin',
+                    is_active: true
+                  })
+                  setShowUserModal(true)
+                }}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Yangi xodim</span>
+              </button>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Login
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Rol
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Holat
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Yaratilgan
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amallar
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {adminUsers.map((adminUser: any) => (
+                    <tr key={adminUser.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {adminUser.username}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {adminUser.role}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {adminUser.is_active ? (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Faol
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                            Bloklangan
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(adminUser.created_at).toLocaleDateString('uz-UZ')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button
+                          onClick={() => {
+                            setEditingItem(adminUser)
+                            setUserForm({
+                              username: adminUser.username,
+                              password: '',
+                              role: adminUser.role,
+                              is_active: adminUser.is_active
+                            })
+                            setShowUserModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-900 mr-3"
+                          title="Tahrirlash"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={() => handleToggleAdminUserStatus(adminUser.id, adminUser.is_active)}
+                          className={`mr-3 ${adminUser.is_active ? 'text-orange-600 hover:text-orange-900' : 'text-green-600 hover:text-green-900'}`}
+                          title={adminUser.is_active ? 'Bloklash' : 'Faollashtirish'}
+                        >
+                          {adminUser.is_active ? <ShieldOff className="h-4 w-4" /> : <Shield className="h-4 w-4" />}
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAdminUser(adminUser.id)}
+                          className="text-red-600 hover:text-red-900"
+                          title="O'chirish"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Modals */}
+      {/* Service Modal */}
       <AnimatePresence>
-        {showCreateUser && <CreateUserModal />}
-        {showEditUser && <EditUserModal />}
-        {showCreateService && <CreateServiceModal />}
-        {showCreateStory && <CreateStoryModal />}
+        {showServiceModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowServiceModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingItem ? 'Xizmatni tahrirlash' : 'Yangi xizmat qo\'shish'}
+                </h3>
+                <button
+                  onClick={() => setShowServiceModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nomi
+                  </label>
+                  <input
+                    type="text"
+                    value={serviceForm.title}
+                    onChange={(e) => setServiceForm({...serviceForm, title: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Tavsif
+                  </label>
+                  <textarea
+                    value={serviceForm.description}
+                    onChange={(e) => setServiceForm({...serviceForm, description: e.target.value})}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Narx
+                    </label>
+                    <input
+                      type="text"
+                      value={serviceForm.price}
+                      onChange={(e) => setServiceForm({...serviceForm, price: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rang
+                    </label>
+                    <select
+                      value={serviceForm.color}
+                      onChange={(e) => setServiceForm({...serviceForm, color: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="blue">Ko'k</option>
+                      <option value="green">Yashil</option>
+                      <option value="purple">Binafsha</option>
+                      <option value="orange">To'q sariq</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={serviceForm.featured}
+                      onChange={(e) => setServiceForm({...serviceForm, featured: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Mashhur xizmat</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Xususiyatlar (har bir qatorga bittadan)
+                  </label>
+                  <textarea
+                    value={serviceForm.features?.join('\n') || ''}
+                    onChange={(e) => setServiceForm({...serviceForm, features: e.target.value.split('\n').filter(f => f.trim())})}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Xususiyat 1&#10;Xususiyat 2&#10;Xususiyat 3"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button
+                  onClick={handleSaveService}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Saqlash</span>
+                </button>
+                <button
+                  onClick={() => setShowServiceModal(false)}
+                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
       </AnimatePresence>
 
-      {/* User Details Modal */}
+      {/* Story Modal */}
       <AnimatePresence>
-        {showUserModal && selectedUser && (
+        {showStoryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowStoryModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingItem ? 'Hikoyani tahrirlash' : 'Yangi hikoya qo\'shish'}
+                </h3>
+                <button
+                  onClick={() => setShowStoryModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ism
+                    </label>
+                    <input
+                      type="text"
+                      value={storyForm.name}
+                      onChange={(e) => setStoryForm({...storyForm, name: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Davlat
+                    </label>
+                    <input
+                      type="text"
+                      value={storyForm.country}
+                      onChange={(e) => setStoryForm({...storyForm, country: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Hikoya matni
+                  </label>
+                  <textarea
+                    value={storyForm.text}
+                    onChange={(e) => setStoryForm({...storyForm, text: e.target.value})}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Reyting
+                    </label>
+                    <select
+                      value={storyForm.rating}
+                      onChange={(e) => setStoryForm({...storyForm, rating: parseInt(e.target.value)})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value={5}>5 yulduz</option>
+                      <option value={4}>4 yulduz</option>
+                      <option value={3}>3 yulduz</option>
+                      <option value={2}>2 yulduz</option>
+                      <option value={1}>1 yulduz</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rasm URL
+                    </label>
+                    <input
+                      type="url"
+                      value={storyForm.image}
+                      onChange={(e) => setStoryForm({...storyForm, image: e.target.value})}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={storyForm.featured}
+                      onChange={(e) => setStoryForm({...storyForm, featured: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Mashhur hikoya</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button
+                  onClick={handleSaveStory}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Saqlash</span>
+                </button>
+                <button
+                  onClick={() => setShowStoryModal(false)}
+                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Bekor qilish
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Admin User Modal */}
+      <AnimatePresence>
+        {showUserModal && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -1900,11 +1303,13 @@ const Admin: React.FC = () => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl p-8 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-2xl font-bold text-gray-900">Foydalanuvchi ma'lumotlari</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {editingItem ? 'Xodimni tahrirlash' : 'Yangi xodim qo\'shish'}
+                </h3>
                 <button
                   onClick={() => setShowUserModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -1913,127 +1318,73 @@ const Admin: React.FC = () => {
                 </button>
               </div>
 
-              <div className="space-y-6">
-                {/* Profile Info */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="h-16 w-16 rounded-full overflow-hidden bg-gray-100">
-                    {selectedUser.avatar_url ? (
-                      <img
-                        src={selectedUser.avatar_url}
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl">
-                        {(selectedUser.full_name || selectedUser.email || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">
-                      {selectedUser.full_name || 'Ism kiritilmagan'}
-                    </h3>
-                    <p className="text-gray-600">{selectedUser.email}</p>
-                    <div className="flex items-center space-x-2 mt-2">
-                      {selectedUser.is_google_user && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          Google orqali ro'yxatdan o'tgan
-                        </span>
-                      )}
-                      {selectedUser.email_confirmed_at && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Email tasdiqlangan
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Login
+                  </label>
+                  <input
+                    type="text"
+                    value={userForm.username}
+                    onChange={(e) => setUserForm({...userForm, username: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    disabled={!!editingItem}
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-6 mb-6">
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Shaxsiy ma'lumotlar</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Telefon:</span>
-                        <span className="text-gray-900">{selectedUser.phone_profile || selectedUser.phone || 'Kiritilmagan'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Manzil:</span>
-                        <span className="text-gray-900">{selectedUser.address || 'Kiritilmagan'}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Tug'ilgan sana:</span>
-                        <span className="text-gray-900">
-                          {selectedUser.birth_date 
-                            ? new Date(selectedUser.birth_date).toLocaleDateString('uz-UZ')
-                            : 'Kiritilmagan'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Ro'yxatdan o'tgan:</span>
-                        <span className="text-gray-900">
-                          {new Date(selectedUser.created_at).toLocaleDateString('uz-UZ')}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-3">Statistika</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Arizalar soni:</span>
-                        <span className="text-gray-900">{selectedUser.applications_count || 0}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Holat:</span>
-                        <span className={selectedUser.is_active ? 'text-green-600' : 'text-red-600'}>
-                          {selectedUser.is_active ? 'Faol' : 'Nofaol'}
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Oxirgi kirish:</span>
-                        <span className="text-gray-900">
-                          {selectedUser.last_sign_in_at 
-                            ? new Date(selectedUser.last_sign_in_at).toLocaleDateString('uz-UZ')
-                            : 'Hech qachon'
-                          }
-                        </span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-500">Ro'yxatdan o'tganiga:</span>
-                        <span className="text-gray-900">
-                          {Math.floor((Date.now() - new Date(selectedUser.created_at).getTime()) / (1000 * 60 * 60 * 24))} kun
-                        </span>
-                      </div>
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Parol {editingItem && '(bo\'sh qoldiring agar o\'zgartirmoqchi bo\'lmasangiz)'}
+                  </label>
+                  <input
+                    type="password"
+                    value={userForm.password}
+                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
                 </div>
 
-                {selectedUser.bio && (
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 mb-2">Bio</h4>
-                    <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
-                      {selectedUser.bio}
-                    </p>
-                  </div>
-                )}
-
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={() => setShowUserModal(false)}
-                    className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rol
+                  </label>
+                  <select
+                    value={userForm.role}
+                    onChange={(e) => setUserForm({...userForm, role: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    Yopish
-                  </button>
-                  <button
-                    onClick={() => handleUserAction(selectedUser.id, 'delete')}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-                  >
-                    Foydalanuvchini o'chirish
-                  </button>
+                    <option value="admin">Admin</option>
+                    <option value="moderator">Moderator</option>
+                  </select>
                 </div>
+
+                <div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={userForm.is_active}
+                      onChange={(e) => setUserForm({...userForm, is_active: e.target.checked})}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Faol</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex space-x-4 mt-6">
+                <button
+                  onClick={handleSaveAdminUser}
+                  className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                >
+                  <Save className="h-4 w-4" />
+                  <span>Saqlash</span>
+                </button>
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Bekor qilish
+                </button>
               </div>
             </motion.div>
           </motion.div>

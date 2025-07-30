@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
+import { useNavigate } from 'react-router-dom'
 import { Upload, FileText, User, Mail, Phone, MapPin, Calendar, GraduationCap, Briefcase, CheckCircle, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
@@ -26,6 +27,7 @@ const schema = yup.object({
 
 const Apply: React.FC = () => {
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [files, setFiles] = useState<{ [key: string]: File | null }>({
     passport: null,
     photo: null,
@@ -89,6 +91,13 @@ const Apply: React.FC = () => {
       return
     }
 
+    // Validate required fields
+    if (!data.firstName || !data.lastName || !data.email || !data.phone || 
+        !data.birthDate || !data.address || !data.education || !data.program || 
+        !data.country || !data.motivation) {
+      toast.error('Barcha majburiy maydonlarni to\'ldiring')
+      return
+    }
     setUploading(true)
     
     try {
@@ -101,11 +110,11 @@ const Apply: React.FC = () => {
           email: data.email,
           phone: data.phone,
           birth_date: data.birthDate,
-          passport_number: data.passportNumber || null,
+          passport_number: null,
           education_level: data.education,
-          university: data.university || null,
-          major: data.major || null,
-          english_level: data.englishLevel || null,
+          university: null,
+          major: null,
+          english_level: null,
           program_type: data.program,
           country_preference: data.country,
           documents: uploadedFiles,
@@ -123,7 +132,7 @@ const Apply: React.FC = () => {
       
       // Redirect to profile after successful submission
       setTimeout(() => {
-        window.location.href = '/profile'
+        navigate('/profile')
       }, 2000)
       
     } catch (error) {

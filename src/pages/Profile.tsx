@@ -131,6 +131,7 @@ const Profile: React.FC = () => {
       }
       setDocuments(prev => [...prev, newDocument])
       setShowDocumentUpload(false)
+      setSelectedDocumentType('')
       toast.success('Hujjat muvaffaqiyatli yuklandi')
     }
   }
@@ -418,7 +419,11 @@ const Profile: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {requiredDocumentTypes.map((docType) => {
-                    const userDoc = documents.find(doc => doc.name.toLowerCase().includes(docType.key))
+                    const userDoc = documents.find(doc => 
+                      doc.path.includes(`${docType.key}-`) || 
+                      doc.name.toLowerCase().includes(docType.key) ||
+                      doc.path.toLowerCase().includes(docType.key)
+                    )
                     return (
                       <div key={docType.key} className={`p-4 border-2 border-dashed rounded-lg ${userDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
                         <div className="flex items-center justify-between">
@@ -622,10 +627,16 @@ const Profile: React.FC = () => {
                 </div>
               )}
 
-              {selectedDocumentType && (
+              {selectedDocumentType && selectedDocumentType !== 'required' && (
                 <FileUpload
-                  label={selectedDocumentType === 'other' ? 'Har qanday hujjat tanlang' : 'Hujjat tanlang'}
-                  onFileUploaded={handleDocumentUpload}
+                  label={selectedDocumentType === 'other' ? 'Har qanday hujjat tanlang' : 
+                    requiredDocumentTypes.find(t => t.key === selectedDocumentType)?.label || 'Hujjat tanlang'}
+                  onFileUploaded={(filePath, fileName) => {
+                    // Add document type prefix to filename for better identification
+                    const prefixedPath = selectedDocumentType !== 'other' ? 
+                      filePath.replace(fileName, `${selectedDocumentType}-${fileName}`) : filePath
+                    handleDocumentUpload(prefixedPath, fileName)
+                  }}
                   bucket={STORAGE_BUCKETS.DOCUMENTS}
                   acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
                   maxSize={10}
