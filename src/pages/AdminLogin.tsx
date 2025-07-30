@@ -23,7 +23,7 @@ const AdminLogin: React.FC = () => {
         .from('admin_users')
         .select('*')
         .eq('username', username)
-        .single()
+        .maybeSingle()
 
       if (error || !data) {
         toast.error('Noto\'g\'ri login')
