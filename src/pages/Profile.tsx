@@ -1,4 +1,5 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import { User, Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, X } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -38,6 +39,7 @@ const Profile: React.FC = () => {
   const loadProfileData = async () => {
     if (!user) return
 
+    setLoading(true)
     try {
       // Load profile
       const { data: profileData } = await supabase
@@ -93,6 +95,7 @@ const Profile: React.FC = () => {
       }
     } catch (error) {
       console.error('Error loading profile data:', error)
+      toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi')
       // Set default profile on error
       if (user) {
         const defaultProfile = {
@@ -177,11 +180,30 @@ const Profile: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Ma'lumotlar yuklanmoqda...</p>
+        </div>
       </div>
     )
   }
 
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Tizimga kiring</h2>
+          <p className="text-gray-600 mb-6">Profil sahifasini ko'rish uchun tizimga kirishingiz kerak</p>
+          <Link
+            to="/login"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Kirish
+          </Link>
+        </div>
+      </div>
+    )
+  }
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
