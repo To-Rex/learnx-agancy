@@ -49,10 +49,7 @@ const Admin: React.FC = () => {
       // Load applications
       const { data: appsData } = await supabase
         .from('applications')
-        .select(`
-          *,
-          profiles(full_name, phone)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
       
       if (appsData) setApplications(appsData)
