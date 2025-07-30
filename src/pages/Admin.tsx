@@ -87,6 +87,7 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     loadData()
+  }, [])
 
   const loadData = async () => {
     setLoading(true)
