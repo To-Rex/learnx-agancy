@@ -1,16 +1,16 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, User, Shield } from 'lucide-react'
+import { Lock, User, Shield, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
+import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   
-  const { adminSignIn } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,12 +18,26 @@ const AdminLogin: React.FC = () => {
     setLoading(true)
 
     try {
-      const { error } = await adminSignIn(username, password)
-      if (error) {
-        toast.error('Noto\'g\'ri login yoki parol')
-      } else {
+      // Check admin credentials from database
+      const { data, error } = await supabase
+        .from('admin_users')
+        .select('*')
+        .eq('username', username)
+        .single()
+
+      if (error || !data) {
+        toast.error('Noto\'g\'ri login')
+        setLoading(false)
+        return
+      }
+
+      // Simple password check (in production, use proper hashing)
+      if (data.password_hash === password) {
+        localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
-        navigate('/admin')
+        navigate('/admin/dashboard')
+      } else {
+        toast.error('Noto\'g\'ri parol')
       }
     } catch (err) {
       toast.error('Kirish jarayonida xatolik yuz berdi')
@@ -100,23 +114,22 @@ const AdminLogin: React.FC = () => {
                 <input
                   id="password"
                   name="password"
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-600 rounded-lg leading-5 bg-gray-800/50 backdrop-blur-sm placeholder-gray-400 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   placeholder="Parol kiriting"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-300"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
               </div>
             </div>
-          </div>
-
-          <div className="bg-blue-900/30 backdrop-blur-sm p-4 rounded-lg">
-            <p className="text-sm text-blue-200">
-              <strong>Demo uchun:</strong><br />
-              Login: admin<br />
-              Parol: admin
-            </p>
           </div>
 
           <div>

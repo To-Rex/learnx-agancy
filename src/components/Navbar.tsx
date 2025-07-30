@@ -70,15 +70,6 @@ const Navbar: React.FC = () => {
           <div className="hidden md:flex items-center space-x-3">
             {user ? (
               <div className="flex items-center space-x-3">
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center space-x-2 px-3 py-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition-all font-medium"
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Admin</span>
-                  </Link>
-                )}
                 <Link
                   to="/profile"
                   className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all font-medium"
@@ -150,16 +141,6 @@ const Navbar: React.FC = () => {
                 
                 {user ? (
                   <div className="border-t pt-4 mt-4 space-y-2">
-                    {isAdmin && (
-                      <Link
-                        to="/admin"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center space-x-3 px-4 py-3 text-purple-600 hover:bg-purple-50 font-medium rounded-lg"
-                      >
-                        <Settings className="h-5 w-5" />
-                        <span>Admin Panel</span>
-                      </Link>
-                    )}
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
