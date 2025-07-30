@@ -2,82 +2,85 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { CheckCircle, ArrowRight, FileText, Users, Plane, Award, Clock, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const Process: React.FC = () => {
+  const { t } = useLanguage()
+  
   const steps = [
     {
       id: 1,
-      title: "Bepul maslahat",
-      description: "Mutaxassislarimiz bilan bog'laning va maqsadlaringizni muhokama qiling",
+      title: t('process.step1.title'),
+      description: t('process.step1.description'),
       details: [
-        "Shaxsiy uchrashuvda yoki onlayn maslahat",
-        "Sizning imkoniyatlaringizni baholash",
-        "Eng mos yo'nalishni tanlash",
-        "Dastlabki reja tuzish"
+        t('process.step1.detail1'),
+        t('process.step1.detail2'),
+        t('process.step1.detail3'),
+        t('process.step1.detail4')
       ],
       icon: Users,
       color: "blue",
-      duration: "1-2 kun"
+      duration: t('process.step1.duration')
     },
     {
       id: 2,
-      title: "Hujjatlar tayyorlash",
-      description: "Zarur hujjatlarni to'plash va rasmiylashtirish",
+      title: t('process.step2.title'),
+      description: t('process.step2.description'),
       details: [
-        "Hujjatlar ro'yxatini tayyorlash",
-        "Tarjima va notarial tasdiq",
-        "Foto va boshqa materiallar",
-        "Hujjatlarni tekshirish"
+        t('process.step2.detail1'),
+        t('process.step2.detail2'),
+        t('process.step2.detail3'),
+        t('process.step2.detail4')
       ],
       icon: FileText,
       color: "green",
-      duration: "1-2 hafta"
+      duration: t('process.step2.duration')
     },
     {
       id: 3,
-      title: "Ariza topshirish",
-      description: "Visa yoki dastur uchun rasmiy ariza topshirish",
+      title: t('process.step3.title'),
+      description: t('process.step3.description'),
       details: [
-        "Onlayn ariza to'ldirish",
-        "Hujjatlarni yuklash",
-        "To'lovlarni amalga oshirish",
-        "Ariza holatini kuzatish"
+        t('process.step3.detail1'),
+        t('process.step3.detail2'),
+        t('process.step3.detail3'),
+        t('process.step3.detail4')
       ],
       icon: Plane,
       color: "purple",
-      duration: "1-3 kun"
+      duration: t('process.step3.duration')
     },
     {
       id: 4,
-      title: "Natija va safar",
-      description: "Ijobiy javob olish va safarga tayyorgarlik",
+      title: t('process.step4.title'),
+      description: t('process.step4.description'),
       details: [
-        "Visa yoki qabul xatini olish",
-        "Aviachiptalar bron qilish",
-        "Turar joy topish",
-        "Safarga tayyorgarlik"
+        t('process.step4.detail1'),
+        t('process.step4.detail2'),
+        t('process.step4.detail3'),
+        t('process.step4.detail4')
       ],
       icon: Award,
       color: "orange",
-      duration: "2-8 hafta"
+      duration: t('process.step4.duration')
     }
   ]
 
   const features = [
     {
       icon: Clock,
-      title: "Tez jarayon",
-      description: "Minimal vaqtda maksimal natija"
+      title: t('process.features.fast.title'),
+      description: t('process.features.fast.description')
     },
     {
       icon: Shield,
-      title: "Kafolat",
-      description: "Muvaffaqiyat kafolati yoki pul qaytarish"
+      title: t('process.features.guarantee.title'),
+      description: t('process.features.guarantee.description')
     },
     {
       icon: Users,
-      title: "Shaxsiy yondashuv",
-      description: "Har bir mijoz uchun individual reja"
+      title: t('process.features.personal.title'),
+      description: t('process.features.personal.description')
     }
   ]
 
@@ -140,7 +143,7 @@ const Process: React.FC = () => {
                   </div>
                   <div>
                     <div className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
-                      {step.id}-bosqich
+                      {step.id}-{t('process.step')}
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900">{step.title}</h3>
                   </div>
@@ -162,7 +165,7 @@ const Process: React.FC = () => {
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center space-x-2">
                     <Clock className="h-5 w-5 text-gray-400" />
-                    <span className="text-sm text-gray-600">Davomiyligi: {step.duration}</span>
+                    <span className="text-sm text-gray-600">{t('process.duration')}: {step.duration}</span>
                   </div>
                 </div>
               </div>
@@ -196,7 +199,7 @@ const Process: React.FC = () => {
           className="bg-white p-12 rounded-2xl shadow-lg mb-16"
         >
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Bizning afzalliklarimiz
+            {t('process.advantages')}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -226,22 +229,22 @@ const Process: React.FC = () => {
           className="text-center"
         >
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-12 rounded-2xl text-white">
-            <h2 className="text-3xl font-bold mb-4">Boshlashga tayyormisiz?</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('process.ready.title')}</h2>
             <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
-              Bugun biz bilan bog'laning va birinchi bosqichni boshlang
+              {t('process.ready.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/contact"
                 className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors inline-block"
               >
-                Bepul maslahat
+                {t('process.ready.consultation')}
               </Link>
               <Link
                 to="/apply"
                 className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors inline-block"
               >
-                Ariza topshirish
+                {t('process.ready.apply')}
               </Link>
             </div>
           </div>

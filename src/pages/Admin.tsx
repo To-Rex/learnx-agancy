@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { 
   Users, 
   FileText, 
@@ -42,6 +44,8 @@ import {
 
 const Admin: React.FC = () => {
   const navigate = useNavigate()
+  const { signOut } = useAuth()
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -158,7 +162,7 @@ const Admin: React.FC = () => {
         totalApplications: applicationsData?.length || 0,
         pendingApplications: applicationsData?.filter(app => app.status === 'pending').length || 0,
         approvedApplications: applicationsData?.filter(app => app.status === 'approved').length || 0,
-        totalUsers: usersData?.length || 0,
+        totalUsers: applicationsData?.length || 0, // Unique users from applications
         totalServices: servicesData?.length || 0,
         totalStories: storiesData?.length || 0,
         totalPartners: partnersData?.length || 0
@@ -346,14 +350,18 @@ const Admin: React.FC = () => {
     })
   }
 
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/admin/login')
+  }
+
   const tabs = [
-    { id: 'dashboard', name: 'Dashboard', icon: BarChart3 },
-    { id: 'applications', name: 'Arizalar', icon: FileText },
-    { id: 'users', name: 'Xodimlar', icon: Users },
-    { id: 'services', name: 'Xizmatlar', icon: Settings },
-    { id: 'stories', name: 'Hikoyalar', icon: MessageSquare },
-    { id: 'partners', name: 'Hamkorlar', icon: Building },
-    { id: 'contacts', name: 'Murojatlar', icon: MessageSquare }
+    { id: 'dashboard', name: t('admin.dashboard'), icon: BarChart3 },
+    { id: 'applications', name: t('admin.applications'), icon: FileText },
+    { id: 'services', name: t('admin.services'), icon: Settings },
+    { id: 'stories', name: t('admin.stories'), icon: MessageSquare },
+    { id: 'partners', name: t('admin.partners'), icon: Building },
+    { id: 'contacts', name: t('admin.contacts'), icon: MessageSquare }
   ]
 
   if (loading) {
@@ -376,7 +384,7 @@ const Admin: React.FC = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Settings className="h-6 w-6 text-white" />
               </div>
               <div>
@@ -388,13 +396,19 @@ const Admin: React.FC = () => {
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-gray-600">Xush kelibsiz, Admin</span>
-              <AdminButton
+              <button
                 onClick={() => navigate('/')}
-                variant="secondary"
-                icon={Home}
+                className="flex items-center space-x-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
               >
-                Saytga qaytish
-              </AdminButton>
+                <Home className="h-4 w-4" />
+                <span>Saytga qaytish</span>
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center space-x-2 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+              >
+                <span>Chiqish</span>
+              </button>
             </div>
           </div>
         </div>
@@ -431,27 +445,27 @@ const Admin: React.FC = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <StatsCard
-                    title="Jami arizalar"
+                    title={t('admin.stats.totalApplications')}
                     value={stats.totalApplications}
                     icon={FileText}
                     color="blue"
-                    trend="+12% bu oy"
+                    trend={t('admin.stats.monthlyGrowth')}
                   />
                   <StatsCard
-                    title="Kutilayotgan"
+                    title={t('admin.stats.pending')}
                     value={stats.pendingApplications}
                     icon={FileText}
                     color="yellow"
                   />
                   <StatsCard
-                    title="Tasdiqlangan"
+                    title={t('admin.stats.approved')}
                     value={stats.approvedApplications}
                     icon={FileText}
                     color="green"
-                    trend="+8% bu hafta"
+                    trend={t('admin.stats.weeklyGrowth')}
                   />
                   <StatsCard
-                    title="Hamkorlar"
+                    title={t('admin.stats.partners')}
                     value={stats.totalPartners}
                     icon={Building}
                     color="purple"
@@ -460,7 +474,7 @@ const Admin: React.FC = () => {
 
                 {/* Recent Activity */}
                 <AdminCard className="p-6">
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">So'nggi faoliyat</h3>
+                  <h3 className="text-lg font-bold text-gray-900 mb-4">{t('admin.recentActivity')}</h3>
                   <div className="space-y-4">
                     {applications.slice(0, 5).map((app: any) => (
                       <div key={app.id} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
@@ -476,8 +490,8 @@ const Admin: React.FC = () => {
                           app.status === 'approved' ? 'bg-green-100 text-green-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {app.status === 'pending' ? 'Kutilmoqda' :
-                           app.status === 'approved' ? 'Tasdiqlangan' : 'Rad etilgan'}
+                          {app.status === 'pending' ? t('admin.status.pending') :
+                           app.status === 'approved' ? t('admin.status.approved') : t('admin.status.rejected')}
                         </span>
                       </div>
                     ))}
@@ -490,22 +504,16 @@ const Admin: React.FC = () => {
               <AdminCard>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Arizalar</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.applications')}</h2>
                     <div className="flex items-center space-x-3">
-                      <AdminButton variant="secondary" icon={Search} size="sm">
-                        Qidirish
-                      </AdminButton>
-                      <AdminButton variant="secondary" icon={Filter} size="sm">
-                        Filtr
-                      </AdminButton>
-                      <AdminButton variant="secondary" icon={Download} size="sm">
-                        Eksport
-                      </AdminButton>
+                      <AdminButton variant="secondary" icon={Search} size="sm">{t('common.search')}</AdminButton>
+                      <AdminButton variant="secondary" icon={Filter} size="sm">{t('common.filter')}</AdminButton>
+                      <AdminButton variant="secondary" icon={Download} size="sm">{t('common.download')}</AdminButton>
                     </div>
                   </div>
                 </div>
                 
-                <AdminTable headers={['Ism', 'Email', 'Dastur', 'Davlat', 'Holat', 'Sana', 'Amallar']}>
+                <AdminTable headers={[t('common.name'), t('common.email'), t('admin.program'), t('admin.country'), t('admin.status'), t('common.date'), t('admin.actions')]}>
                   {applications.map((app: any) => (
                     <tr key={app.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
@@ -524,8 +532,8 @@ const Admin: React.FC = () => {
                           app.status === 'approved' ? 'bg-green-100 text-green-800' :
                           'bg-red-100 text-red-800'
                         }`}>
-                          {app.status === 'pending' ? 'Kutilmoqda' :
-                           app.status === 'approved' ? 'Tasdiqlangan' : 'Rad etilgan'}
+                          {app.status === 'pending' ? t('admin.status.pending') :
+                           app.status === 'approved' ? t('admin.status.approved') : t('admin.status.rejected')}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-gray-600">
@@ -554,7 +562,7 @@ const Admin: React.FC = () => {
               <AdminCard>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Xizmatlar</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.services')}</h2>
                     <AdminButton 
                       onClick={() => {
                         resetServiceForm()
@@ -562,7 +570,7 @@ const Admin: React.FC = () => {
                       }}
                       icon={Plus}
                     >
-                      Yangi xizmat
+                      {t('admin.addService')}
                     </AdminButton>
                   </div>
                 </div>
@@ -617,7 +625,7 @@ const Admin: React.FC = () => {
               <AdminCard>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Hikoyalar</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.stories')}</h2>
                     <AdminButton 
                       onClick={() => {
                         resetStoryForm()
@@ -625,7 +633,7 @@ const Admin: React.FC = () => {
                       }}
                       icon={Plus}
                     >
-                      Yangi hikoya
+                      {t('admin.addStory')}
                     </AdminButton>
                   </div>
                 </div>
@@ -692,7 +700,7 @@ const Admin: React.FC = () => {
               <AdminCard>
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-900">Hamkor universitetlar</h2>
+                    <h2 className="text-xl font-bold text-gray-900">{t('admin.partners')}</h2>
                     <AdminButton 
                       onClick={() => {
                         resetPartnerForm()
@@ -700,7 +708,7 @@ const Admin: React.FC = () => {
                       }}
                       icon={Plus}
                     >
-                      Yangi hamkor
+                      {t('admin.addPartner')}
                     </AdminButton>
                   </div>
                 </div>
@@ -762,10 +770,10 @@ const Admin: React.FC = () => {
             {activeTab === 'contacts' && (
               <AdminCard>
                 <div className="p-6 border-b border-gray-100">
-                  <h2 className="text-xl font-bold text-gray-900">Murojatlar</h2>
+                  <h2 className="text-xl font-bold text-gray-900">{t('admin.contacts')}</h2>
                 </div>
                 
-                <AdminTable headers={['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar']}>
+                <AdminTable headers={[t('common.name'), t('common.email'), t('common.phone'), t('common.message'), t('common.date'), t('admin.actions')]}>
                   {contacts.map((contact: any) => (
                     <tr key={contact.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
@@ -817,7 +825,7 @@ const Admin: React.FC = () => {
         
         <div className="space-y-6">
           <AdminInput
-            label="Nomi"
+            label={t('admin.form.name')}
             value={serviceForm.title[activeLanguage]}
             onChange={(value) => setServiceForm(prev => ({
               ...prev,
@@ -827,7 +835,7 @@ const Admin: React.FC = () => {
           />
 
           <AdminTextarea
-            label="Tavsif"
+            label={t('admin.form.description')}
             value={serviceForm.description[activeLanguage]}
             onChange={(value) => setServiceForm(prev => ({
               ...prev,
@@ -838,14 +846,14 @@ const Admin: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <AdminInput
-              label="Narx"
+              label={t('admin.form.price')}
               value={serviceForm.price}
               onChange={(value) => setServiceForm(prev => ({ ...prev, price: value }))}
               required
             />
 
             <AdminSelect
-              label="Rang"
+              label={t('admin.form.color')}
               value={serviceForm.color}
               onChange={(value) => setServiceForm(prev => ({ ...prev, color: value }))}
               options={[
@@ -860,7 +868,7 @@ const Admin: React.FC = () => {
 
           <div className="flex space-x-4">
             <AdminButton onClick={handleSaveService} icon={Save}>
-              Saqlash
+              {t('common.save')}
             </AdminButton>
             <AdminButton 
               variant="secondary" 
@@ -869,7 +877,7 @@ const Admin: React.FC = () => {
                 setEditingItem(null)
               }}
             >
-              Bekor qilish
+              {t('common.cancel')}
             </AdminButton>
           </div>
         </div>
@@ -887,14 +895,14 @@ const Admin: React.FC = () => {
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <AdminInput
-              label="Ism"
+              label={t('common.name')}
               value={storyForm.name}
               onChange={(value) => setStoryForm(prev => ({ ...prev, name: value }))}
               required
             />
 
             <AdminInput
-              label="Davlat"
+              label={t('admin.form.country')}
               value={storyForm.country}
               onChange={(value) => setStoryForm(prev => ({ ...prev, country: value }))}
               required
@@ -907,7 +915,7 @@ const Admin: React.FC = () => {
           />
 
           <AdminTextarea
-            label="Hikoya matni"
+            label={t('admin.form.storyText')}
             value={storyForm.text[activeLanguage]}
             onChange={(value) => setStoryForm(prev => ({
               ...prev,
@@ -919,7 +927,7 @@ const Admin: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <AdminSelect
-              label="Reyting"
+              label={t('admin.form.rating')}
               value={storyForm.rating.toString()}
               onChange={(value) => setStoryForm(prev => ({ ...prev, rating: parseInt(value) }))}
               options={[
@@ -933,7 +941,7 @@ const Admin: React.FC = () => {
             />
 
             <AdminInput
-              label="Rasm URL"
+              label={t('admin.form.imageUrl')}
               value={storyForm.image}
               onChange={(value) => setStoryForm(prev => ({ ...prev, image: value }))}
               type="url"
@@ -949,13 +957,13 @@ const Admin: React.FC = () => {
               className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
             />
             <label htmlFor="featured" className="ml-2 block text-sm text-gray-700">
-              Mashhur hikoya
+              {t('admin.form.featured')}
             </label>
           </div>
 
           <div className="flex space-x-4">
             <AdminButton onClick={handleSaveStory} icon={Save}>
-              Saqlash
+              {t('common.save')}
             </AdminButton>
             <AdminButton 
               variant="secondary" 
@@ -964,7 +972,7 @@ const Admin: React.FC = () => {
                 setEditingItem(null)
               }}
             >
-              Bekor qilish
+              {t('common.cancel')}
             </AdminButton>
           </div>
         </div>
@@ -986,7 +994,7 @@ const Admin: React.FC = () => {
         
         <div className="space-y-6">
           <AdminInput
-            label="Universitet nomi"
+            label={t('admin.form.universityName')}
             value={partnerForm.name[activeLanguage]}
             onChange={(value) => setPartnerForm(prev => ({
               ...prev,
@@ -996,7 +1004,7 @@ const Admin: React.FC = () => {
           />
 
           <AdminTextarea
-            label="Tavsif"
+            label={t('admin.form.description')}
             value={partnerForm.description[activeLanguage]}
             onChange={(value) => setPartnerForm(prev => ({
               ...prev,
@@ -1005,7 +1013,7 @@ const Admin: React.FC = () => {
           />
 
           <AdminInput
-            label="Logo URL"
+            label={t('admin.form.logoUrl')}
             value={partnerForm.logo}
             onChange={(value) => setPartnerForm(prev => ({ ...prev, logo: value }))}
             type="url"
@@ -1014,14 +1022,14 @@ const Admin: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <AdminInput
-              label="Veb-sayt"
+              label={t('admin.form.website')}
               value={partnerForm.website}
               onChange={(value) => setPartnerForm(prev => ({ ...prev, website: value }))}
               type="url"
             />
 
             <AdminInput
-              label="Davlat"
+              label={t('admin.form.country')}
               value={partnerForm.country}
               onChange={(value) => setPartnerForm(prev => ({ ...prev, country: value }))}
             />
@@ -1029,14 +1037,14 @@ const Admin: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-4">
             <AdminInput
-              label="Tashkil etilgan yil"
+              label={t('admin.form.established')}
               value={partnerForm.established}
               onChange={(value) => setPartnerForm(prev => ({ ...prev, established: value }))}
               type="number"
             />
 
             <AdminInput
-              label="Reyting"
+              label={t('admin.form.ranking')}
               value={partnerForm.ranking}
               onChange={(value) => setPartnerForm(prev => ({ ...prev, ranking: value }))}
               type="number"
@@ -1045,7 +1053,7 @@ const Admin: React.FC = () => {
 
           <div className="flex space-x-4">
             <AdminButton onClick={handleSavePartner} icon={Save}>
-              Saqlash
+              {t('common.save')}
             </AdminButton>
             <AdminButton 
               variant="secondary" 
@@ -1054,7 +1062,7 @@ const Admin: React.FC = () => {
                 setEditingItem(null)
               }}
             >
-              Bekor qilish
+              {t('common.cancel')}
             </AdminButton>
           </div>
         </div>

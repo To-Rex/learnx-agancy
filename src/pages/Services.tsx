@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { FileText, Plane, Users, GraduationCap, Briefcase, Heart, BookOpen, Globe, Award, CheckCircle, ArrowRight, Star } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
+import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
 
 const Services: React.FC = () => {
+  const { t } = useLanguage()
   const [services, setServices] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedService, setSelectedService] = useState<any>(null)
@@ -142,11 +144,10 @@ const Services: React.FC = () => {
           className="text-center mb-16"
         >
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Bizning xizmatlarimiz
+            {t('services.title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Professional jamoa sizga chet davlatlarga ta'lim olish va ishlash uchun 
-            barcha zarur xizmatlarni taqdim etadi
+            {t('services.description')}
           </p>
         </motion.div>
 
@@ -219,7 +220,7 @@ const Services: React.FC = () => {
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl' 
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}>
-                  Tanlash
+                  {t('services.select')}
                 </button>
               </div>
             </motion.div>
@@ -285,13 +286,13 @@ const Services: React.FC = () => {
                   to="/apply"
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all text-center"
                 >
-                  Ariza topshirish
+                  {t('services.apply')}
                 </Link>
                 <Link
                   to="/contact"
                   className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-all text-center"
                 >
-                  Maslahat olish
+                  {t('services.consultation')}
                 </Link>
               </div>
             </motion.div>
@@ -306,7 +307,7 @@ const Services: React.FC = () => {
           className="bg-white p-12 rounded-2xl shadow-lg mb-16"
         >
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Nima uchun bizni tanlaysiz?
+            {t('services.whyChooseUs')}
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -361,22 +362,22 @@ const Services: React.FC = () => {
           className="text-center"
         >
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-12 rounded-2xl text-white">
-            <h2 className="text-3xl font-bold mb-4">Savolingiz bormi?</h2>
+            <h2 className="text-3xl font-bold mb-4">{t('services.cta.title')}</h2>
             <p className="text-xl text-blue-100 mb-8">
-              Mutaxassislarimiz bilan bog'laning va bepul maslahat oling
+              {t('services.cta.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/contact"
                 className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors"
               >
-                Bog'lanish
+                {t('services.cta.contact')}
               </Link>
               <Link
                 to="/apply"
                 className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors"
               >
-                Ariza topshirish
+                {t('services.cta.apply')}
               </Link>
             </div>
           </div>
