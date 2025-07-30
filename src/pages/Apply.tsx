@@ -101,11 +101,14 @@ const Apply: React.FC = () => {
           email: data.email,
           phone: data.phone,
           birth_date: data.birthDate,
+          passport_number: data.passportNumber || null,
           education_level: data.education,
+          university: data.university || null,
+          major: data.major || null,
+          english_level: data.englishLevel || null,
           program_type: data.program,
           country_preference: data.country,
           documents: uploadedFiles,
-          ...data,
           status: 'pending',
           created_at: new Date().toISOString()
         })
@@ -117,6 +120,11 @@ const Apply: React.FC = () => {
       // Reset form
       setCurrentStep(1)
       setUploadedFiles({})
+      
+      // Redirect to profile after successful submission
+      setTimeout(() => {
+        window.location.href = '/profile'
+      }, 2000)
       
     } catch (error) {
       toast.error('Xatolik yuz berdi. Qayta urinib ko\'ring.')

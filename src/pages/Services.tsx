@@ -14,82 +14,69 @@ const Services: React.FC = () => {
   }, [])
 
   const loadServices = async () => {
-    // Use fallback data
-    setServices([
-      {
-        id: 1,
-        title: "Turist vizasi",
-        description: "Sayohat uchun qisqa muddatli vizalar",
-        features: ["Tez rasmiylashtirish", "To'liq hujjat tayyorlash", "90% muvaffaqiyat kafolati", "24/7 qo'llab-quvvatlash"],
-        price: "dan 150$",
-        popular: false,
-        icon: "FileText",
-        color: "blue",
-        duration: "5-10 kun",
-        success_rate: "95%"
-      },
-      {
-        id: 2,
-        title: "Talaba vizasi",
-        description: "Ta'lim olish uchun uzoq muddatli vizalar",
-        features: ["Universitet tanlash", "Grant yutishga yordam", "Turar joy topish", "Til kurslari"],
-        price: "dan 300$",
-        popular: true,
-        icon: "GraduationCap",
-        color: "green",
-        duration: "2-4 hafta",
-        success_rate: "98%"
-      },
-      {
-        id: 3,
-        title: "Ish vizasi",
-        description: "Chet davlatda ishlash uchun vizalar",
-        features: ["Ish joyi topish", "Mehnat shartnomasi", "Uzoq muddatli yashash", "Oila a'zolari uchun visa"],
-        price: "dan 400$",
-        popular: false,
-        icon: "Briefcase",
-        color: "purple",
-        duration: "3-6 hafta",
-        success_rate: "92%"
-      },
-      {
-        id: 4,
-        title: "Work & Travel",
-        description: "AQSh Work & Travel dasturi",
-        features: ["J-1 vizasi", "Ish joyi topish", "Madaniy almashish", "Sayohat imkoniyati"],
-        price: "dan 1000$",
-        popular: true,
-        icon: "Plane",
-        color: "orange",
-        duration: "4-8 hafta",
-        success_rate: "96%"
-      },
-      {
-        id: 5,
-        title: "Ta'lim granti",
-        description: "Bepul ta'lim olish imkoniyati",
-        features: ["Grant topish", "Ariza tayyorlash", "Intervyu tayyorlash", "Stipendiya olish"],
-        price: "dan 200$",
-        popular: false,
-        icon: "BookOpen",
-        color: "indigo",
-        duration: "2-3 oy",
-        success_rate: "85%"
-      },
-      {
-        id: 6,
-        title: "Shaxsiy maslahat",
-        description: "Individual yondashuv va maslahat",
-        features: ["Shaxsiy reja", "24/7 qo'llab-quvvatlash", "Tajribali mutaxassislar", "Muvaffaqiyat kafolati"],
-        price: "dan 50$",
-        popular: false,
-        icon: "Users",
-        color: "pink",
-        duration: "1-2 soat",
-        success_rate: "100%"
+    try {
+      const { data, error } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+      
+      if (error) throw error
+      
+      if (data && data.length > 0) {
+        setServices(data)
+      } else {
+        // Fallback data if no services in database
+        setServices([
+          {
+            id: 1,
+            title: "Turist vizasi",
+            description: "Sayohat uchun qisqa muddatli vizalar",
+            features: ["Tez rasmiylashtirish", "To'liq hujjat tayyorlash", "90% muvaffaqiyat kafolati", "24/7 qo'llab-quvvatlash"],
+            price: "dan 150$",
+            featured: false,
+            icon: "FileText",
+            color: "blue"
+          },
+          {
+            id: 2,
+            title: "Talaba vizasi",
+            description: "Ta'lim olish uchun uzoq muddatli vizalar",
+            features: ["Universitet tanlash", "Grant yutishga yordam", "Turar joy topish", "Til kurslari"],
+            price: "dan 300$",
+            featured: true,
+            icon: "GraduationCap",
+            color: "green"
+          },
+          {
+            id: 3,
+            title: "Work & Travel",
+            description: "AQSh Work & Travel dasturi",
+            features: ["J-1 vizasi", "Ish joyi topish", "Madaniy almashish", "Sayohat imkoniyati"],
+            price: "dan 1000$",
+            featured: true,
+            icon: "Plane",
+            color: "orange"
+          }
+        ])
       }
-    ])
-    setLoading(false)
+    } catch (error) {
+      console.error('Services loading error:', error)
+      // Use fallback data on error
+      setServices([
+        {
+          id: 1,
+          title: "Turist vizasi",
+          description: "Sayohat uchun qisqa muddatli vizalar",
+          features: ["Tez rasmiylashtirish", "To'liq hujjat tayyorlash", "90% muvaffaqiyat kafolati", "24/7 qo'llab-quvvatlash"],
+          price: "dan 150$",
+          featured: false,
+          icon: "FileText",
+          color: "blue"
+        }
+      ])
+    } finally {
+      setLoading(false)
+    }
   }
 
   const getIcon = (iconName: string) => {
@@ -173,11 +160,11 @@ const Services: React.FC = () => {
               transition={{ delay: index * 0.1, duration: 0.6 }}
               whileHover={{ y: -8, scale: 1.02 }}
               className={`bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all relative cursor-pointer group ${
-                service.popular ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                service.featured ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
               }`}
               onClick={() => handleServiceSelect(service)}
             >
-              {service.popular && (
+              {service.featured && (
                 <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                   <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg flex items-center space-x-1">
                     <Star className="h-4 w-4" />
@@ -194,14 +181,18 @@ const Services: React.FC = () => {
               <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
               
               <div className="space-y-3 mb-6">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Davomiyligi:</span>
-                  <span className="font-semibold text-gray-700">{service.duration}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Muvaffaqiyat:</span>
-                  <span className="font-semibold text-green-600">{service.success_rate}</span>
-                </div>
+                {service.duration && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Davomiyligi:</span>
+                    <span className="font-semibold text-gray-700">{service.duration}</span>
+                  </div>
+                )}
+                {service.success_rate && (
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Muvaffaqiyat:</span>
+                    <span className="font-semibold text-green-600">{service.success_rate}</span>
+                  </div>
+                )}
               </div>
               
               <ul className="space-y-3 mb-8">
@@ -224,7 +215,7 @@ const Services: React.FC = () => {
                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                 </div>
                 <button className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${
-                  service.popular 
+                  service.featured 
                     ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl' 
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                 }`}>
@@ -269,10 +260,12 @@ const Services: React.FC = () => {
                   <div className="text-sm text-gray-500 mb-1">Narx</div>
                   <div className="text-2xl font-bold text-blue-600">{selectedService.price}</div>
                 </div>
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="text-sm text-gray-500 mb-1">Davomiyligi</div>
-                  <div className="text-lg font-semibold text-gray-700">{selectedService.duration}</div>
-                </div>
+                {selectedService.duration && (
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="text-sm text-gray-500 mb-1">Davomiyligi</div>
+                    <div className="text-lg font-semibold text-gray-700">{selectedService.duration}</div>
+                  </div>
+                )}
               </div>
               
               <div className="mb-8">

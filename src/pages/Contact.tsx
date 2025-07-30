@@ -18,8 +18,19 @@ const Contact: React.FC = () => {
     setLoading(true)
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Save to database
+      const { error } = await supabase
+        .from('contact_submissions')
+        .insert({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone || null,
+          message: formData.message,
+          status: 'new',
+          created_at: new Date().toISOString()
+        })
+
+      if (error) throw error
       
       toast.success('Xabaringiz muvaffaqiyatli yuborildi! Tez orada siz bilan bog\'lanamiz.')
       setFormData({
@@ -30,6 +41,7 @@ const Contact: React.FC = () => {
         message: ''
       })
     } catch (error) {
+      console.error('Contact form error:', error)
       toast.error('Xatolik yuz berdi. Iltimos, qayta urinib ko\'ring.')
     } finally {
       setLoading(false)
@@ -306,12 +318,16 @@ const Contact: React.FC = () => {
           className="bg-white p-8 rounded-2xl shadow-lg"
         >
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Bizning joylashuvimiz</h2>
-          <div className="h-96 bg-gray-200 rounded-xl flex items-center justify-center">
-            <div className="text-center">
-              <MapPin className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-600">Xarita bu yerda ko'rsatiladi</p>
-              <p className="text-sm text-gray-500 mt-2">Toshkent, Chilonzor tumani</p>
-            </div>
+          <div className="h-96 rounded-xl overflow-hidden">
+            <iframe
+              src="https://yandex.uz/map-widget/v1/?ll=69.285801%2C41.333185&z=16&l=map"
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allowFullScreen
+              className="rounded-xl"
+              title="LearnX joylashuvi"
+            ></iframe>
           </div>
         </motion.div>
       </div>

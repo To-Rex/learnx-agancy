@@ -230,12 +230,18 @@ const Process: React.FC = () => {
               Bugun biz bilan bog'laning va birinchi bosqichni boshlang
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors">
+              <Link
+                to="/contact"
+                className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors inline-block"
+              >
                 Bepul maslahat
-              </button>
-              <button className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors">
+              </Link>
+              <Link
+                to="/apply"
+                className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors inline-block"
+              >
                 Ariza topshirish
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>

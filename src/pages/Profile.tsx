@@ -18,6 +18,16 @@ const Profile: React.FC = () => {
   const [showProfileEditor, setShowProfileEditor] = useState(false)
   const [showDocumentUpload, setShowDocumentUpload] = useState(false)
   const [selectedDocumentType, setSelectedDocumentType] = useState('')
+  const [showOtherDocuments, setShowOtherDocuments] = useState(false)
+
+  const requiredDocumentTypes = [
+    { key: 'passport', label: 'Pasport nusxasi', required: true },
+    { key: 'photo', label: 'Foto 3x4', required: true },
+    { key: 'diploma', label: 'Diplom/Attestat', required: true },
+    { key: 'transcript', label: 'Akademik ma\'lumotnoma', required: false },
+    { key: 'cv', label: 'CV/Resume', required: false },
+    { key: 'motivation', label: 'Motivatsiya xati', required: false }
+  ]
 
   useEffect(() => {
     if (user) {
@@ -291,32 +301,38 @@ const Profile: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Mening arizalarim</h3>
-                <button 
-                  onClick={() => window.location.href = '/apply'}
+                <Link
+                  to="/apply"
                   className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Yangi ariza</span>
-                </button>
+                </Link>
               </div>
 
               {applications.length > 0 ? (
                 <div className="space-y-4">
                   {applications.map((app: any) => (
-                    <div key={app.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div key={app.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{app.program_type || 'Ariza'}</h4>
-                          <p className="text-gray-600">{app.country_preference}</p>
+                          <h4 className="font-semibold text-gray-900 text-lg mb-1">
+                            {app.program_type?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ariza'}
+                          </h4>
+                          <p className="text-gray-600 mb-2 flex items-center">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            {app.country_preference}
+                          </p>
                           <p className="text-sm text-gray-500 mt-1">
-                            Sana: {new Date(app.created_at).toLocaleDateString('uz-UZ')}
+                            <Calendar className="h-4 w-4 inline mr-1" />
+                            {new Date(app.created_at).toLocaleDateString('uz-UZ')}
                           </p>
                         </div>
                         <div className="text-right">
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(app.status)}`}>
                             {getStatusText(app.status)}
                           </span>
-                          <button className="block mt-2 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1">
+                          <button className="block mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
                             <Eye className="h-3 w-3" />
                             <span>Batafsil</span>
                           </button>
@@ -329,12 +345,12 @@ const Profile: React.FC = () => {
                 <div className="text-center py-8">
                   <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">Hali arizalar yo'q</p>
-                  <button 
-                    onClick={() => window.location.href = '/apply'}
+                  <Link
+                    to="/apply"
                     className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Birinchi arizani topshiring
-                  </button>
+                  </Link>
                 </div>
               )}
             </motion.div>
@@ -348,69 +364,137 @@ const Profile: React.FC = () => {
             >
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Hujjatlarim</h3>
-                <button 
-                  onClick={() => setShowDocumentUpload(true)}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-                >
-                  <Upload className="h-4 w-4" />
-                  <span>Hujjat yuklash</span>
-                </button>
-              </div>
-
-              {documents.length > 0 ? (
-                <div className="space-y-4">
-                  {documents.map((doc: any, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-                      <div className="flex items-center space-x-3">
-                        <FileText className="h-6 w-6 text-gray-400" />
-                        <div>
-                          <h4 className="font-medium text-gray-900">{doc.name}</h4>
-                          <p className="text-sm text-gray-500">
-                            Yuklandi: {new Date(doc.date).toLocaleDateString('uz-UZ')}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <a
-                          href={doc.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                          title="Ko'rish"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </a>
-                        <a
-                          href={doc.url}
-                          download
-                          className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 transition-colors"
-                          title="Yuklab olish"
-                        >
-                          <Download className="h-4 w-4" />
-                        </a>
-                        <button
-                          onClick={() => handleDeleteDocument(doc)}
-                          className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                          title="O'chirish"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">Hali hujjatlar yuklanmagan</p>
+                <div className="flex space-x-2">
                   <button 
-                    onClick={() => setShowDocumentUpload(true)}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+                    onClick={() => {
+                      setSelectedDocumentType('required')
+                      setShowDocumentUpload(true)
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
                   >
-                    Birinchi hujjatni yuklang
+                    <Upload className="h-4 w-4" />
+                    <span>Kerakli hujjat</span>
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedDocumentType('other')
+                      setShowDocumentUpload(true)
+                    }}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm"
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>Boshqa hujjat</span>
                   </button>
                 </div>
-              )}
+              </div>
+
+              {/* Required Documents Section */}
+              <div className="mb-8">
+                <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                  <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
+                  Kerakli hujjatlar
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {requiredDocumentTypes.map((docType) => {
+                    const userDoc = documents.find(doc => doc.name.toLowerCase().includes(docType.key))
+                    return (
+                      <div key={docType.key} className={`p-4 border-2 border-dashed rounded-lg ${userDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium text-gray-900">{docType.label}</h5>
+                            <p className="text-sm text-gray-500">
+                              {docType.required ? 'Majburiy' : 'Ixtiyoriy'}
+                            </p>
+                          </div>
+                          {userDoc ? (
+                            <div className="flex items-center space-x-2">
+                              <CheckCircle className="h-5 w-5 text-green-500" />
+                              <span className="text-sm text-green-600">Yuklangan</span>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedDocumentType(docType.key)
+                                setShowDocumentUpload(true)
+                              }}
+                              className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                            >
+                              Yuklash
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Other Documents Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-gray-900 flex items-center">
+                    <FileText className="h-5 w-5 text-gray-600 mr-2" />
+                    Boshqa hujjatlar
+                  </h4>
+                  <button
+                    onClick={() => setShowOtherDocuments(!showOtherDocuments)}
+                    className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                  >
+                    {showOtherDocuments ? 'Yashirish' : 'Ko\'rish'}
+                  </button>
+                </div>
+                
+                {showOtherDocuments && (
+                  <div className="space-y-4">
+                    {documents.filter(doc => !requiredDocumentTypes.some(type => doc.name.toLowerCase().includes(type.key))).length > 0 ? (
+                      documents.filter(doc => !requiredDocumentTypes.some(type => doc.name.toLowerCase().includes(type.key))).map((doc: any, index) => (
+                        <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
+                          <div className="flex items-center space-x-3">
+                            <FileText className="h-6 w-6 text-gray-400" />
+                            <div>
+                              <h4 className="font-medium text-gray-900">{doc.name}</h4>
+                              <p className="text-sm text-gray-500">
+                                Yuklandi: {new Date(doc.date).toLocaleDateString('uz-UZ')}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                              title="Ko'rish"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </a>
+                            <a
+                              href={doc.url}
+                              download
+                              className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                              title="Yuklab olish"
+                            >
+                              <Download className="h-4 w-4" />
+                            </a>
+                            <button
+                              onClick={() => handleDeleteDocument(doc)}
+                              className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                              title="O'chirish"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                        <p className="text-gray-500 mb-4">Boshqa hujjatlar yo'q</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </motion.div>
 
             {/* Recent Activity */}
@@ -483,7 +567,11 @@ const Profile: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">Hujjat yuklash</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  {selectedDocumentType === 'required' ? 'Kerakli hujjat yuklash' : 
+                   selectedDocumentType === 'other' ? 'Boshqa hujjat yuklash' : 
+                   'Hujjat yuklash'}
+                </h3>
                 <button
                   onClick={() => setShowDocumentUpload(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -492,13 +580,35 @@ const Profile: React.FC = () => {
                 </button>
               </div>
 
-              <FileUpload
-                label="Hujjat tanlang"
-                onFileUploaded={handleDocumentUpload}
-                bucket={STORAGE_BUCKETS.DOCUMENTS}
-                acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                maxSize={10}
-              />
+              {selectedDocumentType === 'required' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Hujjat turi
+                  </label>
+                  <select
+                    value={selectedDocumentType}
+                    onChange={(e) => setSelectedDocumentType(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Tanlang</option>
+                    {requiredDocumentTypes.map((type) => (
+                      <option key={type.key} value={type.key}>
+                        {type.label} {type.required ? '(Majburiy)' : '(Ixtiyoriy)'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {selectedDocumentType && (
+                <FileUpload
+                  label={selectedDocumentType === 'other' ? 'Har qanday hujjat tanlang' : 'Hujjat tanlang'}
+                  onFileUploaded={handleDocumentUpload}
+                  bucket={STORAGE_BUCKETS.DOCUMENTS}
+                  acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                  maxSize={10}
+                />
+              )}
 
               <div className="mt-6 flex space-x-3">
                 <button

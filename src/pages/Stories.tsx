@@ -24,83 +24,45 @@ const Stories: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false })
       
-      if (data) {
+      if (data && data.length > 0) {
         setStories(data)
+      } else {
+        // Fallback data if no stories in database
+        setStories([
+          {
+            id: 1,
+            name: "Aziz Karimov",
+            country: "AQSh",
+            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Amerika'da ishlash va sayohat qilish imkoniyati hayotimni o'zgartirdi.",
+            rating: 5,
+            image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
+            featured: true,
+            created_at: "2024-01-15"
+          },
+          {
+            id: 2,
+            name: "Malika Saidova",
+            country: "Germaniya",
+            text: "Germaniyada magistratura o'qish uchun visa olishda LearnX katta yordam berdi. Professional yondashuv va tez natija.",
+            rating: 5,
+            image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300",
+            featured: false,
+            created_at: "2023-12-10"
+          }
+        ])
       }
     } catch (error) {
-      // Fallback data
+      console.error('Stories loading error:', error)
       setStories([
         {
           id: 1,
           name: "Aziz Karimov",
           country: "AQSh",
-          program: "Work & Travel",
           text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Amerika'da ishlash va sayohat qilish imkoniyati hayotimni o'zgartirdi. Ingliz tilimni yaxshiladim va ko'plab do'stlar orttirdim.",
           rating: 5,
           image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2024-01-15",
-          duration: "4 oy",
-          city: "New York"
-        },
-        {
-          id: 2,
-          name: "Malika Saidova",
-          country: "Germaniya",
-          program: "Talaba vizasi",
-          text: "Germaniyada magistratura o'qish uchun visa olishda LearnX katta yordam berdi. Hujjatlar tayyorlashdan tortib, intervyugacha barcha bosqichlarda qo'llab-quvvatladilar.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2023-12-10",
-          duration: "2 yil",
-          city: "Berlin"
-        },
-        {
-          id: 3,
-          name: "Bobur Rahimov",
-          country: "Kanada",
-          program: "Ta'lim granti",
-          text: "Kanadada bepul ta'lim olish uchun grant yutishda LearnX professional yordami juda muhim bo'ldi. Endi Toronto universitetida o'qiyapman va kelajagim uchun ishonchim komil.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2023-11-20",
-          duration: "4 yil",
-          city: "Toronto"
-        },
-        {
-          id: 4,
-          name: "Dilnoza Abdullayeva",
-          country: "Buyuk Britaniya",
-          program: "Magistratura",
-          text: "Oxforddagi magistratura dasturiga qabul qilinish uchun LearnX jamoasi bilan ishlash juda samarali bo'ldi. Ular har bir bosqichda professional maslahat berishdi.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1181424/pexels-photo-1181424.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2023-10-05",
-          duration: "1 yil",
-          city: "Oxford"
-        },
-        {
-          id: 5,
-          name: "Sardor Toshmatov",
-          country: "Avstraliya",
-          program: "Ish vizasi",
-          text: "Avstraliyada IT sohasida ishlash uchun visa olishda LearnX yordami bebaho bo'ldi. Endi Sidneyda dasturchi sifatida ishlayapman va hayotimdan mamnunman.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1040880/pexels-photo-1040880.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2023-09-12",
-          duration: "Doimiy",
-          city: "Sidney"
-        },
-        {
-          id: 6,
-          name: "Nigora Ismoilova",
-          country: "Fransiya",
-          program: "Talaba vizasi",
-          text: "Parij universitetida o'qish uchun visa olish jarayoni LearnX yordami bilan juda oson bo'ldi. Ular barcha hujjatlarni to'g'ri tayyorlashga yordam berishdi.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1181519/pexels-photo-1181519.jpeg?auto=compress&cs=tinysrgb&w=300",
-          date: "2023-08-18",
-          duration: "3 yil",
-          city: "Parij"
+          featured: true,
+          created_at: "2024-01-15"
         }
       ])
     } finally {
@@ -212,11 +174,11 @@ const Stories: React.FC = () => {
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <MapPin className="h-4 w-4" />
-                    <span>{story.city}, {story.country}</span>
+                    <span>{story.country}</span>
                   </div>
                   <div className="flex items-center space-x-2 text-sm text-gray-600">
                     <Calendar className="h-4 w-4" />
-                    <span>Davomiyligi: {story.duration}</span>
+                    <span>{new Date(story.created_at).toLocaleDateString('uz-UZ')}</span>
                   </div>
                 </div>
 
@@ -224,7 +186,7 @@ const Stories: React.FC = () => {
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div>
                     <div className="font-bold text-gray-900">{story.name}</div>
-                    <div className="text-sm text-gray-500">{story.program}</div>
+                    <div className="text-sm text-gray-500">{story.country}</div>
                   </div>
                   <button className="text-blue-600 hover:text-blue-700 transition-colors">
                     <ArrowRight className="h-5 w-5" />
@@ -283,12 +245,18 @@ const Stories: React.FC = () => {
               Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl">
+              <Link
+                to="/apply"
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl inline-block"
+              >
                 Ariza topshirish
-              </button>
-              <button className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+              </Link>
+              <Link
+                to="/contact"
+                className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all inline-block"
+              >
                 Bepul maslahat
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>
