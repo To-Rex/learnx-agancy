@@ -114,7 +114,7 @@ const Admin: React.FC = () => {
           birth_date: profile?.birth_date || '',
           bio: profile?.bio || '',
           // Stats
-          applications_count: applicationsCount[authUser.id] || 0,
+          applications_count: profile?.applications_count || 0,
           is_active: authUser.last_sign_in_at ? new Date(authUser.last_sign_in_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) : false,
           // Provider info
           providers: authUser.app_metadata?.providers || ['email'],
@@ -132,8 +132,8 @@ const Admin: React.FC = () => {
   const loadData = async () => {
     try {
       // Load applications
-      const { data: appsData } = await supabase
-        .from('applications')
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
       
@@ -153,6 +153,21 @@ const Admin: React.FC = () => {
         // Fallback: load profiles without applications count
         const { data: fallbackProfiles } = await supabase
           .from('profiles')
+      // Get application counts for each profile
+      const profilesWithCounts = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { count } = await supabase
+            .from('applications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+          
+          return {
+            ...profile,
+            applications_count: count || 0
+          }
+        })
+      )
+
           .select('*')
           .order('created_at', { ascending: false })
         
