@@ -137,7 +137,15 @@ const Admin: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false })
       
-      if (appsData) setApplications(appsData)
+      // Load applications
+      const { data: applicationsData, error: appsError } = await supabase
+        .from('applications')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (!appsError && applicationsData) {
+        setApplications(applicationsData)
+      }
 
       // Load users from profiles table
       const { data: profilesData, error: profilesQueryError } = await supabase
@@ -153,21 +161,6 @@ const Admin: React.FC = () => {
         // Fallback: load profiles without applications count
         const { data: fallbackProfiles } = await supabase
           .from('profiles')
-      // Get application counts for each profile
-      const profilesWithCounts = await Promise.all(
-        (profiles || []).map(async (profile) => {
-          const { count } = await supabase
-            .from('applications')
-            .select('*', { count: 'exact', head: true })
-            .eq('user_id', profile.id)
-          
-          return {
-            ...profile,
-            applications_count: count || 0
-          }
-        })
-      )
-
           .select('*')
           .order('created_at', { ascending: false })
         
@@ -192,16 +185,6 @@ const Admin: React.FC = () => {
         setUsers(usersWithCounts)
       }
 
-      // Load applications
-      const { data: applicationsData, error: appsError } = await supabase
-        .from('applications')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (!appsError && applicationsData) {
-        setApplications(applicationsData)
-      }
-
       // Fetch profiles separately
       const { data: fetchedProfiles, error: profilesError2 } = await supabase
         .from('profiles')
@@ -213,7 +196,7 @@ const Admin: React.FC = () => {
       // Fetch applications count for each user
       const { data: applications, error: applicationsError } = await supabase
         .from('applications')
-      const profilesWithCounts = await Promise.all((fetchedProfiles || []).map(async (profile: any) => {
+        .select('*')
 
       if (applicationsError) throw applicationsError
 
@@ -222,6 +205,21 @@ const Admin: React.FC = () => {
         acc[app.user_id] = (acc[app.user_id] || 0) + 1
         return acc
       }, {}) || {}
+
+      // Get application counts for each profile
+      const profilesWithCounts = await Promise.all(
+        (profiles || []).map(async (profile) => {
+          const { count } = await supabase
+            .from('applications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', profile.id)
+          
+          return {
+            ...profile,
+            applications_count: count || 0
+          }
+        })
+      )
 
       // Transform profiles to match expected user format
       const transformedUsers = profiles?.map((profile: any) => ({
