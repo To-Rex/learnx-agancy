@@ -194,8 +194,3 @@ INSERT INTO partners (name, logo) VALUES
 ('Oxford University', 'https://images.pexels.com/photos/1205651/pexels-photo-1205651.jpeg?auto=compress&cs=tinysrgb&w=200'),
 ('Cambridge University', 'https://images.pexels.com/photos/1438072/pexels-photo-1438072.jpeg?auto=compress&cs=tinysrgb&w=200'),
 ('Yale University', 'https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=200');
-
--- Insert default admin user (username: admin, password: admin)
--- Note: In production, use a proper password hashing library
-INSERT INTO admin_users (username, password_hash) VALUES
-('admin', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
