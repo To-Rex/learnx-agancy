@@ -206,9 +206,12 @@ const Navbar: React.FC = () => {
                 {user ? (
                   <div className="border-t pt-4 mt-4 space-y-2">
                     {/* Mobile Language Selector */}
-                    <div className="px-4 py-2">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Til / Language</p>
-                      <div className="grid grid-cols-3 gap-2">
+                    <div className="px-4 py-3">
+                      <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
+                        <Globe className="h-4 w-4 mr-2 text-blue-600" />
+                        Til / Language / Язык
+                      </p>
+                      <div className="grid grid-cols-1 gap-2">
                         {languages.map((lang) => (
                           <button
                             key={lang.code}
@@ -216,14 +219,20 @@ const Navbar: React.FC = () => {
                               setLanguage(lang.code as any)
                               setIsOpen(false)
                             }}
-                            className={`p-2 rounded-lg text-center text-sm ${
+                            className={`p-3 rounded-xl text-left text-sm flex items-center space-x-3 transition-all ${
                               language === lang.code 
-                                ? 'bg-blue-100 text-blue-600 font-medium' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                ? 'bg-gradient-to-r from-blue-100 to-purple-100 text-blue-700 font-semibold border-2 border-blue-200' 
+                                : 'bg-gray-50 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 border-2 border-transparent'
                             }`}
                           >
-                            <div>{lang.flag}</div>
-                            <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
+                            <span className="text-2xl">{lang.flag}</span>
+                            <div className="flex-1">
+                              <div className="font-medium">{lang.name}</div>
+                              <div className="text-xs text-gray-500">{lang.code.toUpperCase()}</div>
+                            </div>
+                            {language === lang.code && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            )}
                           </button>
                         ))}
                       </div>
