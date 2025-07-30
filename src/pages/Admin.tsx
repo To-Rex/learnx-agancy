@@ -63,16 +63,47 @@ const Admin: React.FC = () => {
       
       if (appsData) setApplications(appsData)
 
-      // Get profiles with user info
-      const { data: profilesData } = await supabase
+      // Fetch profiles separately
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          applications(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
+
+      if (profilesError) throw profilesError
+
+      // Fetch applications count for each user
+      const { data: applications, error: applicationsError } = await supabase
+        .from('applications')
+        .select('user_id')
+
+      if (applicationsError) throw applicationsError
+
+      // Count applications per user
+      const applicationCounts = applications?.reduce((acc: any, app: any) => {
+        acc[app.user_id] = (acc[app.user_id] || 0) + 1
+        return acc
+      }, {}) || {}
+
+      // Transform profiles to match expected user format
+      const transformedUsers = profiles?.map((profile: any) => ({
+        id: profile.id,
+        email: profile.email || 'Kiritilmagan',
+        user_metadata: {
+          full_name: profile.full_name,
+          avatar_url: profile.avatar_url
+        },
+        app_metadata: {
+          provider: 'email'
+        },
+        email_confirmed_at: profile.created_at,
+        last_sign_in_at: profile.updated_at,
+        created_at: profile.created_at,
+        applications_count: applicationCounts[profile.id] || 0
+      })) || []
+
+      setUsers(transformedUsers)
       
-      if (profilesData) setProfiles(profilesData)
+      if (profiles) setProfiles(profiles)
 
       // Load admin users
       const { data: adminData } = await supabase
