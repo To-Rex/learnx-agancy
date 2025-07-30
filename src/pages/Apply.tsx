@@ -2,12 +2,13 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Upload, FileText, User, Mail, Phone, MapPin, Calendar, GraduationCap, Briefcase, CheckCircle, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import FileUpload from '../components/FileUpload'
 import { STORAGE_BUCKETS } from '../lib/storage'
 
@@ -27,6 +28,7 @@ const schema = yup.object({
 
 const Apply: React.FC = () => {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   const [uploading, setUploading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
@@ -38,10 +40,10 @@ const Apply: React.FC = () => {
   })
 
   const steps = [
-    { id: 1, title: "Shaxsiy ma'lumotlar", icon: User },
-    { id: 2, title: "Ta'lim va tajriba", icon: GraduationCap },
-    { id: 3, title: "Dastur tanlash", icon: Briefcase },
-    { id: 4, title: "Hujjatlar", icon: FileText }
+    { id: 1, title: t('apply.step1'), icon: User },
+    { id: 2, title: t('apply.step2'), icon: GraduationCap },
+    { id: 3, title: t('apply.step3'), icon: Briefcase },
+    { id: 4, title: t('apply.step4'), icon: FileText }
   ]
 
   const programs = [
@@ -82,7 +84,7 @@ const Apply: React.FC = () => {
     console.log('Form submitted with data:', data)
     
     if (!user) {
-      toast.error('Ariza topshirish uchun tizimga kiring')
+      toast.error('Please login to submit application')
       return
     }
 
@@ -121,7 +123,7 @@ const Apply: React.FC = () => {
       }
 
       console.log('Application saved successfully:', result)
-      toast.success('Ariza muvaffaqiyatli yuborildi!')
+      toast.success('Application submitted successfully!')
       
       // Reset form
       setCurrentStep(1)
@@ -133,7 +135,7 @@ const Apply: React.FC = () => {
       }, 2000)
       
     } catch (error) {
-      toast.error('Ariza topshirishda xatolik yuz berdi. Qayta urinib ko\'ring.')
+      toast.error('Error submitting application. Please try again.')
       console.error('Error:', error)
     } finally {
       setUploading(false)
@@ -389,10 +391,10 @@ const Apply: React.FC = () => {
           className="text-center mb-12"
         >
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Ariza topshirish
+            {t('apply.title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Chet davlatlarga ta'lim olish yoki ishlash uchun ariza topshiring
+            {t('apply.description')}
           </p>
         </motion.div>
 
@@ -443,7 +445,7 @@ const Apply: React.FC = () => {
                 disabled={currentStep === 1}
                 className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Orqaga
+                {t('apply.back')}
               </button>
 
               {currentStep < 4 ? (
@@ -452,7 +454,7 @@ const Apply: React.FC = () => {
                   onClick={nextStep}
                   className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Keyingi
+                  {t('apply.next')}
                 </button>
               ) : (
                 <button
@@ -463,18 +465,30 @@ const Apply: React.FC = () => {
                   {uploading ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>Yuborilmoqda...</span>
+                      <span>{t('apply.submitting')}</span>
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-5 w-5" />
-                      <span>Ariza topshirish</span>
+                      <span>{t('apply.submit')}</span>
                     </>
                   )}
                 </button>
               )}
             </div>
           </form>
+          
+          {/* Login prompt for non-authenticated users */}
+          {!user && (
+            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-center">
+                Ariza topshirish uchun tizimga kirishingiz kerak.{' '}
+                <Link to="/login" className="font-semibold underline hover:text-blue-900">
+                  Bu yerda kiring
+                </Link>
+              </p>
+            </div>
+          )}
         </motion.div>
       </div>
     </div>

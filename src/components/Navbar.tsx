@@ -1,20 +1,29 @@
 import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, GraduationCap, User, Settings, LogOut } from 'lucide-react'
+import { Menu, X, GraduationCap, User, Settings, LogOut, Globe } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
+import { useLanguage } from '../contexts/LanguageContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const [showLanguageMenu, setShowLanguageMenu] = useState(false)
   const location = useLocation()
   const { user, isAdmin, signOut } = useAuth()
+  const { language, setLanguage, t } = useLanguage()
 
   const navLinks = [
-    { name: 'Bosh sahifa', path: '/' },
-    { name: 'Xizmatlar', path: '/services' },
-    { name: 'Jarayon', path: '/process' },
-    { name: 'Hikoyalar', path: '/stories' },
-    { name: 'Aloqa', path: '/contact' }
+    { name: t('nav.home'), path: '/' },
+    { name: t('nav.services'), path: '/services' },
+    { name: t('nav.process'), path: '/process' },
+    { name: t('nav.stories'), path: '/stories' },
+    { name: t('nav.contact'), path: '/contact' }
+  ]
+
+  const languages = [
+    { code: 'uz', name: 'O\'zbekcha', flag: '🇺🇿' },
+    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'ru', name: 'Русский', flag: '🇷🇺' }
   ]
 
   const isActive = (path: string) => location.pathname === path
@@ -68,6 +77,46 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* Language Selector */}
+            <div className="relative">
+              <button
+                onClick={() => setShowLanguageMenu(!showLanguageMenu)}
+                className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all"
+              >
+                <Globe className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  {languages.find(lang => lang.code === language)?.flag}
+                </span>
+              </button>
+              
+              <AnimatePresence>
+                {showLanguageMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                  >
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code as any)
+                          setShowLanguageMenu(false)
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center space-x-3 ${
+                          language === lang.code ? 'bg-blue-50 text-blue-600' : 'text-gray-700'
+                        }`}
+                      >
+                        <span className="text-lg">{lang.flag}</span>
+                        <span>{lang.name}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
             {user ? (
               <div className="flex items-center space-x-3">
                 <Link
@@ -75,14 +124,14 @@ const Navbar: React.FC = () => {
                   className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-blue-600 hover:bg-gray-50 rounded-lg transition-all font-medium"
                 >
                   <User className="h-4 w-4" />
-                  <span>Profil</span>
+                  <span>{t('nav.profile')}</span>
                 </Link>
                 <button
                   onClick={handleSignOut}
                   className="flex items-center space-x-2 px-3 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-all font-medium"
                 >
                   <LogOut className="h-4 w-4" />
-                  <span>Chiqish</span>
+                  <span>{t('nav.logout')}</span>
                 </button>
               </div>
             ) : (
@@ -91,13 +140,13 @@ const Navbar: React.FC = () => {
                   to="/login"
                   className="px-3 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-gray-50 transition-all text-sm"
                 >
-                  Kirish
+                  {t('nav.login')}
                 </Link>
                 <Link
                   to="/register"
                   className="px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all font-medium shadow-md hover:shadow-lg text-sm whitespace-nowrap"
                 >
-                  Ro'yxatdan o'tish
+                  {t('nav.register')}
                 </Link>
               </div>
             )}
@@ -141,37 +190,83 @@ const Navbar: React.FC = () => {
                 
                 {user ? (
                   <div className="border-t pt-4 mt-4 space-y-2">
+                    {/* Mobile Language Selector */}
+                    <div className="px-4 py-2">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Til / Language</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {languages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code as any)
+                              setIsOpen(false)
+                            }}
+                            className={`p-2 rounded-lg text-center text-sm ${
+                              language === lang.code 
+                                ? 'bg-blue-100 text-blue-600 font-medium' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            <div>{lang.flag}</div>
+                            <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <Link
                       to="/profile"
                       onClick={() => setIsOpen(false)}
                       className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-gray-50"
                     >
                       <User className="h-5 w-5" />
-                      <span>Profil</span>
+                      <span>{t('nav.profile')}</span>
                     </Link>
                     <button
                       onClick={handleSignOut}
                       className="flex items-center space-x-3 w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 font-medium rounded-lg"
                     >
                       <LogOut className="h-5 w-5" />
-                      <span>Chiqish</span>
+                      <span>{t('nav.logout')}</span>
                     </button>
                   </div>
                 ) : (
                   <div className="border-t pt-4 mt-4 space-y-2">
+                    {/* Mobile Language Selector */}
+                    <div className="px-4 py-2">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Til / Language</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {languages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code as any)
+                              setIsOpen(false)
+                            }}
+                            className={`p-2 rounded-lg text-center text-sm ${
+                              language === lang.code 
+                                ? 'bg-blue-100 text-blue-600 font-medium' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            <div>{lang.flag}</div>
+                            <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                     <Link
                       to="/login"
                       onClick={() => setIsOpen(false)}
                       className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-gray-50 text-center"
                     >
-                      Kirish
+                      {t('nav.login')}
                     </Link>
                     <Link
                       to="/register"
                       onClick={() => setIsOpen(false)}
                       className="block px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 text-center font-medium"
                     >
-                      Ro'yxatdan o'tish
+                      {t('nav.register')}
                     </Link>
                   </div>
                 )}

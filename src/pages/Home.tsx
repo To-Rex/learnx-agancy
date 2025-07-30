@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Plane, FileText, Users, CheckCircle, Star, Award, Globe, BookOpen, TrendingUp } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
 
 const Home: React.FC = () => {
+  const { t } = useLanguage()
   const [services, setServices] = useState([])
   const [testimonials, setTestimonials] = useState([])
   const [partners, setPartners] = useState([])
@@ -129,15 +131,14 @@ const Home: React.FC = () => {
                 </motion.div>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
-                  Chet davlatlarda
+                  {t('home.hero.title')}
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
-                    ta'lim oling
+                    {t('home.hero.subtitle')}
                   </span>
                 </h1>
                 
                 <p className="text-xl text-blue-100 leading-relaxed max-w-2xl">
-                  O'zbekiston yoshlari uchun dunyoning eng yaxshi universitetlarida ta'lim olish, 
-                  visa olish va Work & Travel dasturlarida qatnashish imkoniyatini yaratamiz
+                  {t('home.hero.description')}
                 </p>
               </div>
               
@@ -150,7 +151,7 @@ const Home: React.FC = () => {
                     to="/apply"
                     className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                   >
-                    <span>Ariza topshirish</span>
+                    <span>{t('home.hero.apply')}</span>
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </motion.div>
@@ -163,7 +164,7 @@ const Home: React.FC = () => {
                     to="/contact"
                     className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all text-center"
                   >
-                    Bepul maslahat
+                    {t('home.hero.consultation')}
                   </Link>
                 </motion.div>
               </div>
@@ -235,11 +236,10 @@ const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Bizning xizmatlarimiz
+              {t('home.services.title')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Professional jamoa sizga chet davlatlarga ta'lim olish va ishlash uchun 
-              barcha zarur xizmatlarni taqdim etadi
+              {t('home.services.description')}
             </p>
           </motion.div>
 
@@ -262,7 +262,7 @@ const Home: React.FC = () => {
                   to="/services"
                   className="text-blue-600 font-semibold hover:text-blue-700 transition-colors inline-flex items-center space-x-2 group"
                 >
-                  <span>Batafsil</span>
+                  <span>{t('services.details')}</span>
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </motion.div>
@@ -281,9 +281,9 @@ const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Talabalarimizning hikoyalari
+              {t('home.testimonials.title')}
             </h2>
-            <p className="text-xl text-gray-600">Bizga ishongan talabalarimizning muvaffaqiyat hikoyalari</p>
+            <p className="text-xl text-gray-600">{t('home.testimonials.description')}</p>
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -328,9 +328,9 @@ const Home: React.FC = () => {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Hamkor universitetlar
+              {t('home.partners.title')}
             </h2>
-            <p className="text-xl text-gray-600">Dunyoning eng yaxshi universitetlari bilan hamkorlik</p>
+            <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
@@ -363,10 +363,10 @@ const Home: React.FC = () => {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-              Orzuingizdagi universitetga tayyormisiz?
+              {t('home.cta.title')}
             </h2>
             <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100">
-              Bugun biz bilan bog'laning va chet davlatlarda yangi imkoniyatlarni kashf eting
+              {t('home.cta.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.div
@@ -377,7 +377,7 @@ const Home: React.FC = () => {
                   to="/apply"
                   className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
                 >
-                  Ariza topshirish
+                  {t('home.cta.apply')}
                 </Link>
               </motion.div>
               <motion.div
@@ -388,7 +388,7 @@ const Home: React.FC = () => {
                   to="/contact"
                   className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
                 >
-                  Bog'lanish
+                  {t('home.cta.contact')}
                 </Link>
               </motion.div>
             </div>
