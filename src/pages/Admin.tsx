@@ -535,7 +535,7 @@ const Admin: React.FC = () => {
     return matchesSearch && matchesFilter
   })
 
-  const filteredUsers = users.filter((user: any) => {
+  const currentFilteredUsers = users.filter((user: any) => {
     const matchesSearch = 
       (user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
       user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -816,7 +816,7 @@ const Admin: React.FC = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredUsers.map((user: any) => (
+              {currentFilteredUsers.map((user: any) => (
                 <tr key={user.id} className="hover:bg-gray-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -893,11 +893,13 @@ const Admin: React.FC = () => {
                   </td>
                 </tr>
               ))}
-              {filteredUsers.length === 0 && (
+              {currentFilteredUsers.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
                     <User className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                    <p>Foydalanuvchilar topilmadi</p>
+                    <p>
+                      {searchTerm || filterStatus !== 'all' ? 'Filtr bo\'yicha foydalanuvchilar topilmadi' : 'Foydalanuvchilar topilmadi'}
+                    </p>
                   </td>
                 </tr>
               )}
