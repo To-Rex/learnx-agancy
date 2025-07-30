@@ -25,7 +25,10 @@ const Login: React.FC = () => {
         toast.error('Email yoki parol noto\'g\'ri')
       } else {
         toast.success('Muvaffaqiyatli kirdingiz!')
-        navigate('/profile')
+        // Small delay to ensure auth state is updated
+        setTimeout(() => {
+          navigate('/profile')
+        }, 500)
       }
     } catch (err) {
       toast.error('Kirish jarayonida xatolik yuz berdi')

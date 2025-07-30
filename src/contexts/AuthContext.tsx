@@ -29,37 +29,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [initializing, setInitializing] = useState(true)
 
   useEffect(() => {
+    let mounted = true
+    
     // Check for stored admin user data
     const storedAdminUser = localStorage.getItem('admin_user')
     if (storedAdminUser) {
       setIsAdmin(true)
-      setLoading(false)
+      if (mounted) {
+        setLoading(false)
+        setInitializing(false)
+      }
       return
     }
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('Initial session:', session)
-      setSession(session)
-      setUser(session?.user ?? null)
-      checkAdminStatus(session?.user)
-      setLoading(false)
-    })
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Session error:', error)
+        }
+        
+        console.log('Initial session:', session)
+        
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          await checkAdminStatus(session?.user)
+          setLoading(false)
+          setInitializing(false)
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        if (mounted) {
+          setLoading(false)
+          setInitializing(false)
+        }
+      }
+    }
+    
+    initializeAuth()
 
-    // Listen for auth changes
+    // Listen for auth changes with debounce
+    let timeoutId: NodeJS.Timeout
+    
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('Auth state change:', _event, session)
-      setSession(session)
-      setUser(session?.user ?? null)
-      checkAdminStatus(session?.user)
-      setLoading(false)
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth state change:', event, session)
+      
+      // Clear previous timeout
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      
+      // Debounce auth state changes
+      timeoutId = setTimeout(async () => {
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          await checkAdminStatus(session?.user)
+          setLoading(false)
+          setInitializing(false)
+        }
+      }, 100)
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
+      subscription.unsubscribe()
+    }
   }, [])
 
   const checkAdminStatus = async (user: User | null) => {
@@ -88,14 +134,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true)
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
+    
+    if (!error && data.user) {
+      // Force immediate state update
+      setUser(data.user)
+      setSession(data.session)
+      await checkAdminStatus(data.user)
+    }
+    
+    setLoading(false)
     return { data, error }
   }
 
   const signInWithGoogle = async () => {
+    setLoading(true)
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -106,6 +165,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     })
+    
+    if (error) setLoading(false)
     return { data, error }
   }
 
@@ -150,7 +211,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
+    setUser(null)
+    setSession(null)
     setIsAdmin(false)
+    setLoading(false)
     localStorage.removeItem('admin_user')
     return { error }
   }

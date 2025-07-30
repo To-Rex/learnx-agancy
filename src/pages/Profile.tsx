@@ -20,6 +20,7 @@ const Profile: React.FC = () => {
   const [showDocumentUpload, setShowDocumentUpload] = useState(false)
   const [selectedDocumentType, setSelectedDocumentType] = useState('')
   const [showOtherDocuments, setShowOtherDocuments] = useState(false)
+  const [authLoading, setAuthLoading] = useState(true)
 
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
@@ -33,6 +34,14 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadProfileData()
+      setAuthLoading(false)
+    } else {
+      // Wait a bit for auth to initialize
+      const timer = setTimeout(() => {
+        setAuthLoading(false)
+      }, 2000)
+      
+      return () => clearTimeout(timer)
     }
   }, [user])
 
@@ -178,12 +187,14 @@ const Profile: React.FC = () => {
     }
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Ma'lumotlar yuklanmoqda...</p>
+          <p className="text-gray-600">
+            {authLoading ? 'Tizimga kirilmoqda...' : 'Ma\'lumotlar yuklanmoqda...'}
+          </p>
         </div>
       </div>
     )

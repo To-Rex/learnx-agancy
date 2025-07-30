@@ -28,17 +28,10 @@ const schema = yup.object({
 const Apply: React.FC = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [files, setFiles] = useState<{ [key: string]: File | null }>({
-    passport: null,
-    photo: null,
-    diploma: null,
-    transcript: null,
-    cv: null,
-    motivation: null
-  })
   const [uploading, setUploading] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: string }>({})
+  const [formData, setFormData] = useState<any>({})
 
   const { register, handleSubmit, formState: { errors }, watch } = useForm({
     resolver: yupResolver(schema)
@@ -86,23 +79,23 @@ const Apply: React.FC = () => {
   }
 
   const onSubmit = async (data: any) => {
+    console.log('Form submitted with data:', data)
+    
     if (!user) {
       toast.error('Ariza topshirish uchun tizimga kiring')
       return
     }
 
-    // Validate required fields
-    if (!data.firstName || !data.lastName || !data.email || !data.phone || 
-        !data.birthDate || !data.address || !data.education || !data.program || 
-        !data.country || !data.motivation) {
-      toast.error('Barcha majburiy maydonlarni to\'ldiring')
-      return
-    }
+    // Store form data for all steps
+    setFormData(prev => ({ ...prev, ...data }))
+    
     setUploading(true)
     
     try {
+      console.log('Saving to database...')
+      
       // Save application to database
-      const { error } = await supabase
+      const { data: result, error } = await supabase
         .from('applications')
         .insert({
           user_id: user.id,
@@ -112,7 +105,7 @@ const Apply: React.FC = () => {
           birth_date: data.birthDate,
           passport_number: null,
           education_level: data.education,
-          university: null,
+          university: data.university || null,
           major: null,
           english_level: null,
           program_type: data.program,
@@ -122,8 +115,12 @@ const Apply: React.FC = () => {
           created_at: new Date().toISOString()
         })
 
-      if (error) throw error
+      if (error) {
+        console.error('Database error:', error)
+        throw error
+      }
 
+      console.log('Application saved successfully:', result)
       toast.success('Ariza muvaffaqiyatli yuborildi!')
       
       // Reset form
@@ -136,7 +133,7 @@ const Apply: React.FC = () => {
       }, 2000)
       
     } catch (error) {
-      toast.error('Xatolik yuz berdi. Qayta urinib ko\'ring.')
+      toast.error('Ariza topshirishda xatolik yuz berdi. Qayta urinib ko\'ring.')
       console.error('Error:', error)
     } finally {
       setUploading(false)
@@ -461,7 +458,7 @@ const Apply: React.FC = () => {
                 <button
                   type="submit"
                   disabled={uploading}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold"
                 >
                   {uploading ? (
                     <>
@@ -469,7 +466,10 @@ const Apply: React.FC = () => {
                       <span>Yuborilmoqda...</span>
                     </>
                   ) : (
-                    <span>Ariza topshirish</span>
+                    <>
+                      <CheckCircle className="h-5 w-5" />
+                      <span>Ariza topshirish</span>
+                    </>
                   )}
                 </button>
               )}
