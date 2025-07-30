@@ -203,7 +203,7 @@ const Admin: React.FC = () => {
       }
 
       // Fetch profiles separately
-      const { data: profiles, error: profilesError2 } = await supabase
+      const { data: fetchedProfiles, error: profilesError2 } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
@@ -213,7 +213,7 @@ const Admin: React.FC = () => {
       // Fetch applications count for each user
       const { data: applications, error: applicationsError } = await supabase
         .from('applications')
-        .select('user_id')
+      const profilesWithCounts = await Promise.all((fetchedProfiles || []).map(async (profile: any) => {
 
       if (applicationsError) throw applicationsError
 
