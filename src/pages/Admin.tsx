@@ -60,10 +60,7 @@ const Admin: React.FC = () => {
       // Load regular users
       const { data: usersData } = await supabase
         .from('profiles')
-        .select(`
-          *,
-          applications(count)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
       
       if (usersData) setUsers(usersData)
