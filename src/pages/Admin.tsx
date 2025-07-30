@@ -505,15 +505,11 @@ const Admin: React.FC = () => {
       e.preventDefault()
       
       try {
-        // Hash the password before storing
-        const hashedPassword = await hashPassword(formData.password)
-        
         const { error } = await supabase
-          .from('admin_users')
-          .insert({
-            username: formData.username,
-            password_hash: hashedPassword,
-            role: formData.role
+          .rpc('create_admin_user', {
+            input_username: formData.username,
+            input_password: formData.password,
+            input_role: formData.role
           })
 
         if (error) throw error

@@ -19,48 +19,38 @@ const AdminLogin: React.FC = () => {
     setLoading(true)
     
     try {
-      // Simple hardcoded check first to test
-      if (username === 'admin' && password === 'admin') {
-        const mockAdmin = {
-          id: '1',
-          username: 'admin',
-          role: 'super_admin',
-          created_at: new Date().toISOString()
-        }
-        localStorage.setItem('admin_user', JSON.stringify(mockAdmin))
-        toast.success('Admin panelga xush kelibsiz!')
-        navigate('/admin/dashboard')
-        setLoading(false)
-        return
-      }
-
-      // Try database check
+      // Database check with proper password verification
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
         .eq('username', username)
         .maybeSingle()
 
-      console.log('Database check:', { username, data, error })
-
       if (error || !data) {
-        console.log('Database error or no user found')
         toast.error('Noto\'g\'ri login yoki parol')
         setLoading(false)
         return
       }
 
-      // Check password (try both hashed and plain)
-      const isPasswordValid = password === data.password_hash || 
-                             password === 'admin' || 
-                             password === 'admin123'
+      // Verify password using PostgreSQL crypt function
+      const { data: passwordCheck, error: passwordError } = await supabase
+        .rpc('verify_admin_password', {
+          input_username: username,
+          input_password: password
+        })
       
-      if (isPasswordValid) {
+      if (passwordError) {
+        console.error('Password verification error:', passwordError)
+        toast.error('Parol tekshirishda xatolik')
+        setLoading(false)
+        return
+      }
+
+      if (passwordCheck) {
         localStorage.setItem('admin_user', JSON.stringify(data))
         toast.success('Admin panelga xush kelibsiz!')
         navigate('/admin/dashboard')
       } else {
-        console.log('Password mismatch:', { entered: password, stored: data.password_hash })
         toast.error('Noto\'g\'ri parol')
       }
     } catch (err) {
