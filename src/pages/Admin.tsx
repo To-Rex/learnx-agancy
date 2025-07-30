@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react'
+import { Users, FileText, MessageSquare, Settings, BarChart3, Plus, Edit, Trash2, Eye, LogOut, UserPlus, Shield, Crown, Briefcase, Search, Filter, Download, Upload, CheckCircle, XCircle, Clock, AlertTriangle, Lock, Unlock, Key, Star, Globe, Award, TrendingUp, Calendar, Mail, Phone, MapPin, Save, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-import { hashPassword } from '../lib/auth'
 import toast, { Toaster } from 'react-hot-toast'
 
 interface AdminUser {
   id: string
   username: string
   role: 'super_admin' | 'admin' | 'manager' | 'sales'
+  is_active: boolean
   created_at: string
 }
 
@@ -18,11 +18,20 @@ const Admin: React.FC = () => {
   const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(null)
   const [applications, setApplications] = useState([])
   const [users, setUsers] = useState([])
+  const [profiles, setProfiles] = useState([])
   const [adminUsers, setAdminUsers] = useState([])
   const [services, setServices] = useState([])
   const [stories, setStories] = useState([])
   const [loading, setLoading] = useState(true)
   const [showCreateUser, setShowCreateUser] = useState(false)
+  const [showEditUser, setShowEditUser] = useState(false)
+  const [showCreateService, setShowCreateService] = useState(false)
+  const [showEditService, setShowEditService] = useState(false)
+  const [showCreateStory, setShowCreateStory] = useState(false)
+  const [showEditStory, setShowEditStory] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<any>(null)
+  const [selectedService, setSelectedService] = useState<any>(null)
+  const [selectedStory, setSelectedStory] = useState<any>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('all')
   
@@ -54,13 +63,17 @@ const Admin: React.FC = () => {
       
       if (appsData) setApplications(appsData)
 
-      // Load regular users
-      const { data: usersData } = await supabase
+      // Load auth users
+      const { data: authUsers } = await supabase.auth.admin.listUsers()
+      if (authUsers?.users) setUsers(authUsers.users)
+
+      // Load profiles
+      const { data: profilesData } = await supabase
         .from('profiles')
         .select('*')
         .order('created_at', { ascending: false })
       
-      if (usersData) setUsers(usersData)
+      if (profilesData) setProfiles(profilesData)
 
       // Load admin users
       const { data: adminData } = await supabase
@@ -167,34 +180,136 @@ const Admin: React.FC = () => {
     }
   }
 
+  const toggleAdminStatus = async (id: string, isActive: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .update({ is_active: !isActive })
+        .eq('id', id)
+
+      if (error) throw error
+
+      setAdminUsers(prev => 
+        prev.map((admin: any) => 
+          admin.id === id ? { ...admin, is_active: !isActive } : admin
+        )
+      )
+      
+      toast.success(isActive ? 'Xodim bloklandi' : 'Xodim aktivlashtirildi')
+    } catch (error) {
+      toast.error('Xatolik yuz berdi')
+    }
+  }
+
+  const deleteAdmin = async (id: string) => {
+    if (!confirm('Xodimni o\'chirmoqchimisiz?')) return
+
+    try {
+      const { error } = await supabase
+        .from('admin_users')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setAdminUsers(prev => prev.filter((admin: any) => admin.id !== id))
+      toast.success('Xodim o\'chirildi')
+    } catch (error) {
+      toast.error('Xatolik yuz berdi')
+    }
+  }
+
+  const deleteService = async (id: string) => {
+    if (!confirm('Xizmatni o\'chirmoqchimisiz?')) return
+
+    try {
+      const { error } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setServices(prev => prev.filter((service: any) => service.id !== id))
+      toast.success('Xizmat o\'chirildi')
+    } catch (error) {
+      toast.error('Xatolik yuz berdi')
+    }
+  }
+
+  const deleteStory = async (id: string) => {
+    if (!confirm('Hikoyani o\'chirmoqchimisiz?')) return
+
+    try {
+      const { error } = await supabase
+        .from('stories')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setStories(prev => prev.filter((story: any) => story.id !== id))
+      toast.success('Hikoya o\'chirildi')
+    } catch (error) {
+      toast.error('Xatolik yuz berdi')
+    }
+  }
+
+  // Calculate accurate statistics
+  const todayApplications = applications.filter((app: any) => 
+    new Date(app.created_at).toDateString() === new Date().toDateString()
+  ).length
+
+  const thisWeekApplications = applications.filter((app: any) => {
+    const appDate = new Date(app.created_at)
+    const weekAgo = new Date()
+    weekAgo.setDate(weekAgo.getDate() - 7)
+    return appDate >= weekAgo
+  }).length
+
+  const thisMonthApplications = applications.filter((app: any) => {
+    const appDate = new Date(app.created_at)
+    const monthAgo = new Date()
+    monthAgo.setMonth(monthAgo.getMonth() - 1)
+    return appDate >= monthAgo
+  }).length
+
+  const successRate = applications.length > 0 
+    ? Math.round((applications.filter((app: any) => app.status === 'approved').length / applications.length) * 100)
+    : 0
+
   const stats = [
     { 
       title: 'Jami arizalar', 
       value: applications.length, 
       color: 'blue',
       icon: FileText,
-      change: '+12%'
+      change: `+${thisWeekApplications} (hafta)`,
+      trend: 'up'
     },
     { 
       title: 'Kutilayotgan', 
       value: applications.filter((app: any) => app.status === 'pending').length, 
       color: 'yellow',
       icon: Clock,
-      change: '+5%'
+      change: `${Math.round((applications.filter((app: any) => app.status === 'pending').length / Math.max(applications.length, 1)) * 100)}%`,
+      trend: 'neutral'
     },
     { 
       title: 'Tasdiqlangan', 
       value: applications.filter((app: any) => app.status === 'approved').length, 
       color: 'green',
       icon: CheckCircle,
-      change: '+18%'
+      change: `${successRate}% muvaffaqiyat`,
+      trend: 'up'
     },
     { 
       title: 'Foydalanuvchilar', 
       value: users.length, 
       color: 'purple',
       icon: Users,
-      change: '+8%'
+      change: `+${profiles.length} profil`,
+      trend: 'up'
     }
   ]
 
@@ -225,6 +340,7 @@ const Admin: React.FC = () => {
           <div className="text-right">
             <p className="text-blue-100">Bugun</p>
             <p className="text-2xl font-bold">{new Date().toLocaleDateString('uz-UZ')}</p>
+            <p className="text-blue-200 text-sm">{todayApplications} yangi ariza</p>
           </div>
         </div>
       </div>
@@ -243,7 +359,12 @@ const Admin: React.FC = () => {
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-${stat.color}-100`}>
                 <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
               </div>
-              <span className="text-green-500 text-sm font-medium">{stat.change}</span>
+              <span className={`text-sm font-medium ${
+                stat.trend === 'up' ? 'text-green-500' : 
+                stat.trend === 'down' ? 'text-red-500' : 'text-gray-500'
+              }`}>
+                {stat.change}
+              </span>
             </div>
             <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
             <p className="text-gray-600">{stat.title}</p>
@@ -251,51 +372,59 @@ const Admin: React.FC = () => {
         ))}
       </div>
 
-      {/* Recent Activity */}
+      {/* Charts and Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-lg font-bold text-gray-900 mb-4">So'nggi arizalar</h3>
           <div className="space-y-4">
             {applications.slice(0, 5).map((app: any) => (
-              <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={app.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div>
                   <p className="font-medium text-gray-900">{app.full_name}</p>
-                  <p className="text-sm text-gray-500">{app.program_type}</p>
+                  <p className="text-sm text-gray-500">{app.program_type} - {app.country_preference}</p>
+                  <p className="text-xs text-gray-400">{new Date(app.created_at).toLocaleString('uz-UZ')}</p>
                 </div>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(app.status)}`}>
                   {getStatusText(app.status)}
                 </span>
               </div>
             ))}
+            {applications.length === 0 && (
+              <p className="text-gray-500 text-center py-4">Hali arizalar yo'q</p>
+            )}
           </div>
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-lg">
           <h3 className="text-lg font-bold text-gray-900 mb-4">Tizim statistikasi</h3>
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Bugungi arizalar</span>
-              <span className="font-semibold text-blue-600">
-                {applications.filter((app: any) => 
-                  new Date(app.created_at).toDateString() === new Date().toDateString()
-                ).length}
+            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+              <span className="text-gray-700 flex items-center space-x-2">
+                <Calendar className="h-4 w-4 text-blue-500" />
+                <span>Bugungi arizalar</span>
               </span>
+              <span className="font-semibold text-blue-600">{todayApplications}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Faol foydalanuvchilar</span>
+            <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+              <span className="text-gray-700 flex items-center space-x-2">
+                <Users className="h-4 w-4 text-green-500" />
+                <span>Faol foydalanuvchilar</span>
+              </span>
               <span className="font-semibold text-green-600">{users.length}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Xodimlar soni</span>
+            <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+              <span className="text-gray-700 flex items-center space-x-2">
+                <Shield className="h-4 w-4 text-purple-500" />
+                <span>Xodimlar soni</span>
+              </span>
               <span className="font-semibold text-purple-600">{adminUsers.length}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Muvaffaqiyat foizi</span>
-              <span className="font-semibold text-orange-600">
-                {applications.length > 0 
-                  ? Math.round((applications.filter((app: any) => app.status === 'approved').length / applications.length) * 100)
-                  : 0}%
+            <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+              <span className="text-gray-700 flex items-center space-x-2">
+                <TrendingUp className="h-4 w-4 text-orange-500" />
+                <span>Muvaffaqiyat foizi</span>
               </span>
+              <span className="font-semibold text-orange-600">{successRate}%</span>
             </div>
           </div>
         </div>
@@ -308,7 +437,7 @@ const Admin: React.FC = () => {
       {/* Header with Search and Filters */}
       <div className="bg-white p-6 rounded-xl shadow-lg">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Barcha arizalar</h3>
+          <h3 className="text-xl font-bold text-gray-900">Barcha arizalar ({applications.length})</h3>
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -349,7 +478,7 @@ const Admin: React.FC = () => {
             <tbody>
               {filteredApplications.map((app: any) => (
                 <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4">{app.full_name}</td>
+                  <td className="py-3 px-4 font-medium">{app.full_name}</td>
                   <td className="py-3 px-4">{app.email}</td>
                   <td className="py-3 px-4">{app.program_type}</td>
                   <td className="py-3 px-4">{app.country_preference}</td>
@@ -357,24 +486,33 @@ const Admin: React.FC = () => {
                     <select
                       value={app.status}
                       onChange={(e) => updateApplicationStatus(app.id, e.target.value)}
-                      className="px-2 py-1 border border-gray-300 rounded text-sm"
+                      className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="pending">Kutilmoqda</option>
                       <option value="approved">Tasdiqlangan</option>
                       <option value="rejected">Rad etilgan</option>
                     </select>
                   </td>
-                  <td className="py-3 px-4">{new Date(app.created_at).toLocaleDateString('uz-UZ')}</td>
+                  <td className="py-3 px-4 text-sm">{new Date(app.created_at).toLocaleDateString('uz-UZ')}</td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
+                      <button 
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        title="Ko'rish"
+                      >
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50">
+                      <button 
+                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                        title="Yuklab olish"
+                      >
                         <Download className="h-4 w-4" />
                       </button>
                       {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'admin') && (
-                        <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
+                        <button 
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                          title="O'chirish"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
@@ -384,70 +522,169 @@ const Admin: React.FC = () => {
               ))}
             </tbody>
           </table>
+          {filteredApplications.length === 0 && (
+            <div className="text-center py-8">
+              <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Arizalar topilmadi</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 
-  const renderUsers = () => (
-    <div className="bg-white p-6 rounded-xl shadow-lg">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-xl font-bold text-gray-900">Foydalanuvchilar</h3>
-      </div>
-      
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-gray-200">
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Ism</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Telefon</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Arizalar</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Ro'yxatdan o'tgan</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user: any) => (
-              <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-3 px-4">{user.full_name || 'Kiritilmagan'}</td>
-                <td className="py-3 px-4">{user.id}</td>
-                <td className="py-3 px-4">{user.phone || 'Kiritilmagan'}</td>
-                <td className="py-3 px-4">
-                  {applications.filter((app: any) => app.user_id === user.id).length}
-                </td>
-                <td className="py-3 px-4">{new Date(user.created_at).toLocaleDateString('uz-UZ')}</td>
-                <td className="py-3 px-4">
-                  <div className="flex space-x-2">
-                    <button className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50">
-                      <Eye className="h-4 w-4" />
-                    </button>
-                    <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50">
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'admin') && (
-                      <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
-                  </div>
-                </td>
+  const renderUsers = () => {
+    // Combine auth users with profiles
+    const combinedUsers = users.map((user: any) => {
+      const profile = profiles.find((p: any) => p.id === user.id)
+      return {
+        ...user,
+        profile: profile || null,
+        applications_count: applications.filter((app: any) => app.user_id === user.id).length
+      }
+    })
+
+    return (
+      <div className="bg-white p-6 rounded-xl shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Foydalanuvchilar ({users.length})</h3>
+          <div className="flex items-center space-x-4">
+            <div className="text-sm text-gray-600">
+              <span className="font-medium">{profiles.length}</span> profil to'ldirilgan
+            </div>
+          </div>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200">
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Foydalanuvchi</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Email</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Telefon</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Kirish usuli</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Arizalar</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Ro'yxatdan o'tgan</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {combinedUsers.map((user: any) => (
+                <tr key={user.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100">
+                        {user.user_metadata?.avatar_url || user.profile?.avatar_url ? (
+                          <img
+                            src={user.user_metadata?.avatar_url || user.profile?.avatar_url}
+                            alt="Avatar"
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
+                            {(user.profile?.full_name || user.email || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {user.profile?.full_name || user.user_metadata?.full_name || 'Kiritilmagan'}
+                        </p>
+                        {user.profile && (
+                          <p className="text-xs text-green-600">Profil to'ldirilgan</p>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm">{user.email}</span>
+                      {user.email_confirmed_at && (
+                        <CheckCircle className="h-4 w-4 text-green-500" title="Tasdiqlangan" />
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    {user.profile?.phone ? (
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-4 w-4 text-gray-400" />
+                        <span className="text-sm">{user.profile.phone}</span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">Kiritilmagan</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex items-center space-x-2">
+                      {user.app_metadata?.provider === 'google' ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center">
+                            <span className="text-white text-xs">G</span>
+                          </div>
+                          <span className="text-sm">Google</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm">Email</span>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {user.applications_count}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-sm">{new Date(user.created_at).toLocaleDateString('uz-UZ')}</td>
+                  <td className="py-3 px-4">
+                    <div className="flex space-x-2">
+                      <button 
+                        className="text-blue-600 hover:text-blue-800 p-1 rounded hover:bg-blue-50"
+                        title="Ko'rish"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button 
+                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                        title="Tahrirlash"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'admin') && (
+                        <button 
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                          title="Bloklash"
+                        >
+                          <Lock className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {combinedUsers.length === 0 && (
+            <div className="text-center py-8">
+              <Users className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Foydalanuvchilar topilmadi</p>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   const renderStaff = () => (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-xl shadow-lg">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-gray-900">Xodimlar boshqaruvi</h3>
+          <h3 className="text-xl font-bold text-gray-900">Xodimlar boshqaruvi ({adminUsers.length})</h3>
           <button 
             onClick={() => setShowCreateUser(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
           >
             <UserPlus className="h-4 w-4" />
             <span>Yangi xodim</span>
@@ -460,6 +697,7 @@ const Admin: React.FC = () => {
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Login</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Rol</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Yaratilgan</th>
                 <th className="text-left py-3 px-4 font-semibold text-gray-700">Amallar</th>
               </tr>
@@ -469,17 +707,56 @@ const Admin: React.FC = () => {
                 <tr key={admin.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 flex items-center space-x-2">
                     {getRoleIcon(admin.role)}
-                    <span>{admin.username}</span>
+                    <span className="font-medium">{admin.username}</span>
                   </td>
-                  <td className="py-3 px-4">{getRoleName(admin.role)}</td>
-                  <td className="py-3 px-4">{new Date(admin.created_at).toLocaleDateString('uz-UZ')}</td>
+                  <td className="py-3 px-4">
+                    <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">
+                      {getRoleName(admin.role)}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      admin.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {admin.is_active !== false ? 'Faol' : 'Bloklangan'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4 text-sm">{new Date(admin.created_at).toLocaleDateString('uz-UZ')}</td>
                   <td className="py-3 px-4">
                     <div className="flex space-x-2">
-                      <button className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50">
+                      <button 
+                        onClick={() => {
+                          setSelectedUser(admin)
+                          setShowEditUser(true)
+                        }}
+                        className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                        title="Tahrirlash"
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
+                      <button 
+                        onClick={() => toggleAdminStatus(admin.id, admin.is_active !== false)}
+                        className={`p-1 rounded ${
+                          admin.is_active !== false 
+                            ? 'text-orange-600 hover:text-orange-800 hover:bg-orange-50' 
+                            : 'text-blue-600 hover:text-blue-800 hover:bg-blue-50'
+                        }`}
+                        title={admin.is_active !== false ? 'Bloklash' : 'Aktivlashtirish'}
+                      >
+                        {admin.is_active !== false ? <Lock className="h-4 w-4" /> : <Unlock className="h-4 w-4" />}
+                      </button>
+                      <button 
+                        className="text-purple-600 hover:text-purple-800 p-1 rounded hover:bg-purple-50"
+                        title="Parolni o'zgartirish"
+                      >
+                        <Key className="h-4 w-4" />
+                      </button>
                       {admin.role !== 'super_admin' && (
-                        <button className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50">
+                        <button 
+                          onClick={() => deleteAdmin(admin.id)}
+                          className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                          title="O'chirish"
+                        >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       )}
@@ -489,20 +766,181 @@ const Admin: React.FC = () => {
               ))}
             </tbody>
           </table>
+          {adminUsers.length === 0 && (
+            <div className="text-center py-8">
+              <Shield className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <p className="text-gray-500">Xodimlar topilmadi</p>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 
+  const renderServices = () => (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Xizmatlar ({services.length})</h3>
+          <button 
+            onClick={() => setShowCreateService(true)}
+            className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Yangi xizmat</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {services.map((service: any) => (
+            <div key={service.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 rounded-lg flex items-center justify-center bg-${service.color || 'blue'}-100`}>
+                  <Settings className={`h-6 w-6 text-${service.color || 'blue'}-600`} />
+                </div>
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => {
+                      setSelectedService(service)
+                      setShowEditService(true)
+                    }}
+                    className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </button>
+                  <button 
+                    onClick={() => deleteService(service.id)}
+                    className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+              <h4 className="text-lg font-bold text-gray-900 mb-2">{service.title}</h4>
+              <p className="text-gray-600 mb-4 line-clamp-3">{service.description}</p>
+              {service.price && (
+                <p className="text-lg font-bold text-blue-600 mb-2">{service.price}</p>
+              )}
+              {service.features && service.features.length > 0 && (
+                <div className="text-sm text-gray-500">
+                  {service.features.length} xususiyat
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {services.length === 0 && (
+          <div className="text-center py-12">
+            <Settings className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">Hali xizmatlar qo'shilmagan</p>
+            <button 
+              onClick={() => setShowCreateService(true)}
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
+            >
+              Birinchi xizmatni qo'shing
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  const renderStories = () => (
+    <div className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-lg">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-xl font-bold text-gray-900">Hikoyalar ({stories.length})</h3>
+          <button 
+            onClick={() => setShowCreateStory(true)}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 flex items-center space-x-2 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Yangi hikoya</span>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {stories.map((story: any) => (
+            <div key={story.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+              {story.image && (
+                <img 
+                  src={story.image} 
+                  alt={story.name}
+                  className="w-full h-48 object-cover"
+                />
+              )}
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <h4 className="text-lg font-bold text-gray-900">{story.name}</h4>
+                    {story.featured && (
+                      <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                    )}
+                  </div>
+                  <div className="flex space-x-2">
+                    <button 
+                      onClick={() => {
+                        setSelectedStory(story)
+                        setShowEditStory(true)
+                      }}
+                      className="text-green-600 hover:text-green-800 p-1 rounded hover:bg-green-50"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </button>
+                    <button 
+                      onClick={() => deleteStory(story.id)}
+                      className="text-red-600 hover:text-red-800 p-1 rounded hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">{story.country}</p>
+                <p className="text-gray-700 mb-4 line-clamp-3">{story.text}</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-1">
+                    {[...Array(story.rating || 5)].map((_, i) => (
+                      <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                    ))}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {new Date(story.created_at).toLocaleDateString('uz-UZ')}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {stories.length === 0 && (
+          <div className="text-center py-12">
+            <MessageSquare className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 mb-4">Hali hikoyalar qo'shilmagan</p>
+            <button 
+              onClick={() => setShowCreateStory(true)}
+              className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700"
+            >
+              Birinchi hikoyani qo'shing
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+
+  // Modal Components
   const CreateUserModal = () => {
     const [formData, setFormData] = useState({
       username: '',
       password: '',
       role: 'sales'
     })
+    const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault()
+      setLoading(true)
       
       try {
         const { error } = await supabase
@@ -516,9 +954,12 @@ const Admin: React.FC = () => {
 
         toast.success('Yangi xodim yaratildi')
         setShowCreateUser(false)
+        setFormData({ username: '', password: '', role: 'sales' })
         loadData()
       } catch (error) {
         toast.error('Xodim yaratishda xatolik')
+      } finally {
+        setLoading(false)
       }
     }
 
@@ -578,13 +1019,511 @@ const Admin: React.FC = () => {
             <div className="flex space-x-4 pt-4">
               <button
                 type="submit"
-                className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700"
+                disabled={loading}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
               >
-                Yaratish
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Yaratish'
+                )}
               </button>
               <button
                 type="button"
                 onClick={() => setShowCreateUser(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  const EditUserModal = () => {
+    const [formData, setFormData] = useState({
+      username: selectedUser?.username || '',
+      role: selectedUser?.role || 'sales',
+      newPassword: ''
+    })
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setLoading(true)
+      
+      try {
+        const updates: any = {
+          username: formData.username,
+          role: formData.role
+        }
+
+        if (formData.newPassword) {
+          const { error: passwordError } = await supabase
+            .rpc('update_admin_password', {
+              admin_id: selectedUser.id,
+              new_password: formData.newPassword
+            })
+          
+          if (passwordError) throw passwordError
+        }
+
+        const { error } = await supabase
+          .from('admin_users')
+          .update(updates)
+          .eq('id', selectedUser.id)
+
+        if (error) throw error
+
+        toast.success('Xodim ma\'lumotlari yangilandi')
+        setShowEditUser(false)
+        setSelectedUser(null)
+        loadData()
+      } catch (error) {
+        toast.error('Xodim yangilashda xatolik')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={() => setShowEditUser(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-2xl p-8 max-w-md w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Xodimni tahrirlash</h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Login</label>
+              <input
+                type="text"
+                value={formData.username}
+                onChange={(e) => setFormData({...formData, username: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Rol</label>
+              <select
+                value={formData.role}
+                onChange={(e) => setFormData({...formData, role: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="sales">Sotuvchi</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Yangi parol (bo'sh qoldirish mumkin)
+              </label>
+              <input
+                type="password"
+                value={formData.newPassword}
+                onChange={(e) => setFormData({...formData, newPassword: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                placeholder="Yangi parol"
+              />
+            </div>
+            
+            <div className="flex space-x-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Saqlash'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowEditUser(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  const CreateServiceModal = () => {
+    const [formData, setFormData] = useState({
+      title: '',
+      description: '',
+      icon: 'FileText',
+      color: 'blue',
+      price: '',
+      features: ['']
+    })
+    const [loading, setLoading] = useState(false)
+
+    const addFeature = () => {
+      setFormData({...formData, features: [...formData.features, '']})
+    }
+
+    const removeFeature = (index: number) => {
+      setFormData({...formData, features: formData.features.filter((_, i) => i !== index)})
+    }
+
+    const updateFeature = (index: number, value: string) => {
+      const newFeatures = [...formData.features]
+      newFeatures[index] = value
+      setFormData({...formData, features: newFeatures})
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setLoading(true)
+      
+      try {
+        const { error } = await supabase
+          .from('services')
+          .insert({
+            title: formData.title,
+            description: formData.description,
+            icon: formData.icon,
+            color: formData.color,
+            price: formData.price || null,
+            features: formData.features.filter(f => f.trim() !== '')
+          })
+
+        if (error) throw error
+
+        toast.success('Yangi xizmat qo\'shildi')
+        setShowCreateService(false)
+        setFormData({
+          title: '',
+          description: '',
+          icon: 'FileText',
+          color: 'blue',
+          price: '',
+          features: ['']
+        })
+        loadData()
+      } catch (error) {
+        toast.error('Xizmat qo\'shishda xatolik')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={() => setShowCreateService(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Yangi xizmat qo'shish</h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nomi</label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({...formData, title: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Narx</label>
+                <input
+                  type="text"
+                  value={formData.price}
+                  onChange={(e) => setFormData({...formData, price: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="dan 150$"
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tavsif</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                rows={3}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ikonka</label>
+                <select
+                  value={formData.icon}
+                  onChange={(e) => setFormData({...formData, icon: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="FileText">FileText</option>
+                  <option value="Plane">Plane</option>
+                  <option value="GraduationCap">GraduationCap</option>
+                  <option value="Briefcase">Briefcase</option>
+                  <option value="BookOpen">BookOpen</option>
+                  <option value="Users">Users</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rang</label>
+                <select
+                  value={formData.color}
+                  onChange={(e) => setFormData({...formData, color: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="blue">Ko'k</option>
+                  <option value="green">Yashil</option>
+                  <option value="purple">Binafsha</option>
+                  <option value="orange">To'q sariq</option>
+                  <option value="indigo">Indigo</option>
+                  <option value="pink">Pushti</option>
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Xususiyatlar</label>
+              {formData.features.map((feature, index) => (
+                <div key={index} className="flex items-center space-x-2 mb-2">
+                  <input
+                    type="text"
+                    value={feature}
+                    onChange={(e) => updateFeature(index, e.target.value)}
+                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    placeholder="Xususiyat"
+                  />
+                  {formData.features.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeFeature(index)}
+                      className="text-red-600 hover:text-red-800 p-2"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={addFeature}
+                className="text-blue-600 hover:text-blue-800 text-sm flex items-center space-x-1"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Xususiyat qo'shish</span>
+              </button>
+            </div>
+            
+            <div className="flex space-x-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 disabled:opacity-50 flex items-center justify-center"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Qo\'shish'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateService(false)}
+                className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
+              >
+                Bekor qilish
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </motion.div>
+    )
+  }
+
+  const CreateStoryModal = () => {
+    const [formData, setFormData] = useState({
+      name: '',
+      country: '',
+      text: '',
+      rating: 5,
+      image: '',
+      featured: false
+    })
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+      e.preventDefault()
+      setLoading(true)
+      
+      try {
+        const { error } = await supabase
+          .from('stories')
+          .insert(formData)
+
+        if (error) throw error
+
+        toast.success('Yangi hikoya qo\'shildi')
+        setShowCreateStory(false)
+        setFormData({
+          name: '',
+          country: '',
+          text: '',
+          rating: 5,
+          image: '',
+          featured: false
+        })
+        loadData()
+      } catch (error) {
+        toast.error('Hikoya qo\'shishda xatolik')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={() => setShowCreateStory(false)}
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 className="text-xl font-bold text-gray-900 mb-6">Yangi hikoya qo'shish</h3>
+          
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Ism</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Davlat</label>
+                <input
+                  type="text"
+                  value={formData.country}
+                  onChange={(e) => setFormData({...formData, country: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Hikoya</label>
+              <textarea
+                value={formData.text}
+                onChange={(e) => setFormData({...formData, text: e.target.value})}
+                rows={6}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Reyting</label>
+                <select
+                  value={formData.rating}
+                  onChange={(e) => setFormData({...formData, rating: parseInt(e.target.value)})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value={5}>5 yulduz</option>
+                  <option value={4}>4 yulduz</option>
+                  <option value={3}>3 yulduz</option>
+                  <option value={2}>2 yulduz</option>
+                  <option value={1}>1 yulduz</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Rasm URL</label>
+                <input
+                  type="url"
+                  value={formData.image}
+                  onChange={(e) => setFormData({...formData, image: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="featured"
+                checked={formData.featured}
+                onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+              <label htmlFor="featured" className="text-sm font-medium text-gray-700">
+                Asosiy hikoya sifatida belgilash
+              </label>
+            </div>
+            
+            <div className="flex space-x-4 pt-4">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center justify-center"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  'Qo\'shish'
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowCreateStory(false)}
                 className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50"
               >
                 Bekor qilish
@@ -611,8 +1550,8 @@ const Admin: React.FC = () => {
       case 'applications': return renderApplications()
       case 'users': return renderUsers()
       case 'staff': return renderStaff()
-      case 'services': return <div className="bg-white p-6 rounded-xl shadow-lg">Xizmatlar bo'limi</div>
-      case 'stories': return <div className="bg-white p-6 rounded-xl shadow-lg">Hikoyalar bo'limi</div>
+      case 'services': return renderServices()
+      case 'stories': return renderStories()
       default: return renderDashboard()
     }
   }
@@ -620,7 +1559,10 @@ const Admin: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Ma'lumotlar yuklanmoqda...</p>
+        </div>
       </div>
     )
   }
@@ -693,6 +1635,9 @@ const Admin: React.FC = () => {
       {/* Modals */}
       <AnimatePresence>
         {showCreateUser && <CreateUserModal />}
+        {showEditUser && <EditUserModal />}
+        {showCreateService && <CreateServiceModal />}
+        {showCreateStory && <CreateStoryModal />}
       </AnimatePresence>
     </div>
   )

@@ -21,6 +21,7 @@ import Admin from './pages/Admin'
 const AppContent = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith('/admin')
 
   useEffect(() => {
     // Initialize storage buckets
@@ -86,7 +87,7 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
       <main className="flex-grow">
         <Routes>
           <Route path="/" element={<Home />} />
@@ -103,7 +104,7 @@ const AppContent = () => {
           <Route path="/admin/dashboard" element={<Admin />} />
         </Routes>
       </main>
-      <Footer />
+      {!isAdminRoute && <Footer />}
     </div>
   )
 }
