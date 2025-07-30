@@ -86,12 +86,7 @@ const Admin: React.FC = () => {
   })
 
   useEffect(() => {
-    if (!user || !isAdmin) {
-      navigate('/admin/login')
-      return
-    }
     loadData()
-  }, [user, isAdmin, navigate])
 
   const loadData = async () => {
     setLoading(true)

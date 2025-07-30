@@ -206,6 +206,47 @@ const Navbar: React.FC = () => {
                 {user ? (
                   <div className="border-t pt-4 mt-4 space-y-2">
                     {/* Mobile Language Selector */}
+                    <div className="px-4 py-2">
+                      <p className="text-sm font-medium text-gray-700 mb-2">Til / Language</p>
+                      <div className="grid grid-cols-3 gap-2">
+                        {languages.map((lang) => (
+                          <button
+                            key={lang.code}
+                            onClick={() => {
+                              setLanguage(lang.code as any)
+                              setIsOpen(false)
+                            }}
+                            className={`p-2 rounded-lg text-center text-sm ${
+                              language === lang.code 
+                                ? 'bg-blue-100 text-blue-600 font-medium' 
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                            }`}
+                          >
+                            <div>{lang.flag}</div>
+                            <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsOpen(false)}
+                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-gray-50"
+                    >
+                      <User className="h-5 w-5" />
+                      <span>{t('nav.profile')}</span>
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center space-x-3 w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 font-medium rounded-lg"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span>{t('nav.logout')}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-t pt-4 mt-4 space-y-2">
+                    {/* Mobile Language Selector */}
                     <div className="px-4 py-3">
                       <p className="text-sm font-semibold text-gray-800 mb-3 flex items-center">
                         <Globe className="h-4 w-4 mr-2 text-blue-600" />
@@ -233,47 +274,6 @@ const Navbar: React.FC = () => {
                             {language === lang.code && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                             )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center space-x-3 px-4 py-3 text-gray-700 hover:text-blue-600 font-medium rounded-lg hover:bg-gray-50"
-                    >
-                      <User className="h-5 w-5" />
-                      <span>{t('nav.profile')}</span>
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="flex items-center space-x-3 w-full text-left px-4 py-3 text-red-600 hover:bg-red-50 font-medium rounded-lg"
-                    >
-                      <LogOut className="h-5 w-5" />
-                      <span>{t('nav.logout')}</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="border-t pt-4 mt-4 space-y-2">
-                    {/* Mobile Language Selector */}
-                    <div className="px-4 py-2">
-                      <p className="text-sm font-medium text-gray-700 mb-2">Til / Language</p>
-                      <div className="grid grid-cols-3 gap-2">
-                        {languages.map((lang) => (
-                          <button
-                            key={lang.code}
-                            onClick={() => {
-                              setLanguage(lang.code as any)
-                              setIsOpen(false)
-                            }}
-                            className={`p-2 rounded-lg text-center text-sm ${
-                              language === lang.code 
-                                ? 'bg-blue-100 text-blue-600 font-medium' 
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            <div>{lang.flag}</div>
-                            <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
                           </button>
                         ))}
                       </div>
