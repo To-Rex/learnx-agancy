@@ -101,13 +101,35 @@ const AppContent = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/dashboard" element={<Admin />} />
+          <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
+          <Route path="/admin/dashboard" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
         </Routes>
       </main>
       {!isAdminRoute && <Footer />}
     </div>
   )
+}
+
+// Admin himoyalangan route komponenti
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAdmin } = useAuth()
+  const navigate = useNavigate()
+  
+  useEffect(() => {
+    // Admin emas bo'lsa login sahifasiga yo'naltirish
+    const adminUser = localStorage.getItem('admin_user')
+    if (!isAdmin && !adminUser) {
+      navigate('/admin/login')
+    }
+  }, [isAdmin, navigate])
+  
+  // Admin tekshiruvi
+  const adminUser = localStorage.getItem('admin_user')
+  if (!isAdmin && !adminUser) {
+    return null // Login sahifasiga yo'naltirilmoqda
+  }
+  
+  return <>{children}</>
 }
 
 function App() {
