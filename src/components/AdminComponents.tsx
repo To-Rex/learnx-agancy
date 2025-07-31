@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { DivideIcon as LucideIcon } from 'lucide-react'
+import { LucideIcon } from 'lucide-react'
 
 // Reusable Card Component
 export const AdminCard: React.FC<{
@@ -10,7 +10,7 @@ export const AdminCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`bg-white rounded-xl shadow-lg border border-gray-100 ${className}`}
+    className={`bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl ${className}`}
   >
     {children}
   </motion.div>
@@ -34,30 +34,32 @@ export const AdminButton: React.FC<{
   disabled = false,
   className = ''
 }) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
+  const baseClasses = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 shadow-lg hover:shadow-xl'
   
   const variants = {
-    primary: 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500 shadow-lg hover:shadow-xl',
-    secondary: 'bg-gray-100 text-gray-700 hover:bg-gray-200 focus:ring-gray-500',
-    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-red-500 shadow-lg hover:shadow-xl',
-    success: 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 focus:ring-green-500 shadow-lg hover:shadow-xl'
+    primary: 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 focus:ring-blue-500',
+    secondary: 'bg-white/10 backdrop-blur-sm text-white border border-white/20 hover:bg-white/20 focus:ring-white/50',
+    danger: 'bg-gradient-to-r from-red-500 to-red-600 text-white hover:from-red-600 hover:to-red-700 focus:ring-red-500',
+    success: 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 focus:ring-green-500'
   }
   
   const sizes = {
     sm: 'px-3 py-2 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base'
+    md: 'px-4 py-3 text-sm',
+    lg: 'px-6 py-4 text-base'
   }
 
   return (
-    <button
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
       onClick={onClick}
       disabled={disabled}
       className={`${baseClasses} ${variants[variant]} ${sizes[size]} ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}
     >
       {Icon && <Icon className="h-4 w-4 mr-2" />}
       {children}
-    </button>
+    </motion.button>
   )
 }
 
@@ -72,8 +74,8 @@ export const AdminInput: React.FC<{
   className?: string
 }> = ({ label, value, onChange, type = 'text', placeholder, required = false, className = '' }) => (
   <div className={className}>
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
+    <label className="block text-sm font-semibold text-white mb-3">
+      {label} {required && <span className="text-red-400">*</span>}
     </label>
     <input
       type={type}
@@ -81,7 +83,7 @@ export const AdminInput: React.FC<{
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
       required={required}
-      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
+      className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-white placeholder-white/50"
     />
   </div>
 )
@@ -97,8 +99,8 @@ export const AdminTextarea: React.FC<{
   className?: string
 }> = ({ label, value, onChange, placeholder, rows = 4, required = false, className = '' }) => (
   <div className={className}>
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
+    <label className="block text-sm font-semibold text-white mb-3">
+      {label} {required && <span className="text-red-400">*</span>}
     </label>
     <textarea
       value={value}
@@ -106,7 +108,7 @@ export const AdminTextarea: React.FC<{
       placeholder={placeholder}
       rows={rows}
       required={required}
-      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white resize-none"
+      className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-white placeholder-white/50 resize-none"
     />
   </div>
 )
@@ -121,18 +123,18 @@ export const AdminSelect: React.FC<{
   className?: string
 }> = ({ label, value, onChange, options, required = false, className = '' }) => (
   <div className={className}>
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
+    <label className="block text-sm font-semibold text-white mb-3">
+      {label} {required && <span className="text-red-400">*</span>}
     </label>
     <select
       value={value}
       onChange={(e) => onChange(e.target.value)}
       required={required}
-      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors bg-gray-50 focus:bg-white"
+      className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-white"
     >
-      <option value="">Tanlang</option>
+      <option value="" className="bg-gray-800">Tanlang</option>
       {options.map((option) => (
-        <option key={option.value} value={option.value}>
+        <option key={option.value} value={option.value} className="bg-gray-800">
           {option.label}
         </option>
       ))}
@@ -156,15 +158,15 @@ export const AdminModal: React.FC<{
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.9, opacity: 0 }}
-        className={`bg-white rounded-2xl shadow-2xl ${maxWidth} w-full max-h-[90vh] overflow-y-auto`}
+        className={`bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 rounded-2xl shadow-2xl ${maxWidth} w-full max-h-[90vh] overflow-y-auto border border-white/20`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6 border-b border-gray-100">
+        <div className="p-6 border-b border-white/20">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+            <h3 className="text-xl font-bold text-white">{title}</h3>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="text-white/60 hover:text-white p-2 hover:bg-white/10 rounded-lg transition-all duration-300"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -187,16 +189,16 @@ export const AdminTable: React.FC<{
 }> = ({ headers, children }) => (
   <div className="overflow-x-auto">
     <table className="w-full">
-      <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
+      <thead className="bg-white/5">
         <tr>
           {headers.map((header, index) => (
-            <th key={index} className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+            <th key={index} className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
               {header}
             </th>
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-gray-100">
+      <tbody className="divide-y divide-white/10">
         {children}
       </tbody>
     </table>
@@ -220,16 +222,16 @@ export const StatsCard: React.FC<{
   }
 
   return (
-    <AdminCard className="p-6 hover:shadow-xl transition-shadow">
+    <AdminCard className="p-6 hover:scale-105 transition-all duration-300 group">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+          <p className="text-sm font-medium text-white/80 mb-1">{title}</p>
+          <p className="text-3xl font-bold text-white">{value}</p>
           {trend && (
-            <p className="text-sm text-green-600 mt-1">{trend}</p>
+            <p className="text-sm text-green-400 mt-1">{trend}</p>
           )}
         </div>
-        <div className={`p-3 rounded-xl bg-gradient-to-r ${colors[color]} shadow-lg`}>
+        <div className={`p-3 rounded-xl bg-gradient-to-r ${colors[color]} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
           <Icon className="h-6 w-6 text-white" />
         </div>
       </div>
@@ -249,15 +251,15 @@ export const LanguageTabs: React.FC<{
   ]
 
   return (
-    <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg mb-6">
+    <div className="flex space-x-1 bg-white/10 backdrop-blur-sm p-1 rounded-xl mb-6 border border-white/20">
       {languages.map((lang) => (
         <button
           key={lang.code}
           onClick={() => onLanguageChange(lang.code)}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+          className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
             activeLanguage === lang.code
-              ? 'bg-white text-blue-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg'
+              : 'text-white/70 hover:text-white hover:bg-white/10'
           }`}
         >
           <span>{lang.flag}</span>

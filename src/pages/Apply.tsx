@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
+import { supabase } from '../lib/supabase'
 import * as yup from 'yup'
 import { useNavigate, Link } from 'react-router-dom'
 import { Upload, FileText, User, Mail, Phone, MapPin, Calendar, GraduationCap, Briefcase, CheckCircle, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
-import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import FileUpload from '../components/FileUpload'
@@ -83,6 +83,8 @@ const Apply: React.FC = () => {
   const onSubmit = async (data: any) => {
     console.log('🚀 Form submitted with data:', data)
     console.log('🔐 User:', user)
+    console.log('📝 Form validation passed')
+    console.log('📋 Current form data:', data)
     
     if (!user) {
       toast.error('Ariza topshirish uchun tizimga kiring')
@@ -90,6 +92,7 @@ const Apply: React.FC = () => {
       return
     }
 
+    console.log('✅ User authenticated:', user.id)
     // Validate required fields
     if (!data.firstName || !data.lastName || !data.email || !data.phone) {
       toast.error('Barcha majburiy maydonlarni to\'ldiring')
@@ -100,6 +103,7 @@ const Apply: React.FC = () => {
       toast.error('Dastur va davlatni tanlang')
       return
     }
+    console.log('✅ Form validation passed')
     
     setUploading(true)
     
@@ -107,6 +111,7 @@ const Apply: React.FC = () => {
       console.log('💾 Saving to database...')
       
       // Save application to database
+      console.log('📤 Preparing data for database...')
       const { data: result, error } = await supabase
         .from('applications')
         .insert({
@@ -116,6 +121,10 @@ const Apply: React.FC = () => {
           phone: data.phone,
           birth_date: data.birthDate,
           education_level: data.education,
+          university: data.university || null,
+          major: data.major || null,
+          english_level: data.englishLevel || null,
+          passport_number: data.passportNumber || null,
           program_type: data.program,
           country_preference: data.country,
           documents: uploadedFiles,
@@ -123,6 +132,7 @@ const Apply: React.FC = () => {
           created_at: new Date().toISOString()
         })
 
+      console.log('📊 Database response:', { result, error })
       if (error) {
         console.error('❌ Database error:', error)
         throw error
@@ -130,6 +140,7 @@ const Apply: React.FC = () => {
 
       console.log('✅ Application saved successfully:', result)
       toast.success('Ariza muvaffaqiyatli topshirildi!')
+      console.log('🎉 Success message shown')
       
       // Reset form
       setCurrentStep(1)
@@ -137,6 +148,7 @@ const Apply: React.FC = () => {
       setFormData({})
       
       // Redirect to profile after successful submission
+      console.log('🔄 Redirecting to profile...')
       setTimeout(() => {
         navigate('/profile')
       }, 1500)
@@ -144,6 +156,7 @@ const Apply: React.FC = () => {
     } catch (error) {
       console.error('❌ Submit error:', error)
       toast.error('Ariza topshirishda xatolik. Qaytadan urinib ko\'ring.')
+      console.log('💥 Error details:', error)
     } finally {
       setUploading(false)
     }
