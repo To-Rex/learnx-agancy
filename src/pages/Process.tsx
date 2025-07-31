@@ -115,11 +115,10 @@ const Process: React.FC = () => {
           className="text-center mb-16"
         >
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Qanday ishlaydi?
+            {t('Qanday ishlaydi?')}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun 
-            barcha zarur jarayonlarni amalga oshiramiz
+            {t('Oddiy 4 bosqichda chet davlatlarga ta\'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz')}
           </p>
         </motion.div>
 

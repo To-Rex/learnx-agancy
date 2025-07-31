@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom'
 import { Star, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+import { useLanguage } from '../contexts/LanguageContext'
 
 const Stories: React.FC = () => {
-  const [stories, setStories] = useState([])
-  const [filteredStories, setFilteredStories] = useState([])
+  const { t } = useLanguage()
+  const [stories, setStories] = useState<any[]>([])
+  const [filteredStories, setFilteredStories] = useState<any[]>([])
   const [selectedCountry, setSelectedCountry] = useState('all')
   const [loading, setLoading] = useState(true)
 
@@ -24,48 +26,25 @@ const Stories: React.FC = () => {
         .from('stories')
         .select('*')
         .order('created_at', { ascending: false })
-      
+
       if (data && data.length > 0) {
         setStories(data)
       } else {
-        // Fallback data if no stories in database
         setStories([
           {
             id: 1,
             name: "Aziz Karimov",
-            country: "AQSh",
-            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Amerika'da ishlash va sayohat qilish imkoniyati hayotimni o'zgartirdi.",
+            country: "USA",
+            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim.",
             rating: 5,
             image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
             featured: true,
             created_at: "2024-01-15"
-          },
-          {
-            id: 2,
-            name: "Malika Saidova",
-            country: "Germaniya",
-            text: "Germaniyada magistratura o'qish uchun visa olishda LearnX katta yordam berdi. Professional yondashuv va tez natija.",
-            rating: 5,
-            image: "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=300",
-            featured: false,
-            created_at: "2023-12-10"
           }
         ])
       }
     } catch (error) {
       console.error('Stories loading error:', error)
-      setStories([
-        {
-          id: 1,
-          name: "Aziz Karimov",
-          country: "AQSh",
-          text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Amerika'da ishlash va sayohat qilish imkoniyati hayotimni o'zgartirdi. Ingliz tilimni yaxshiladim va ko'plab do'stlar orttirdim.",
-          rating: 5,
-          image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
-          featured: true,
-          created_at: "2024-01-15"
-        }
-      ])
     } finally {
       setLoading(false)
     }
@@ -75,11 +54,11 @@ const Stories: React.FC = () => {
     if (selectedCountry === 'all') {
       setFilteredStories(stories)
     } else {
-      setFilteredStories(stories.filter((story: any) => story.country === selectedCountry))
+      setFilteredStories(stories.filter(story => story.country === selectedCountry))
     }
   }
 
-  const countries = ['all', ...Array.from(new Set(stories.map((story: any) => story.country)))]
+  const countries = ['all', ...Array.from(new Set(stories.map(story => story.country)))]
 
   if (loading) {
     return (
@@ -89,27 +68,34 @@ const Stories: React.FC = () => {
     )
   }
 
+  const stats = [
+    { number: "2000+", label: t('stories.stat.successfulStudents') },
+    { number: "50+", label: t('stories.stat.partnerCountries') },
+    { number: "98%", label: t('stories.stat.successRate') },
+    { number: "5+", label: t('stories.stat.yearsExperience') }
+  ]
+
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
           <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-            Muvaffaqiyat hikoyalari
+            {t('stories.title')}
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Bizga ishongan va chet davlatlarda muvaffaqiyatga erishgan 
-            talabalarimizning haqiqiy hikoyalari
+            {t('stories.subtitle')}
           </p>
         </motion.div>
 
         {/* Filter */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.6 }}
@@ -117,26 +103,25 @@ const Stories: React.FC = () => {
         >
           <div className="flex items-center space-x-2">
             <Filter className="h-5 w-5 text-gray-500" />
-            <span className="text-gray-700 font-medium">Davlat bo'yicha:</span>
+            <span className="text-gray-700 font-medium">{t('stories.filterByCountry')}</span>
           </div>
           {countries.map((country) => (
             <button
               key={country}
               onClick={() => setSelectedCountry(country)}
-              className={`px-4 py-2 rounded-lg font-medium transition-all ${
-                selectedCountry === country
+              className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedCountry === country
                   ? 'bg-blue-600 text-white shadow-lg'
                   : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
-              }`}
+                }`}
             >
-              {country === 'all' ? 'Barchasi' : country}
+              {country === 'all' ? t('stories.all') : country}
             </button>
           ))}
         </motion.div>
 
         {/* Stories Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {filteredStories.map((story: any, index) => (
+          {filteredStories.map((story, index) => (
             <motion.div
               key={story.id}
               initial={{ opacity: 0, y: 20 }}
@@ -147,8 +132,8 @@ const Stories: React.FC = () => {
             >
               {/* Image */}
               <div className="relative h-48 overflow-hidden">
-                <img 
-                  src={story.image} 
+                <img
+                  src={story.image}
                   alt={story.name}
                   className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                 />
@@ -199,24 +184,19 @@ const Stories: React.FC = () => {
         </div>
 
         {/* Stats */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           className="bg-gradient-to-r from-blue-600 to-purple-600 p-12 rounded-2xl text-white mb-16"
         >
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold mb-4">Bizning natijalarimiz</h2>
-            <p className="text-blue-100 text-lg">Raqamlar o'z-o'zidan gapiradi</p>
+            <h2 className="text-3xl font-bold mb-4">{t('stories.resultsTitle')}</h2>
+            <p className="text-blue-100 text-lg">{t('stories.resultsSubtitle')}</p>
           </div>
-          
+
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { number: "2000+", label: "Muvaffaqiyatli talabalar" },
-              { number: "50+", label: "Hamkor davlatlar" },
-              { number: "98%", label: "Muvaffaqiyat foizi" },
-              { number: "5+", label: "Yillik tajriba" }
-            ].map((stat, index) => (
+            {stats.map((stat, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, scale: 0.8 }}
@@ -232,7 +212,7 @@ const Stories: React.FC = () => {
         </motion.div>
 
         {/* CTA */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -240,23 +220,23 @@ const Stories: React.FC = () => {
         >
           <div className="bg-white p-12 rounded-2xl shadow-lg">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Sizning hikoyangiz keyingi bo'lsin!
+              {t('stories.nextStory')}
             </h2>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating
+              {t('stories.ctaText')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/apply"
                 className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl inline-block"
               >
-                Ariza topshirish
+                {t('stories.apply')}
               </Link>
               <Link
                 to="/contact"
                 className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all inline-block"
               >
-                Bepul maslahat
+                {t('stories.consultation')}
               </Link>
             </div>
           </div>

@@ -112,12 +112,14 @@ const Home: React.FC = () => {
     }
   }
 
-  const stats = [
-    { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
-    { number: "50+", label: "Hamkor universitetlar", icon: Globe },
-    { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
-    { number: "5+", label: "Yillik tajriba", icon: Award }
-  ]
+const stats = [
+  { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
+  { number: "50+", label: "Hamkor universitetlar", icon: Globe },
+  { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
+  { number: "5+", label: "Yillik tajriba", icon: Award }
+];
+
+
 
   const getIcon = (iconName: string) => {
     const icons = {
@@ -163,7 +165,7 @@ const Home: React.FC = () => {
                   className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm"
                 >
                   <Star className="h-4 w-4 text-yellow-400" />
-                  <span>O'zbekistondagi #1 ta'lim platformasi</span>
+                  <span>{t('home.hero.span')}</span>
                 </motion.div>
                 
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
@@ -225,7 +227,7 @@ const Home: React.FC = () => {
                     </div>
                     <div>
                       <div className="font-bold text-gray-900">2000+</div>
-                      <div className="text-sm text-gray-600">Muvaffaqiyatli talabalar</div>
+                      <div className="text-sm text-gray-600">{t('home.hero.number')}</div>
                     </div>
                   </div>
                 </div>
@@ -254,7 +256,10 @@ const Home: React.FC = () => {
                   <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
                     {stat.number}
                   </div>
-                  <div className="text-gray-600 font-medium">{stat.label}</div>
+                 <div className="text-gray-600 font-medium">{t(stat.label)}</div>
+
+                  
+
                 </motion.div>
               ))}
             </div>
@@ -292,8 +297,8 @@ const Home: React.FC = () => {
                 <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${getColorClasses(service.color)} group-hover:scale-110 transition-transform`}>
                   {getIcon(service.icon)}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{service.title}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{t('services.title')}</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">{t('services.description')}</p>
                 <Link 
                   to="/services"
                   className="text-blue-600 font-semibold hover:text-blue-700 transition-colors inline-flex items-center space-x-2 group"
