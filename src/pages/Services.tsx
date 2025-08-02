@@ -5,15 +5,54 @@ import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
 
+interface Services {
+  id: number,
+  title: string,
+  description: string,
+  features: object
+  price: string,
+  featured: boolean,
+  icon: string ,
+  color: string
+}
+
 const Services: React.FC = () => {
   const { t } = useLanguage()
-  const [services, setServices] = useState([])
+  const [services, setServices] = useState<Services[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedService, setSelectedService] = useState<any>(null)
 
   useEffect(() => {
     loadServices()
-  }, [])
+  }, []) 
+
+  const featureData = [
+    {
+      icon: Award,
+      title: "services.experience",
+      description: "services.experienceDesc",
+      color: "blue"
+    },
+    {
+      icon: Users,
+      title: "services.team",
+      description: "services.teamDesc",
+      color: "green"
+    },
+    {
+      icon: Globe,
+      title: "services.countries",
+      description: "services.countriesDesc",
+      color: "purple"
+    },
+    {
+      icon: CheckCircle,
+      title: "services.success",
+      description: "services.successDesc",
+      color: "orange"
+    }
+  ];
+
 
   const loadServices = async () => {
     try {
@@ -21,9 +60,9 @@ const Services: React.FC = () => {
         .from('services')
         .select('*')
         .order('created_at', { ascending: false })
-      
+
       if (error) throw error
-      
+
       if (data && data.length > 0) {
         setServices(data)
       } else {
@@ -80,6 +119,7 @@ const Services: React.FC = () => {
       setLoading(false)
     }
   }
+   
 
   const getIcon = (iconName: string) => {
     const icons = {
@@ -137,7 +177,7 @@ const Services: React.FC = () => {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -160,9 +200,8 @@ const Services: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.6 }}
               whileHover={{ y: -8, scale: 1.02 }}
-              className={`bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all relative cursor-pointer group ${
-                service.featured ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-              }`}
+              className={`bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all relative cursor-pointer group ${service.featured ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                }`}
               onClick={() => handleServiceSelect(service)}
             >
               {service.featured && (
@@ -173,14 +212,14 @@ const Services: React.FC = () => {
                   </span>
                 </div>
               )}
-              
+
               <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${getBgColorClasses(service.color)} group-hover:scale-110 transition-transform`}>
                 {getIcon(service.icon)}
               </div>
-              
+
               <h3 className="text-2xl font-bold text-gray-900 mb-4">{service.title}</h3>
               <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
-              
+
               <div className="space-y-3 mb-6">
                 {service.duration && (
                   <div className="flex items-center justify-between text-sm">
@@ -195,7 +234,7 @@ const Services: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <ul className="space-y-3 mb-8">
                 {service.features?.slice(0, 3).map((feature: string, idx: number) => (
                   <li key={idx} className="flex items-center space-x-3">
@@ -209,17 +248,16 @@ const Services: React.FC = () => {
                   </li>
                 )}
               </ul>
-              
+
               <div className="border-t pt-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-3xl font-bold text-blue-600">{service.price}</div>
                   <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
                 </div>
-                <button className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${
-                  service.featured 
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl' 
+                <button className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${service.featured
+                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
                     : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                }`}>
+                  }`}>
                   {t('services.select')}
                 </button>
               </div>
@@ -252,10 +290,10 @@ const Services: React.FC = () => {
                   ×
                 </button>
               </div>
-              
+
               <h2 className="text-3xl font-bold text-gray-900 mb-4">{selectedService.title}</h2>
               <p className="text-gray-600 mb-6 text-lg leading-relaxed">{selectedService.description}</p>
-              
+
               <div className="grid grid-cols-2 gap-4 mb-6">
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <div className="text-sm text-gray-500 mb-1">Narx</div>
@@ -268,7 +306,7 @@ const Services: React.FC = () => {
                   </div>
                 )}
               </div>
-              
+
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Xizmat tarkibi:</h3>
                 <ul className="space-y-3">
@@ -280,7 +318,7 @@ const Services: React.FC = () => {
                   ))}
                 </ul>
               </div>
-              
+
               <div className="flex space-x-4">
                 <Link
                   to="/apply"
@@ -300,43 +338,20 @@ const Services: React.FC = () => {
         )}
 
         {/* Why Choose Us */}
-        <motion.div 
+         
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+            {t('services.whyChooseUs')}
+          </h2>
+
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           className="bg-white p-12 rounded-2xl shadow-lg mb-16"
         >
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            {t('services.whyChooseUs')}
-          </h2>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: Award,
-                title: "5+ yillik tajriba",
-                description: "Chet davlatlarga yuborish sohasida katta tajriba",
-                color: "blue"
-              },
-              {
-                icon: Users,
-                title: "Professional jamoa",
-                description: "Malakali mutaxassislar va huquqshunoslar",
-                color: "green"
-              },
-              {
-                icon: Globe,
-                title: "50+ davlat",
-                description: "Dunyoning ko'plab davlatlari bilan aloqa",
-                color: "purple"
-              },
-              {
-                icon: CheckCircle,
-                title: "98% muvaffaqiyat",
-                description: "Yuqori muvaffaqiyat foizi va kafolat",
-                color: "orange"
-              }
-            ].map((item, index) => (
+            {featureData.map((item, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
@@ -344,18 +359,29 @@ const Services: React.FC = () => {
                 transition={{ delay: index * 0.1, duration: 0.6 }}
                 className="text-center group"
               >
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${getBgColorClasses(item.color)} group-hover:scale-110 transition-transform`}>
+                <div
+                  className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 ${getBgColorClasses(
+                    item.color
+                  )} group-hover:scale-110 transition-transform`}
+                >
                   <item.icon className="h-10 w-10" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-900 mb-3">{item.title}</h3>
-                <p className="text-gray-600 leading-relaxed">{item.description}</p>
+                <h3 className="text-lg font-bold text-gray-900 mb-3">
+                  {t(item.title)}
+                </h3>
+                <p className="text-gray-600 leading-relaxed">
+                  {t(item.description)}
+                </p>
               </motion.div>
             ))}
           </div>
         </motion.div>
 
+
+   
+
         {/* CTA Section */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}

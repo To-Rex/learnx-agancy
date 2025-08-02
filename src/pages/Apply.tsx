@@ -35,7 +35,7 @@ const Apply: React.FC = () => {
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: string }>({})
   const [formData, setFormData] = useState<any>({})
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema)
   })
 
@@ -72,7 +72,10 @@ const Apply: React.FC = () => {
     if (filePath) {
       setUploadedFiles(prev => ({ ...prev, [key]: filePath }))
       toast.success(`${fileName} muvaffaqiyatli yuklandi`)
+    } else {
+      toast.error(`${fileName} yuklashda xatolik yuz berdi`)
     }
+    
   }
 
   const removeFile = (key: string) => {
