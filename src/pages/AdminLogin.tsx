@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Lock, User, Shield, Eye, EyeOff } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { supabase } from '../lib/supabase'
+// import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import toast, { Toaster } from 'react-hot-toast'
 

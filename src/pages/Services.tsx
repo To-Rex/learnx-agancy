@@ -5,9 +5,20 @@ import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
 
+interface Services {
+  id: number,
+  title: string,
+  description: string,
+  features: object
+  price: string,
+  featured: boolean,
+  icon: string ,
+  color: string
+}
+
 const Services: React.FC = () => {
   const { t } = useLanguage()
-  const [services, setServices] = useState([])
+  const [services, setServices] = useState<Services[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedService, setSelectedService] = useState<any>(null)
 

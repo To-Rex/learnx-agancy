@@ -5,12 +5,33 @@ import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
 
+interface Services {
+  id: number
+  title: string
+  description: string
+  icon: string
+  color: string
+}
+interface Testimonials {
+  id: number
+  name: string
+  country: string
+  text: string
+  rating: number
+  image: string
+}
+interface Partners {
+  id: number
+  name: string
+  logo: string
+}
+
 const Home: React.FC = () => {
   const { t } = useLanguage()
-  const [services, setServices] = useState([])
-  const [testimonials, setTestimonials] = useState([])
-  const [partners, setPartners] = useState([])
-  const [certificates, setCertificates] = useState([])
+  const [services, setServices] = useState<Services[]>([])
+  const [testimonials, setTestimonials] = useState<Testimonials[]>([])
+  const [partners, setPartners] = useState<Partners[]>([])
+  // const [certificates, setCertificates] = useState([])
 
   useEffect(() => {
     loadData()
@@ -180,14 +201,14 @@ const stats = [
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col items-start sm:items-center space-y-2 gap-4 sm:flex-row ">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
                   <Link
                     to="/apply"
-                    className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+                    className="bg-gradient-to-r mt-2 from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
                   >
                     <span>{t('home.hero.apply')}</span>
                     <ArrowRight className="h-5 w-5" />
@@ -200,7 +221,7 @@ const stats = [
                 >
                   <Link
                     to="/contact"
-                    className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all text-center"
+                    className="border-2 border-white/30 text-white px-12 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all text-center"
                   >
                     {t('home.hero.consultation')}
                   </Link>
@@ -374,7 +395,7 @@ const stats = [
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {partners.map((partner: any, index) => (
               <motion.div
                 key={partner.id}
@@ -396,7 +417,7 @@ const stats = [
       </section>
 
       {/* CTA Section */}
-      <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-20">
+      <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -406,17 +427,17 @@ const stats = [
             <h2 className="text-3xl lg:text-4xl font-bold mb-6">
               {t('home.cta.title')}
             </h2>
-            <p className="text-xl mb-8 max-w-2xl mx-auto text-blue-100">
+            <p className="text-xl mb-12 md:mb-8 max-w-2xl mx-auto text-blue-100">
               {t('home.cta.description')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-9 md:gap-4 justify-center">
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
                 <Link
                   to="/apply"
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-12 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
                 >
                   {t('home.cta.apply')}
                 </Link>
@@ -427,7 +448,7 @@ const stats = [
               >
                 <Link
                   to="/contact"
-                  className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
+                  className="border-2 border-white/30 text-white px-16 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
                 >
                   {t('home.cta.contact')}
                 </Link>

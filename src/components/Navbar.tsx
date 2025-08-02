@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { Menu, X, GraduationCap, User, Settings, LogOut, Globe } from 'lucide-react'
+import { Menu, X, GraduationCap, User, LogOut, Globe } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -9,7 +9,7 @@ const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [showLanguageMenu, setShowLanguageMenu] = useState(false)
   const location = useLocation()
-  const { user, isAdmin, signOut } = useAuth()
+  const { user, signOut } = useAuth()
   const { language, setLanguage, t } = useLanguage()
   const languageMenuRef = useRef(null);
 

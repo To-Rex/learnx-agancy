@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
                 <GraduationCap className="h-10 w-10 text-blue-400" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+              <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                 LearnX
               </span>
             </div>
@@ -104,19 +104,19 @@ const Footer: React.FC = () => {
                 <div className="p-2 bg-blue-500/20 rounded-lg group-hover:bg-blue-500/30 transition-colors">
                   <Phone className="h-4 w-4 text-blue-400" />
                 </div>
-                <span className="text-gray-300 text-sm">+998 91 021 60 01</span>
+                <a href='tel:+998910216001' className="text-gray-300 hover:text-white text-sm">+998 91 021 60 01</a>
               </div>
               <div className="flex items-center space-x-3 group">
                 <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-colors">
                   <Mail className="h-4 w-4 text-green-400" />
                 </div>
-                <span className="text-gray-300 text-sm">umidyusupov258@gmail.com</span>
+                <span className="text-gray-300 text-sm cursor-pointer hover:text-white">umidyusupov258@gmail.com</span>
               </div>
-              <div className="flex items-center space-x-3 group">
+              <div className="flex items-center space-x-3 group cursor-pointer">
                 <div className="p-2 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
                   <MapPin className="h-4 w-4 text-orange-400" />
                 </div>
-                <span className="text-gray-300 text-sm">{t('contact.info.address')}: Toshkent, O'zbekiston</span>
+                <span className="text-gray-300 text-sm hover:text-white">{t('contact.info.address')}: Toshkent, O'zbekiston</span>
               </div>
             </div>
           </div>
@@ -128,8 +128,8 @@ const Footer: React.FC = () => {
           <select
             id="language"
             value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
-            className="bg-gray-800 text-white rounded-md p-2"
+            onChange={(e) => setLanguage(e.target.value as language)}
+            className="bg-blue-900 shadow-sm outline-none cursor-pointer text-white rounded-md p-2"
           >
             <option value="uz">O'zbek</option>
             <option value="en">English</option>

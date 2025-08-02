@@ -126,22 +126,22 @@ const Contact: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.name')} *</label>
-                  <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} placeholder={t('contact.form.namePlaceholder')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} placeholder={t('contact.form.namePlaceholder')} className="w-full px-4 py-3 border border-gray-300 outline-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                 </div>
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.email')} *</label>
-                  <input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} placeholder="email@example.com" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} placeholder="email@example.com" className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.phone')}</label>
-                  <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+998 90 123 45 67" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+998 90 123 45 67" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors" />
                 </div>
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.subject')} *</label>
-                  <select id="subject" name="subject" required value={formData.subject} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors">
+                  <select id="subject" name="subject" required value={formData.subject} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none focus:border-blue-500 transition-colors">
                     <option value="">{t('contact.form.selectSubject')}</option>
                     <option value="visa">{t('contact.form.subjects.visa')}</option>
                     <option value="work-travel">{t('contact.form.subjects.workTravel')}</option>
@@ -154,7 +154,7 @@ const Contact: React.FC = () => {
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.message')} *</label>
-                <textarea id="message" name="message" required rows={6} value={formData.message} onChange={handleChange} placeholder={t('contact.form.message')} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" />
+                <textarea id="message" name="message" required rows={6} value={formData.message} onChange={handleChange} placeholder={t('contact.form.message')} className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" />
               </div>
 
               <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl">

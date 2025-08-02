@@ -141,6 +141,7 @@ const ProfileEditor: React.FC<ProfileEditorProps> = ({ onClose, onSave }) => {
       onSave(formData)
       onClose()
     } catch (error) {
+      console.error('Profile update error:', error)
       toast.error('Profilni yangilashda xatolik yuz berdi')
     } finally {
       setLoading(false)
