@@ -115,8 +115,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      // Check if user email matches any admin user
-      // Since admin_users table doesn't have email column, we'll check against known admin emails
       const adminEmails = ['admin@learnx.uz', 'dev.dilshodjon@gmail.com']
       setIsAdmin(adminEmails.includes(user.email || ''))
     } catch (error) {
@@ -208,6 +206,94 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data: null, error: { message: 'Kirish jarayonida xatolik yuz berdi' } }
     }
   }
+
+  // const adminSignIn = async (username: string, password: string) => {
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from('admin_users')
+  //       .select('*')
+  //       .eq('username', username)
+  //       .maybeSingle()
+  
+  //     if (error || !data) {
+  //       return { data: null, error: { message: "Noto'g'ri login yoki parol" } }
+  //     }
+  
+  //     // 2. RPC orqali parolni tekshiramiz
+  //     const { data: passwordCheck, error: passwordError } = await supabase.rpc(
+  //       'verify_admin_password',
+  //       {
+  //         input_username: username,
+  //         input_password: password,
+  //       }
+  //     )
+  
+  //     if (passwordError) {
+  //       console.error('Password verification error:', passwordError)
+  //       return { data: null, error: { message: 'Parol tekshirishda xatolik' } }
+  //     }
+  
+  //     if (!passwordCheck) {
+  //       return { data: null, error: { message: "Noto'g'ri parol" } }
+  //     }
+  
+  //     const {
+  //       data: sessionData,
+  //       error: sessionError,
+  //     } = await supabase.auth.getSession()
+  
+  //     if (sessionError || !sessionData.session) {
+  //       return { data: null, error: { message: 'Session topilmadi' } }
+  //     }
+  
+  //     const accessToken = sessionData.session.access_token
+  
+  //     const response = await fetch('/api/v1/auth/login-with-supabase', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': `Bearer ${accessToken}`,
+  //       },
+  //       body: JSON.stringify({
+  //         message: 'Admin kirishi muvaffaqiyatli bo‘ldi',
+  //         username: username,
+  //       }),
+  //     })
+      
+  
+  //     if (!response.ok) {
+  //       const text = await response.text()
+  //       throw new Error(`API xatolik: ${response.status} - ${text}`)
+  //     }
+  
+  //     const responseData = await response.json()
+  //     console.log('Backend javobi:', responseData)
+  
+  //     // 5. Lokal holatda adminni saqlaymiz
+  //     setIsAdmin(true)
+  //     localStorage.setItem('admin_user', JSON.stringify(data))
+  
+  //     return {
+  //       data: {
+  //         user: {
+  //           email: `${username}@admin.local`,
+  //           role: data.role,
+  //         },
+  //         apiResponse: responseData,
+  //       },
+  //       error: null,
+  //     }
+  //   } catch (err: any) {
+  //     console.error('Admin login error:', err)
+  //     return {
+  //       data: null,
+  //       error: {
+  //         message: err?.message || 'Kirish jarayonida xatolik yuz berdi',
+  //       },
+  //     }
+  //   }
+  // }
+  
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
