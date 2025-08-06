@@ -275,7 +275,7 @@ const Admin: React.FC = () => {
         const { error } = await supabase
           .from('stories')
           .update(storyData)
-          .eq('id', editingItem.id)
+          .eq('id', editingItem)
         
         if (error) throw error
         toast.success('Hikoya yangilandi')

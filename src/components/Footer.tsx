@@ -4,12 +4,12 @@ import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext'
 
 const Footer: React.FC = () => {
-  const { t, language, setLanguage } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <footer className="bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 py-12">
           {/* Company Info */}
           <div className="space-y-6">
             <div className="flex items-center space-x-3">
@@ -110,31 +110,20 @@ const Footer: React.FC = () => {
                 <div className="p-2 bg-green-500/20 rounded-lg group-hover:bg-green-500/30 transition-colors">
                   <Mail className="h-4 w-4 text-green-400" />
                 </div>
-                <span className="text-gray-300 text-sm cursor-pointer hover:text-white">umidyusupov258@gmail.com</span>
+                <span className="text-gray-300 text-sm cursor-pointer hover:text-white">
+                  <a target='_blank' href="mailto:umidyusupov258@gmail.com">umidyusupov258@gmail.com</a>
+                </span>
               </div>
               <div className="flex items-center space-x-3 group cursor-pointer">
                 <div className="p-2 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30 transition-colors">
                   <MapPin className="h-4 w-4 text-orange-400" />
                 </div>
-                <span className="text-gray-300 text-sm hover:text-white">{t('contact.info.address')}: Toshkent, O'zbekiston</span>
+                <span className="text-gray-300 text-sm hover:text-white">{t('contact.info.address')}
+                  <a target='_blank' href="https://yandex.uz/map-widget/v1/?ll=69.285628%2C41.332677&z=16&l=map"> : Toshkent, O'zbekiston</a>
+                </span>
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Language Switcher */}
-        <div className="mt-8">
-          <label htmlFor="language" className="text-gray-300 text-sm mr-2">{t('common.language')}:</label>
-          <select
-            id="language"
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as language)}
-            className="bg-blue-900 shadow-sm outline-none cursor-pointer text-white rounded-md p-2"
-          >
-            <option value="uz">O'zbek</option>
-            <option value="en">English</option>
-            <option value="ru">Русский</option>
-          </select>
         </div>
 
         <div className="border-t border-gray-700 mt-12 pt-8">

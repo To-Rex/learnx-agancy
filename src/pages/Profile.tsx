@@ -157,6 +157,7 @@ const Profile: React.FC = () => {
         toast.success('Hujjat o\'chirildi')
       }
     } catch (error) {
+      console.error('Error deleting document:', error)
       toast.error('Hujjatni o\'chirishda xatolik yuz berdi')
     }
   }

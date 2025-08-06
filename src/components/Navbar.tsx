@@ -23,7 +23,7 @@ const Navbar: React.FC = () => {
 
   const languages = [
     { code: 'uz', name: 'O\'zbekcha', flag: '🇺🇿' },
-    { code: 'en', name: 'English', flag: '🇺🇸' },
+    { code: 'en', name: 'English', flag: 'en' },
     { code: 'ru', name: 'Русский', flag: '🇷🇺' }
   ]
 
@@ -102,12 +102,12 @@ const Navbar: React.FC = () => {
                 <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                   <Globe className="h-3 w-3 text-white" />
                 </div>
-                <span className="text-2xl">
+                <span className="text-xl">
                   {languages.find((lang) => lang.code === language)?.flag}
                 </span>
-                <span className="text-sm font-semibold text-gray-700">
+                {/* <span className="text-sm font-semibold text-gray-700">
                   {languages.find((lang) => lang.code === language)?.code.toUpperCase()}
-                </span>
+                </span> */}
               </button>
 
               <AnimatePresence>
@@ -134,12 +134,9 @@ const Navbar: React.FC = () => {
                             : "text-gray-700 hover:text-blue-600"
                           }`}
                       >
-                        <span className="text-2xl">{lang.flag}</span>
+                        {/* <span className="text-2xl">{lang.flag}</span> */}
                         <div className="flex-1">
                           <div className="font-semibold">{lang.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {lang.code.toUpperCase()}
-                          </div>
                         </div>
                         {language === lang.code && (
                           <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
@@ -242,7 +239,7 @@ const Navbar: React.FC = () => {
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                           >
-                            <div>{lang.flag}</div>
+                            {/* <div>{lang.flag}</div> */}
                             <div className="text-xs mt-1">{lang.code.toUpperCase()}</div>
                           </button>
                         ))}
@@ -286,10 +283,10 @@ const Navbar: React.FC = () => {
                                 : 'bg-gray-50 text-gray-700 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 border-2 border-transparent'
                             }`}
                           >
-                            <span className="text-2xl">{lang.flag}</span>
+                            {/* <span className="text-2xl">{lang.flag}</span> */}
                             <div className="flex-1">
                               <div className="font-medium">{lang.name}</div>
-                              <div className="text-xs text-gray-500">{lang.code.toUpperCase()}</div>
+                              {/* <div className="text-xs text-gray-500">{lang.code.toUpperCase()}</div> */}
                             </div>
                             {language === lang.code && (
                               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
