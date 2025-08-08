@@ -113,6 +113,7 @@ const Admin: React.FC = () => {
 
   useEffect(() => {
     loadData()
+    fetchPartners()
   }, [])
   const [file, setFile ] = useState<File | null>(null)
 
@@ -340,24 +341,18 @@ const Admin: React.FC = () => {
     }
   }
 
-  const handleDeleteItem = async (table: string, id: string) => {
-    if (!confirm('O\'chirmoqchimisiz?')) return
-
-    try {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
-      toast.success('O\'chirildi')
-      loadData()
-    } catch (error) {
-      console.error('Delete error:', error)
-      toast.error('O\'chirishda xatolik')
-    }
-  }
+  const handleDeleteItem = async (table: string, id: number) => {
+    const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
+    if (!confirmed) return;
+  
+    const { error } = await supabase.from(table).delete().eq('id', id);
+    if (!error) fetchPartners();
+  };
+  const fetchPartners = async () => {
+    const { data, error } = await supabase.from('partners').select('*');
+    if (!error) setPartners(data);
+  };
+  
 
   const resetServiceForm = () => {
     setServiceForm({
@@ -382,6 +377,7 @@ const Admin: React.FC = () => {
   }
 
   const resetPartnerForm = () => {
+    setEditingItem(null);
     setPartnerForm({
       name: { uz: '', en: '', ru: '' },
       description: { uz: '', en: '', ru: '' },
@@ -390,8 +386,10 @@ const Admin: React.FC = () => {
       country: '',
       established: '',
       ranking: ''
-    })
-  }
+    });
+    setFile(null);
+  };
+  
 
   const handleSignOut = async () => {
     await signOut()
@@ -444,22 +442,22 @@ const Admin: React.FC = () => {
       toast.success('Hamkor qo\'shildi')}
   }
 
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="relative">
-  //           <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
-  //           <div className="absolute inset-0 flex items-center justify-center">
-  //             <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
-  //           </div>
-  //         </div>
-  //         <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
-  //         <p className="text-purple-200">Iltimos kuting</p>
-  //       </div>
-  //     </div>
-  //   )
-  // }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="relative">
+            <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+            </div>
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
+          <p className="text-purple-200">Iltimos kuting</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -793,6 +791,109 @@ const Admin: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                  
+                  {showServiceModal && (
+                      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-purple-700 rounded-3xl p-8 w-full max-w-md max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                          {/* Modal Header */}
+                          <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-bold text-white">
+                              {editingItem ? "Xizmatni tahrirlash" : "Yangi xizmat qo'shish"}
+                            </h2>
+                            <button
+                              onClick={() => setShowServiceModal(false)}
+                              className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                              <X className="w-5 h-5 text-white" />
+                            </button>
+                          </div>
+
+                          {/* Form */}
+                          <div className="space-y-6">
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">
+                                Xizmat nomi
+                              </label>
+                              <input
+                                type="text"
+                                name="name"
+                                value={formData.name}
+                                onChange={handleInputChange}
+                                placeholder="Masalan: Visa olishga yordam"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">
+                                Tavsif
+                              </label>
+                              <textarea
+                                name="description"
+                                value={formData.description}
+                                onChange={handleInputChange}
+                                placeholder="Xizmat haqida batafsil ma'lumot"
+                                rows={3}
+                                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300 resize-none"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">
+                                Narx ($)
+                              </label>
+                              <input
+                                type="number"
+                                name="price"
+                                value={formData.price}
+                                onChange={handleInputChange}
+                                placeholder="299"
+                                min="0"
+                                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                                required
+                              />
+                            </div>
+
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">
+                                Holat
+                              </label>
+                              <select
+                                name="status"
+                                value={formData.status}
+                                onChange={handleInputChange}
+                                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                                required
+                              >
+                                <option value="blue" className="bg-gray-800">Faol</option>
+                                <option value="green" className="bg-gray-800">Mashhur</option>
+                                <option value="purple" className="bg-gray-800">Yangi</option>
+                                <option value="orange" className="bg-gray-800">Chegirma</option>
+                              </select>
+                            </div>
+
+                            {/* Form Buttons */}
+                            <div className="flex gap-4 pt-4">
+                              <button
+                                type="button"
+                                onClick={() => setShowServiceModal(false)}
+                                className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
+                              >
+                                Bekor qilish
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleSaveService}
+                                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                              >
+                                Saqlash
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   
                   <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1145,9 +1246,6 @@ const Admin: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Modals would go here - keeping them simple for now */}
-      {/* Service Modal, Story Modal, Partner Modal implementations would be similar to before but with the new styling */}
     </div>
   )
 }
