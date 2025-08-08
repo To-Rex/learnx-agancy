@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { useLanguage } from '../contexts/LanguageContext'
+// import { useLanguage } from '../contexts/LanguageContext'
 import { 
   Users, 
   FileText, 
@@ -49,7 +49,7 @@ import toast, { Toaster } from 'react-hot-toast'
 const Admin: React.FC = () => {
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  const { t } = useLanguage()
+  // const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -114,6 +114,7 @@ const Admin: React.FC = () => {
   useEffect(() => {
     loadData()
   }, [])
+  const [file, setFile ] = useState<File | null>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -432,22 +433,33 @@ const Admin: React.FC = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
-          <p className="text-purple-200">Iltimos kuting</p>
-        </div>
-      </div>
-    )
+  const handleAddPartners = async (e) => {
+    e.preventDefault()
+    const {error} = await supabase.from('partners').insert({
+      name,
+    })
+    if(error){
+      console.error('Error adding partner:', error)
+    }else {
+      toast.success('Hamkor qo\'shildi')}
   }
+
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="relative">
+  //           <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
+  //           <div className="absolute inset-0 flex items-center justify-center">
+  //             <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+  //           </div>
+  //         </div>
+  //         <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
+  //         <p className="text-purple-200">Iltimos kuting</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -461,7 +473,7 @@ const Admin: React.FC = () => {
       </div>
       
       {/* Header */}
-      <div className="relative bg-white/10 backdrop-blur-md border-b border-white/20 sticky top-0 z-40">
+      <div className="relative bg-white/10 backdrop-blur-md border-b border-white/20   top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div className="flex items-center space-x-4">
@@ -949,18 +961,33 @@ const Admin: React.FC = () => {
                         <Building className="h-6 w-6 mr-3 text-indigo-400" />
                         Hamkorlar boshqaruvi
                       </h2>
-                      <button 
-                        onClick={() => {
-                          resetPartnerForm()
-                          setShowPartnerModal(true)
-                        }}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
+                      <button onClick={() => {
+                        resetPartnerForm()
+                        setShowPartnerModal(true)
+                      }}
+                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
                         <Plus className="h-4 w-4" />
                         <span>Yangi hamkor</span>
                       </button>
                     </div>
                   </div>
+                  {showPartnerModal && (
+                    <div onClick={() => setShowPartnerModal(false)} className='fixed inset-0 top-20 left-0 right-0 '>
+                      <div onClick={(e) => e.stopPropagation()} 
+                        className='container mx-auto border  w-[400px] rounded-lg p-6 backdrop-blur-sm bg-purple-600'>
+                        <h2 className='text-center pb-3 text-2xl font-semibold text-white'>Hamkor qo'shish</h2>
+                        <form onSubmit={handleAddPartners} className='flex flex-col w-full space-y-4'>
+                          <input type="text" placeholder='Univercity name' 
+                          className='p-2 outline-none border-2 border-gray-500 rounded-md '/>
+                          <input type="file" onChange={(e) => setFile(e.target.files[0])}
+                          className='p-2 border-2 border-gray-500 rounded-md '/>
+                          <button type='submit'
+                            className='border p-3 bg-gradient-to-br from-gray-600 via-purple-500 to-slate-700 text-white font-bold rounded-lg shadow-2xl active:scale-95 duration-500 '>
+                            Qo'shish</button>
+                        </form>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
