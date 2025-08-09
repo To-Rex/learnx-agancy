@@ -1,9 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-// import { useLanguage } from '../contexts/LanguageContext'
 import { 
-  Users, 
   FileText, 
   MessageSquare, 
   Settings, 
@@ -15,28 +13,13 @@ import {
   Search,
   Filter,
   Download,
-  Upload,
   Star,
-  Globe,
   Building,
-  Award,
-  UserCheck,
-  UserX,
-  Save,
   X,
   Home,
-  TrendingUp,
-  Calendar,
   Clock,
   CheckCircle,
-  AlertCircle,
   Mail,
-  Phone,
-  MapPin,
-  ExternalLink,
-  Image,
-  Zap,
-  Target,
   Sparkles,
   Crown,
   Shield,
@@ -45,11 +28,11 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
+import { editPartner } from '../functions/partnerfunctions'
 
 const Admin: React.FC = () => {
   const navigate = useNavigate()
   const { signOut } = useAuth()
-  // const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
@@ -80,7 +63,10 @@ const Admin: React.FC = () => {
   const [showPartnerModal, setShowPartnerModal] = useState(false)
   const [showApplicationModal, setShowApplicationModal] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
+  const [editingService, setEditingService] = useState(null)
   const [activeLanguage, setActiveLanguage] = useState('uz')
+  const [file, setFile] = useState<File | null>(null);
+
 
   // Form states
   const [serviceForm, setServiceForm] = useState({
@@ -101,22 +87,16 @@ const Admin: React.FC = () => {
     featured: false
   })
 
-  const [partnerForm, setPartnerForm] = useState({
-    name: { uz: '', en: '', ru: '' },
-    description: { uz: '', en: '', ru: '' },
+  const [partnerForm, setPartnerForm] = useState<PartnerForm>({
+    name: '',
     logo: '',
-    website: '',
-    country: '',
-    established: '',
-    ranking: ''
-  })
-
+  });
   useEffect(() => {
     loadData()
     fetchPartners()
   }, [])
-  const [file, setFile ] = useState<File | null>(null)
-
+  // const [file, setFile ] = useState<File | null>(null)
+// 
   const loadData = async () => {
     setLoading(true)
     try {
@@ -300,46 +280,40 @@ const Admin: React.FC = () => {
     }
   }
 
-  const handleSavePartner = async () => {
-    try {
-      const partnerData = {
-        name: partnerForm.name[activeLanguage],
-        description: partnerForm.description[activeLanguage],
-        logo: partnerForm.logo,
-        website: partnerForm.website,
-        country: partnerForm.country,
-        established: partnerForm.established,
-        ranking: partnerForm.ranking,
-        name_translations: partnerForm.name,
-        description_translations: partnerForm.description
-      }
+  // const handleSavePartner = async () => {
+  //   try {
+  //     const partnerData = {
+  //       name: partnerForm.name,
+  //       logo: partnerForm.logo,
+  //       name_translations: partnerForm.name,
+  //     }
 
-      if (editingItem) {
-        const { error } = await supabase
-          .from('partners')
-          .update(partnerData)
-          .eq('id', editingItem.id)
+  //     if (editingItem) {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .update(partnerData)
+  //         .eq('id', editingItem.id)
         
-        if (error) throw error
-        toast.success('Hamkor yangilandi')
-      } else {
-        const { error } = await supabase
-          .from('partners')
-          .insert(partnerData)
+  //       if (error) throw error
+  //       toast.success('Hamkor yangilandi')
+  //     } else {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .insert(partnerData)
         
-        if (error) throw error
-        toast.success('Yangi hamkor qo\'shildi')
-      }
+  //       if (error) throw error
+  //       toast.success('Yangi hamkor qo\'shildi')
+  //     }
 
-      setShowPartnerModal(false)
-      setEditingItem(null)
-      resetPartnerForm()
-      loadData()
-    } catch (error) {
-      console.error('Partner save error:', error)
-      toast.error('Hamkorni saqlashda xatolik')
-    }
-  }
+  //     setShowPartnerModal(false)
+  //     setEditingItem(null)
+  //     resetPartnerForm()
+  //     loadData()
+  //   } catch (error) {
+  //     console.error('Partner save error:', error)
+  //     toast.error('Hamkorni saqlashda xatolik')
+  //   }
+  // }
 
   const handleDeleteItem = async (table: string, id: number) => {
     const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
@@ -353,7 +327,6 @@ const Admin: React.FC = () => {
     if (!error) setPartners(data);
   };
   
-
   const resetServiceForm = () => {
     setServiceForm({
       title: { uz: '', en: '', ru: '' },
@@ -376,21 +349,20 @@ const Admin: React.FC = () => {
     })
   }
 
-  const resetPartnerForm = () => {
-    setEditingItem(null);
-    setPartnerForm({
-      name: { uz: '', en: '', ru: '' },
-      description: { uz: '', en: '', ru: '' },
-      logo: '',
-      website: '',
-      country: '',
-      established: '',
-      ranking: ''
-    });
-    setFile(null);
-  };
+  // const resetPartnerForm = () => {
+  //   setEditingItem(null);
+  //   setPartnerForm({
+  //     name: { uz: '', en: '', ru: '' },
+  //     description: { uz: '', en: '', ru: '' },
+  //     logo: '',
+  //     website: '',
+  //     country: '',
+  //     established: '',
+  //     ranking: ''
+  //   });
+  //   setFile(null);
+  // };
   
-
   const handleSignOut = async () => {
     await signOut()
     navigate('/admin/login')
@@ -431,16 +403,16 @@ const Admin: React.FC = () => {
     }
   }
 
-  const handleAddPartners = async (e) => {
-    e.preventDefault()
-    const {error} = await supabase.from('partners').insert({
-      name,
-    })
-    if(error){
-      console.error('Error adding partner:', error)
-    }else {
-      toast.success('Hamkor qo\'shildi')}
-  }
+  // const handleAddPartners = async (e) => {
+  //   e.preventDefault()
+  //   const {error} = await supabase.from('partners').insert({
+  //     name,
+  //   })
+  //   if(error){
+  //     console.error('Error adding partner:', error)
+  //   }else {
+  //     toast.success('Hamkor qo\'shildi')}
+  // }
 
   if (loading) {
     return (
@@ -458,6 +430,31 @@ const Admin: React.FC = () => {
       </div>
     )
   }
+
+  // partners uchun funksiyalar
+  interface Partner {
+    id: string;
+    name: string;
+    logo: string;
+  }
+  
+  interface PartnerForm {
+    name: string;
+    logo: string;
+  }
+
+    const resetPartnerForm = () => {
+      setEditingItem(null);
+      setPartnerForm({ name: '', logo: '' });
+      setFile(null);
+    };
+  
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const selectedFile = e.target.files?.[0] || null;
+      setFile(selectedFile);
+    };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -952,6 +949,7 @@ const Admin: React.FC = () => {
               )}
 
               {activeTab === 'stories' && (
+                <>
                 <motion.div
                   key="stories"
                   initial={{ opacity: 0, y: 20 }}
@@ -977,6 +975,75 @@ const Admin: React.FC = () => {
                       </button>
                     </div>
                   </div>
+                  {showStoryModal && (
+                    <div className="fixed inset-0 -top-[460px] backdrop-blur-md z-50 flex items-center justify-center p-4">
+                      <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                        <div className="flex justify-between items-center mb-4">
+                          <h2 className="text-2xl text-center font-bold text-white">
+                            {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
+                          </h2>
+                          <button onClick={() => setShowStoryModal(false)}
+                            className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                            <X className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+
+                        {/* Form */}
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">
+                              Ismi, familiyasi
+                            </label>
+                            <input type="text" name="name"
+                              // value={formData.name}
+                              // onChange={handleInputChange}
+                              placeholder="Enter name"
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                              required
+                            />
+                            <label className="block text-white text-sm font-semibold mt-4 my-2">Qaysi mamlakat</label>
+                            <input type="text" placeholder='Enter country'
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                              required/>
+                          </div>
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">Tavsif</label>
+                            <textarea
+                              name="description"
+                              // value={formData.description}
+                              // onChange={handleInputChange}
+                              placeholder="Xizmat haqida batafsil ma'lumot"
+                              rows={2}
+                              className="w-full px-3 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300 resize-none"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
+                            <input type="file" name="price"
+                              // value={formData.price}
+                              // onChange={handleInputChange}
+                              placeholder="299" min="0"
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                              required
+                            />
+                          </div>
+                          {/* Form Buttons */}
+                          <div className="flex gap-4 pt-2">
+                            <button type="button" onClick={() => setShowStoryModal(false)}
+                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">
+                              Bekor qilish
+                            </button>
+                            <button type="button" onClick={handleSaveStory}
+                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                              Saqlash
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   
                   <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1046,127 +1113,165 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                 </motion.div>
+              </>
               )}
 
               {activeTab === 'partners' && (
                 <motion.div
-                  key="partners"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
-                >
-                  <div className="p-8 border-b border-white/20">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-bold text-white flex items-center">
-                        <Building className="h-6 w-6 mr-3 text-indigo-400" />
-                        Hamkorlar boshqaruvi
-                      </h2>
-                      <button onClick={() => {
-                        resetPartnerForm()
-                        setShowPartnerModal(true)
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
+              >
+                <div className="p-8 border-b border-white/20">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white flex items-center">
+                      <Building className="h-6 w-6 mr-3 text-indigo-400" />
+                      Hamkorlar boshqaruvi
+                    </h2>
+                    <button
+                      onClick={() => {
+                        resetPartnerForm();
+                        setShowPartnerModal(true);
                       }}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                        <Plus className="h-4 w-4" />
-                        <span>Yangi hamkor</span>
-                      </button>
-                    </div>
+                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Yangi hamkor</span>
+                    </button>
                   </div>
-                  {showPartnerModal && (
-                    <div onClick={() => setShowPartnerModal(false)} className='fixed inset-0 top-20 left-0 right-0 '>
-                      <div onClick={(e) => e.stopPropagation()} 
-                        className='container mx-auto border  w-[400px] rounded-lg p-6 backdrop-blur-sm bg-purple-600'>
-                        <h2 className='text-center pb-3 text-2xl font-semibold text-white'>Hamkor qo'shish</h2>
-                        <form onSubmit={handleAddPartners} className='flex flex-col w-full space-y-4'>
-                          <input type="text" placeholder='Univercity name' 
-                          className='p-2 outline-none border-2 border-gray-500 rounded-md '/>
-                          <input type="file" onChange={(e) => setFile(e.target.files[0])}
-                          className='p-2 border-2 border-gray-500 rounded-md '/>
-                          <button type='submit'
-                            className='border p-3 bg-gradient-to-br from-gray-600 via-purple-500 to-slate-700 text-white font-bold rounded-lg shadow-2xl active:scale-95 duration-500 '>
-                            Qo'shish</button>
-                        </form>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {partners.map((partner: any, index) => (
-                        <motion.div
-                          key={partner.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
+                </div>
+          
+                {showPartnerModal && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                      <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-2xl font-bold text-white">
+                          {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
+                        </h2>
+                        <button
+                          onClick={() => setShowPartnerModal(false)}
+                          className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300"
                         >
-                          <div className="flex justify-between items-start mb-4">
-                            <h3 className="font-bold text-white text-lg group-hover:text-indigo-200 transition-colors">
-                              {partner.name}
-                            </h3>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => {
-                                  setEditingItem(partner)
-                                  setPartnerForm({
-                                    name: partner.name_translations || { uz: partner.name, en: '', ru: '' },
-                                    description: partner.description_translations || { uz: partner.description || '', en: '', ru: '' },
-                                    logo: partner.logo,
-                                    website: partner.website || '',
-                                    country: partner.country || '',
-                                    established: partner.established || '',
-                                    ranking: partner.ranking || ''
-                                  })
-                                  setShowPartnerModal(true)
-                                }}
-                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
-                              >
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button
-                                onClick={() => handleDeleteItem('partners', partner.id)}
-                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                          {partner.logo && (
-                            <div className="mb-4 h-32 bg-white/5 rounded-lg flex items-center justify-center overflow-hidden">
-                              <img 
-                                src={partner.logo} 
-                                alt={partner.name}
-                                className="max-h-full max-w-full object-contain"
+                          <X className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+          
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Nomi (UZ)</label>
+                          <input
+                            type="text"
+                            value={partnerForm.name}
+                            onChange={(e) => setPartnerForm({ ...partnerForm, name: e.target.value })}
+                            placeholder="Nomi (UZ)"
+                            className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white"
+                            required
+                          />
+
+                        </div>
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg"
+                            onChange={handleFileChange}
+                            className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
+                          />
+                          {partnerForm.logo && !file && (
+                            <div className="mt-2">
+                              <img
+                                src={partnerForm.logo}
+                                alt="Current logo"
+                                className="h-16 w-16 object-contain rounded"
                               />
                             </div>
                           )}
-                          {partner.description && (
-                            <p className="text-purple-200 text-sm mb-3 leading-relaxed">{partner.description}</p>
-                          )}
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-indigo-300">{partner.country}</span>
-                            {partner.ranking && (
-                              <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">
-                                #{partner.ranking}
-                              </span>
-                            )}
-                          </div>
-                          {partner.website && (
-                            <a
-                              href={partner.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="mt-3 flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors text-sm"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              <span>Veb-sayt</span>
-                            </a>
-                          )}
-                        </motion.div>
-                      ))}
+                        </div>
+                        {/* Boshqa maydonlar uchun shunga o'xshash inputlar qo'shilishi mumkin */}
+                        <div className="flex gap-4 pt-4">
+                          <button
+                            type="button"
+                            onClick={() => setShowPartnerModal(false)}
+                            className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
+                          >
+                            Bekor qilish
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => 
+                              editingItem
+                                ? editPartner(supabase, partnerForm, editingItem, setShowPartnerModal, setPartnerForm, loadData)
+                                : savePartner(supabase, partnerForm, setShowPartnerModal, setPartnerForm, loadData)  
+                            }
+                            className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
+                          >
+                            Saqlash
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </motion.div>
+                )}
+          
+                <div className="p-8">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {partners.map((partner: Partner, index: number) => (
+                      <motion.div
+                        key={partner.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
+                      >
+                        <div className="flex justify-between items-start mb-4">
+                          <h3 className="font-bold text-white text-lg group-hover:text-indigo-200 transition-colors">
+                            {partner.name}
+                          </h3>
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingItem(partner);
+                                setPartnerForm({
+                                  name: partner.name,
+                                  logo: partner.logo,
+                                });
+                                setShowPartnerModal(true);
+                              }}
+                              className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => deletePartner(supabase, partner.id, loadData)}
+                              className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        {partner.logo && (
+                          <div className="mb-4 h-32 bg-white/5 rounded-lg flex items-center justify-center overflow-hidden">
+                            <img src={partner.logo} alt={partner.name} className="max-h-full max-w-full object-contain" />
+                          </div>
+                        )}
+                        {partner.description && (
+                          <p className="text-purple-200 text-sm mb-3 leading-relaxed">{partner.description}</p>
+                        )}
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-indigo-300">{partner.country}</span>
+                          {partner.ranking && (
+                            <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">
+                              #{partner.ranking}
+                            </span>
+                          )}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            
               )}
 
               {activeTab === 'contacts' && (
