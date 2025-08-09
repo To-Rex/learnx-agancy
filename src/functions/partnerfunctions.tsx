@@ -12,7 +12,6 @@ interface PartnerForm {
   logo: string;
 }
 
-// 📌 Logo yuklash
 const uploadLogo = async (supabase: SupabaseClient, file: File): Promise<string | null> => {
   try {
     if (!file) throw new Error('Fayl tanlanmadi');
@@ -31,9 +30,7 @@ const uploadLogo = async (supabase: SupabaseClient, file: File): Promise<string 
   }
 };
 
-//
-// 📌 Yangi hamkor qo‘shish
-//
+
 const addPartner = async (
   supabase: SupabaseClient,
   partnerForm: PartnerForm,
@@ -72,9 +69,6 @@ const addPartner = async (
   }
 };
 
-//
-// 📌 Hamkorni tahrirlash
-//
 const editPartner = async (
   supabase: SupabaseClient,
   partnerForm: PartnerForm,
@@ -119,9 +113,6 @@ const editPartner = async (
   }
 };
 
-//
-// 📌 Hamkorni o‘chirish
-//
 const deletePartner = async (
   supabase: SupabaseClient,
   partnerId: string,

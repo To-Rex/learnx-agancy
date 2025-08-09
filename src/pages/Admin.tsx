@@ -31,10 +31,12 @@ import toast, { Toaster } from 'react-hot-toast'
 import { editPartner } from '../functions/partnerfunctions'
 
 const Admin: React.FC = () => {
+  const API_BASE = "https://learnx-crm-production.up.railway.app";
+
   const navigate = useNavigate()
   const { signOut } = useAuth()
   const [activeTab, setActiveTab] = useState('dashboard')
-  const [loading, setLoading] = useState(true)
+  // Removed unused loading state
   const [stats, setStats] = useState({
     totalApplications: 0,
     pendingApplications: 0,
@@ -56,6 +58,7 @@ const Admin: React.FC = () => {
   const [stories, setStories] = useState([])
   const [partners, setPartners] = useState([])
   const [contacts, setContacts] = useState([])
+  const [loading, setLoading] = useState(false)
 
   // Modal states
   const [showServiceModal, setShowServiceModal] = useState(false)
@@ -246,7 +249,6 @@ const Admin: React.FC = () => {
       const storyData = {
         name: storyForm.name,
         country: storyForm.country,
-        text: storyForm.text[activeLanguage],
         rating: storyForm.rating,
         image: storyForm.image,
         featured: storyForm.featured,
@@ -280,48 +282,16 @@ const Admin: React.FC = () => {
     }
   }
 
-  // const handleSavePartner = async () => {
-  //   try {
-  //     const partnerData = {
-  //       name: partnerForm.name,
-  //       logo: partnerForm.logo,
-  //       name_translations: partnerForm.name,
-  //     }
-
-  //     if (editingItem) {
-  //       const { error } = await supabase
-  //         .from('partners')
-  //         .update(partnerData)
-  //         .eq('id', editingItem.id)
-        
-  //       if (error) throw error
-  //       toast.success('Hamkor yangilandi')
-  //     } else {
-  //       const { error } = await supabase
-  //         .from('partners')
-  //         .insert(partnerData)
-        
-  //       if (error) throw error
-  //       toast.success('Yangi hamkor qo\'shildi')
-  //     }
-
-  //     setShowPartnerModal(false)
-  //     setEditingItem(null)
-  //     resetPartnerForm()
-  //     loadData()
-  //   } catch (error) {
-  //     console.error('Partner save error:', error)
-  //     toast.error('Hamkorni saqlashda xatolik')
-  //   }
-  // }
-
   const handleDeleteItem = async (table: string, id: number) => {
     const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
     if (!confirmed) return;
+    toast.success("Muvaffaqiyatli o'chirildi")
+
   
     const { error } = await supabase.from(table).delete().eq('id', id);
     if (!error) fetchPartners();
   };
+
   const fetchPartners = async () => {
     const { data, error } = await supabase.from('partners').select('*');
     if (!error) setPartners(data);
@@ -348,20 +318,6 @@ const Admin: React.FC = () => {
       featured: false
     })
   }
-
-  // const resetPartnerForm = () => {
-  //   setEditingItem(null);
-  //   setPartnerForm({
-  //     name: { uz: '', en: '', ru: '' },
-  //     description: { uz: '', en: '', ru: '' },
-  //     logo: '',
-  //     website: '',
-  //     country: '',
-  //     established: '',
-  //     ranking: ''
-  //   });
-  //   setFile(null);
-  // };
   
   const handleSignOut = async () => {
     await signOut()
@@ -403,45 +359,23 @@ const Admin: React.FC = () => {
     }
   }
 
-  // const handleAddPartners = async (e) => {
-  //   e.preventDefault()
-  //   const {error} = await supabase.from('partners').insert({
-  //     name,
-  //   })
-  //   if(error){
-  //     console.error('Error adding partner:', error)
-  //   }else {
-  //     toast.success('Hamkor qo\'shildi')}
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="relative">
+  //           <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
+  //           <div className="absolute inset-0 flex items-center justify-center">
+  //             <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+  //           </div>
+  //         </div>
+  //         <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
+  //         <p className="text-purple-200">Iltimos kuting</p>
+  //       </div>
+  //     </div>
+  //   )
   // }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
-          <p className="text-purple-200">Iltimos kuting</p>
-        </div>
-      </div>
-    )
-  }
-
-  // partners uchun funksiyalar
-  interface Partner {
-    id: string;
-    name: string;
-    logo: string;
-  }
-  
-  interface PartnerForm {
-    name: string;
-    logo: string;
-  }
 
     const resetPartnerForm = () => {
       setEditingItem(null);
@@ -449,12 +383,52 @@ const Admin: React.FC = () => {
       setFile(null);
     };
   
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0] || null;
-      setFile(selectedFile);
+    // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //   const selectedFile = e.target.files?.[0] || null;
+    //   setFile(selectedFile);
+    // };
+
+    const handleInputChangeStory = (e) => {
+      const { name, value, type, checked } = e.target;
+      setStoryForm((prev) => ({
+        ...prev,
+        [name]: type === "checkbox" ? checked : value
+      }));
+    };
+    const handleFileChange = async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+  
+      const fileName = `${Date.now()}_${file.name}`;
+      const { error } = await supabase.storage
+        .from("story-images")
+        .upload(fileName, file);
+  
+      if (!error) {
+        const { data: publicUrl } = supabase.storage
+          .from("story-images")
+          .getPublicUrl(fileName);
+  
+        setStoryForm((prev) => ({ ...prev, image: publicUrl.publicUrl }));
+      }
+    };
+    const deleteStory = async (id) => {
+      const res = await fetch(`${API_BASE}/stories/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Hikoyani o‘chirishda xatolik");
+      return await res.json();
     };
 
-
+    const addStory = async (story) => {
+      const res = await fetch(`${API_BASE}/stories`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(story),
+      });
+      if (!res.ok) throw new Error("Hikoya qo‘shishda xatolik");
+      return await res.json();
+    };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -976,7 +950,7 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                   {showStoryModal && (
-                    <div className="fixed inset-0 -top-[460px] backdrop-blur-md z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 bottom-96 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                       <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                           <h2 className="text-2xl text-center font-bold text-white">
@@ -995,14 +969,16 @@ const Admin: React.FC = () => {
                               Ismi, familiyasi
                             </label>
                             <input type="text" name="name"
-                              // value={formData.name}
-                              // onChange={handleInputChange}
+                              value={storyForm.name}
+                              onChange={handleInputChangeStory}
                               placeholder="Enter name"
                               className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
                               required
                             />
                             <label className="block text-white text-sm font-semibold mt-4 my-2">Qaysi mamlakat</label>
                             <input type="text" placeholder='Enter country'
+                              value={storyForm.country}
+                              onChange={handleInputChangeStory}
                               className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
                               required/>
                           </div>
@@ -1010,8 +986,8 @@ const Admin: React.FC = () => {
                             <label className="block text-white text-sm font-semibold mb-2">Tavsif</label>
                             <textarea
                               name="description"
-                              // value={formData.description}
-                              // onChange={handleInputChange}
+                              value={storyForm.text.uz || ''}
+                              onChange={handleInputChangeStory}
                               placeholder="Xizmat haqida batafsil ma'lumot"
                               rows={2}
                               className="w-full px-3 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300 resize-none"
@@ -1022,12 +998,29 @@ const Admin: React.FC = () => {
                           <div>
                             <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
                             <input type="file" name="price"
-                              // value={formData.price}
-                              // onChange={handleInputChange}
+                              // value={storyForm.image}
+                              // onChange={handleFileChange}
                               placeholder="299" min="0"
                               className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
                               required
                             />
+                            <input
+                              type="number"
+                              name="rating"
+                              value={storyForm.rating}
+                              onChange={handleInputChangeStory}
+                              placeholder="Reyting"
+                              className="w-full px-4 py-3 mt-4 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"                            />
+                            <label className="flex items-center gap-2 mb-2 text-white cursor-pointer">
+                              <input
+                                type="checkbox"
+                                name="featured"
+                                checked={storyForm.featured}
+                                onChange={handleInputChangeStory}
+                                className='my-2 cursor-pointer text-white'
+                              />
+                              Tavsiya etilgan
+                            </label>
                           </div>
                           {/* Form Buttons */}
                           <div className="flex gap-4 pt-2">
@@ -1035,7 +1028,7 @@ const Admin: React.FC = () => {
                               className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">
                               Bekor qilish
                             </button>
-                            <button type="button" onClick={handleSaveStory}
+                            <button type="button" onClick={ addStory}
                               className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
                               Saqlash
                             </button>
@@ -1094,7 +1087,7 @@ const Admin: React.FC = () => {
                                   <Edit className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteItem('stories', story.id)}
+                                  onClick={() => deleteStory('stories', story.id)}
                                   className="p-1 text-red-400 hover:bg-red-500/20 rounded"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -1143,7 +1136,7 @@ const Admin: React.FC = () => {
                 </div>
           
                 {showPartnerModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                  <div className="fixed inset-0 bottom-20 -top-20 z-50 flex items-center justify-center p-4">
                     <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
                       <div className="flex justify-between items-center mb-8">
                         <h2 className="text-2xl font-bold text-white">
