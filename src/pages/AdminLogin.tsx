@@ -16,25 +16,26 @@ const AdminLogin: React.FC = () => {
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  e.preventDefault();
+  setLoading(true);
+  
+  try {
+    const { data, error } = await adminSignIn(username, password);
+    console.log('adminSignIn javobi:', { data, error });
     
-    try {
-      const { data, error } = await adminSignIn(username, password)
-      
-      if (error) {
-        toast.error(error.message)
-      } else if (data) {
-        toast.success('Admin panelga xush kelibsiz!')
-        navigate('/admin/dashboard')
-      }
-    } catch (err) {
-      console.error('Login error:', err)
-      toast.error('Kirish jarayonida xatolik yuz berdi')
-    } finally {
-      setLoading(false)
+    if (error) {
+      toast.error(error.message);
+    } else if (data) {
+      toast.success('Admin panelga xush kelibsiz!');
+      navigate('/admin/dashboard');
     }
+  } catch (err) {
+    console.error('Login xatosi:', err);
+    toast.error('Kirish jarayonida xatolik yuz berdi');
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

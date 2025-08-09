@@ -1,5 +1,5 @@
-import { toast } from 'react-toastify';
 import { SupabaseClient } from '@supabase/supabase-js';
+import toast from 'react-hot-toast';
 
 interface Partner {
   id: string;
