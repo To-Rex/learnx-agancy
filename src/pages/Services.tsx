@@ -1,32 +1,42 @@
 import React, { useState, useEffect } from 'react'
-import { FileText, Plane, Users, GraduationCap, Briefcase, Heart, BookOpen, Globe, Award, CheckCircle, ArrowRight, Star } from 'lucide-react'
+import {
+  FileText,
+  Plane,
+  Users,
+  GraduationCap,
+  Briefcase,
+  Heart,
+  BookOpen,
+  Globe,
+  Award,
+  CheckCircle,
+  ArrowRight,
+  Star,
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../contexts/LanguageContext'
-import { supabase } from '../lib/supabase'
 
-interface Services {
-  id: number,
-  title: string,
-  description: string,
-  features: object
-  price: string,
-  featured: boolean,
-  icon: string ,
+
+interface Service {
+  id: string
+  title: string
+  description: string
+  features: string[]
+  price: string
+  featured: boolean
+  icon: string
   color: string
+  duration?: string
 }
 
 const Services: React.FC = () => {
   const { t } = useLanguage()
-  const [services, setServices] = useState<Services[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedService, setSelectedService] = useState<any>(null)
-
-  useEffect(() => {
-    loadServices()
-  }, []) 
-
-  const featureData = [
+  const [error, setError] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+   const featureData = [
     {
       icon: Award,
       title: "services.experience",
@@ -53,115 +63,87 @@ const Services: React.FC = () => {
     }
   ];
 
-
   const loadServices = async () => {
+    setLoading(true)
+    setError(null)
     try {
-      const { data, error } = await supabase
-        .from('services')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const token = localStorage.getItem('api_access_token') || ''
 
-      if (error) throw error
-
-      if (data && data.length > 0) {
-        setServices(data)
-      } else {
-        // Fallback data if no services in database
-        setServices([
-          {
-            id: 1,
-            title: "Turist vizasi",
-            description: "Sayohat uchun qisqa muddatli vizalar",
-            features: ["Tez rasmiylashtirish", "To'liq hujjat tayyorlash", "90% muvaffaqiyat kafolati", "24/7 qo'llab-quvvatlash"],
-            price: "dan 150$",
-            featured: false,
-            icon: "FileText",
-            color: "blue"
-          },
-          {
-            id: 2,
-            title: "Talaba vizasi",
-            description: "Ta'lim olish uchun uzoq muddatli vizalar",
-            features: ["Universitet tanlash", "Grant yutishga yordam", "Turar joy topish", "Til kurslari"],
-            price: "dan 300$",
-            featured: true,
-            icon: "GraduationCap",
-            color: "green"
-          },
-          {
-            id: 3,
-            title: "Work & Travel",
-            description: "AQSh Work & Travel dasturi",
-            features: ["J-1 vizasi", "Ish joyi topish", "Madaniy almashish", "Sayohat imkoniyati"],
-            price: "dan 1000$",
-            featured: true,
-            icon: "Plane",
-            color: "orange"
-          }
-        ])
-      }
-    } catch (error) {
-      console.error('Services loading error:', error)
-      // Use fallback data on error
-      setServices([
+      const res = await fetch(
+        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list',
         {
-          id: 1,
-          title: "Turist vizasi",
-          description: "Sayohat uchun qisqa muddatli vizalar",
-          features: ["Tez rasmiylashtirish", "To'liq hujjat tayyorlash", "90% muvaffaqiyat kafolati", "24/7 qo'llab-quvvatlash"],
-          price: "dan 150$",
-          featured: false,
-          icon: "FileText",
-          color: "blue"
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         }
-      ])
+      )
+
+      if (!res.ok) throw new Error('Serverdan javob olmadi')
+
+      const data = await res.json()
+
+      if (!Array.isArray(data)) throw new Error('Maʼlumot noto‘g‘ri formatda')
+
+      const normalizedData = data.map((item: any) => ({
+        id: item.id,
+        title: item.title?.en || '',
+        description: item.description?.en || '',
+        price: item.price || '',
+        featured: item.featured || false,
+        icon: item.icon?.Name || 'FileText',
+        color: item.icon?.Color?.toLowerCase() || 'blue',
+        features: Array.isArray(item.features)
+          ? item.features.map((f: any) => f.en || '')
+          : [],
+        duration: item.duration || undefined,
+      }))
+
+      setServices(normalizedData)
+    } catch (err: any) {
+      console.error('Xizmatlarni olishda xatolik:', err)
+      setError(err.message || 'Nomaʼlum xatolik yuz berdi')
+      setServices([])
     } finally {
       setLoading(false)
     }
   }
-   
+
+  useEffect(() => {
+    loadServices()
+  }, [])
+
+  const icons = {
+    FileText,
+    Plane,
+    Users,
+    GraduationCap,
+    Briefcase,
+    Heart,
+    BookOpen,
+    Globe,
+    Award,
+  }
 
   const getIcon = (iconName: string) => {
-    const icons = {
-      FileText: FileText,
-      Plane: Plane,
-      Users: Users,
-      GraduationCap: GraduationCap,
-      Briefcase: Briefcase,
-      Heart: Heart,
-      BookOpen: BookOpen,
-      Globe: Globe,
-      Award: Award
-    }
     const IconComponent = icons[iconName as keyof typeof icons] || FileText
     return <IconComponent className="h-8 w-8" />
   }
 
-  const getColorClasses = (color: string) => {
-    const colors = {
-      blue: "from-blue-500 to-blue-600",
-      green: "from-green-500 to-green-600",
-      purple: "from-purple-500 to-purple-600",
-      orange: "from-orange-500 to-orange-600",
-      indigo: "from-indigo-500 to-indigo-600",
-      pink: "from-pink-500 to-pink-600"
-    }
-    return colors[color as keyof typeof colors] || colors.blue
+  const colors = {
+    blue: 'bg-blue-50 text-blue-600',
+    green: 'bg-green-50 text-green-600',
+    purple: 'bg-purple-50 text-purple-600',
+    orange: 'bg-orange-50 text-orange-600',
+    indigo: 'bg-indigo-50 text-indigo-600',
+    pink: 'bg-pink-50 text-pink-600',
   }
 
   const getBgColorClasses = (color: string) => {
-    const colors = {
-      blue: "bg-blue-50 text-blue-600",
-      green: "bg-green-50 text-green-600",
-      purple: "bg-purple-50 text-purple-600",
-      orange: "bg-orange-50 text-orange-600",
-      indigo: "bg-indigo-50 text-indigo-600",
-      pink: "bg-pink-50 text-pink-600"
-    }
     return colors[color as keyof typeof colors] || colors.blue
   }
 
-  const handleServiceSelect = (service: any) => {
+  const handleServiceSelect = (service: Service) => {
     setSelectedService(service)
   }
 
@@ -169,6 +151,14 @@ const Services: React.FC = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-red-600 text-lg">{error}</p>
       </div>
     )
   }
@@ -193,79 +183,74 @@ const Services: React.FC = () => {
 
         {/* Services Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-          {services.map((service: any, index) => (
-            <motion.div
-              key={service.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.6 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-              className={`bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all relative cursor-pointer group ${service.featured ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-                }`}
-              onClick={() => handleServiceSelect(service)}
-            >
-              {service.featured && (
-                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                  <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg flex items-center space-x-1">
-                    <Star className="h-4 w-4" />
-                    <span>Mashhur</span>
-                  </span>
-                </div>
-              )}
-
-              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${getBgColorClasses(service.color)} group-hover:scale-110 transition-transform`}>
-                {getIcon(service.icon)}
-              </div>
-
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">{service.title}</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
-
-              <div className="space-y-3 mb-6">
-                {service.duration && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Davomiyligi:</span>
-                    <span className="font-semibold text-gray-700">{service.duration}</span>
+          {services.length === 0 ? (
+            <p className="text-center text-gray-500 col-span-full">Xizmatlar mavjud emas</p>
+          ) : (
+            services.map((service, index) => (
+              <motion.div
+                key={service.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+                whileHover={{ y: -8, scale: 1.02 }}
+                className={`bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition-all relative cursor-pointer group ${service.featured ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+                  }`}
+                onClick={() => handleServiceSelect(service)}
+              >
+                {service.featured && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-2 rounded-full text-sm font-semibold shadow-lg flex items-center space-x-1">
+                      <Star className="h-4 w-4" />
+                      <span>Mashhur</span>
+                    </span>
                   </div>
                 )}
-                {service.success_rate && (
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Muvaffaqiyat:</span>
-                    <span className="font-semibold text-green-600">{service.success_rate}</span>
-                  </div>
-                )}
-              </div>
 
-              <ul className="space-y-3 mb-8">
-                {service.features?.slice(0, 3).map((feature: string, idx: number) => (
-                  <li key={idx} className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
-                  </li>
-                ))}
-                {service.features?.length > 3 && (
-                  <li className="text-sm text-gray-500 pl-8">
-                    +{service.features.length - 3} boshqa xizmat
-                  </li>
-                )}
-              </ul>
-
-              <div className="border-t pt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="text-3xl font-bold text-blue-600">{service.price}</div>
-                  <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                <div
+                  className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-6 ${getBgColorClasses(
+                    service.color
+                  )} group-hover:scale-110 transition-transform`}
+                >
+                  {getIcon(service.icon)}
                 </div>
-                <button className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${service.featured
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
-                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                  }`}>
-                  {t('services.select')}
-                </button>
-              </div>
-            </motion.div>
-          ))}
+
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{service.title}</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+
+                <div className="space-y-3 mb-6">
+                  {service.features?.slice(0, 3).map((feature, idx) => (
+                    <div key={idx} className="flex items-center space-x-3 text-gray-700">
+                      <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      <span>{feature}</span>
+                    </div>
+                  ))}
+                  {service.features?.length > 3 && (
+                    <div className="text-sm text-gray-500 pl-8">
+                      +{service.features.length - 3} boshqa xizmat
+                    </div>
+                  )}
+                </div>
+
+                <div className="border-t pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-3xl font-bold text-blue-600">{service.price}</div>
+                    <ArrowRight className="h-5 w-5 text-gray-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                  </div>
+                  <button
+                    className={`w-full py-3 px-6 rounded-xl font-semibold transition-all ${service.featured
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                      : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      }`}
+                  >
+                    {t('services.select')}
+                  </button>
+                </div>
+              </motion.div>
+            ))
+          )}
         </div>
 
-        {/* Service Details Modal */}
+        {/* Modal */}
         {selectedService && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -280,8 +265,12 @@ const Services: React.FC = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <div className={`w-16 h-16 rounded-xl flex items-center justify-center ${getBgColorClasses(selectedService.color)}`}>
-                  {getIcon(selectedService.icon)}
+                <div
+                  className={`w-16 h-16 rounded-xl flex items-center justify-center ${getBgColorClasses(
+                    selectedService.color ?? 'blue'
+                  )}`}
+                >
+                  {getIcon(selectedService.icon ?? 'FileText')}
                 </div>
                 <button
                   onClick={() => setSelectedService(null)}
@@ -310,7 +299,7 @@ const Services: React.FC = () => {
               <div className="mb-8">
                 <h3 className="text-xl font-bold text-gray-900 mb-4">Xizmat tarkibi:</h3>
                 <ul className="space-y-3">
-                  {selectedService.features?.map((feature: string, idx: number) => (
+                  {selectedService.features?.map((feature, idx) => (
                     <li key={idx} className="flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                       <span className="text-gray-700">{feature}</span>
@@ -336,12 +325,10 @@ const Services: React.FC = () => {
             </motion.div>
           </motion.div>
         )}
-
         {/* Why Choose Us */}
-         
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            {t('services.whyChooseUs')}
-          </h2>
+        <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+          {t('services.whyChooseUs')}
+        </h2>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -349,7 +336,6 @@ const Services: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="bg-white p-12 rounded-2xl shadow-lg mb-16"
         >
-
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {featureData.map((item, index) => (
               <motion.div
@@ -378,9 +364,7 @@ const Services: React.FC = () => {
         </motion.div>
 
 
-   
-
-        {/* CTA Section */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -389,9 +373,7 @@ const Services: React.FC = () => {
         >
           <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-12 rounded-2xl text-white">
             <h2 className="text-3xl font-bold mb-4">{t('services.cta.title')}</h2>
-            <p className="text-xl text-blue-100 mb-8">
-              {t('services.cta.description')}
-            </p>
+            <p className="text-xl text-blue-100 mb-8">{t('services.cta.description')}</p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
                 to="/contact"

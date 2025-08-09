@@ -1,17 +1,52 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Plane, FileText, Users, CheckCircle, Star, Award, Globe, BookOpen, TrendingUp } from 'lucide-react'
+import {
+  ArrowRight, Plane, FileText, Users, GraduationCap,
+  Briefcase,
+  Heart, CheckCircle, Star, Award, Globe, BookOpen, TrendingUp
+} from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
+const featureData = [
+  {
+    icon: Award,
+    title: "services.experience",
+    description: "services.experienceDesc",
+    color: "blue"
+  },
+  {
+    icon: Users,
+    title: "services.team",
+    description: "services.teamDesc",
+    color: "green"
+  },
+  {
+    icon: Globe,
+    title: "services.countries",
+    description: "services.countriesDesc",
+    color: "purple"
+  },
+  {
+    icon: CheckCircle,
+    title: "services.success",
+    description: "services.successDesc",
+    color: "orange"
+  }
+];
 
-interface Services {
-  id: number
+interface Service {
+  id: string
   title: string
   description: string
+  features: string[]
+  price: string
+  featured: boolean
   icon: string
   color: string
+  duration?: string
 }
+
 interface Testimonials {
   id: number
   name: string
@@ -21,17 +56,82 @@ interface Testimonials {
   image: string
 }
 interface Partners {
-  id: number
-  name: string
-  logo: string
+  id: string // UUID string sifatida
+  name: string // name.en dan olinadi
+  logo: string // logo_url dan olinadi
 }
 
 const Home: React.FC = () => {
   const { t } = useLanguage()
-  const [services, setServices] = useState<Services[]>([])
+  const [services, setServices] = useState<Service[]>([])
   const [testimonials, setTestimonials] = useState<Testimonials[]>([])
   const [partners, setPartners] = useState<Partners[]>([])
-  // const [certificates, setCertificates] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [selectedService, setSelectedService] = useState<Service | null>(null)
+
+  const loadServices = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const token = localStorage.getItem('api_access_token') || ''
+
+      const res = await fetch(
+        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (!res.ok) throw new Error('Serverdan javob olmadi')
+
+      const data = await res.json()
+
+      if (!Array.isArray(data)) throw new Error('Maʼlumot noto‘g‘ri formatda')
+
+      const normalizedData = data.map((item: any) => ({
+        id: item.id,
+        title: item.title?.en || '',
+        description: item.description?.en || '',
+        price: item.price || '',
+        featured: item.featured || false,
+        icon: item.icon?.Name || 'FileText',
+        color: item.icon?.Color?.toLowerCase() || 'blue',
+        features: Array.isArray(item.features)
+          ? item.features.map((f: any) => f.en || '')
+          : [],
+        duration: item.duration || undefined,
+      }))
+
+      setServices(normalizedData)
+    } catch (err: any) {
+      console.error('Xizmatlarni olishda xatolik:', err)
+      setError(err.message || 'Nomaʼlum xatolik yuz berdi')
+      setServices([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadServices()
+  }, [])
+
+  const icons = {
+    FileText,
+    Plane,
+    Users,
+    GraduationCap,
+    Briefcase,
+    Heart,
+    BookOpen,
+    Globe,
+    Award,
+  }
+
 
   useEffect(() => {
     loadData()
@@ -39,17 +139,17 @@ const Home: React.FC = () => {
 
   const loadData = async () => {
     try {
-      // Load services from database
+      // Load services from Supabase
       const { data: servicesData } = await supabase
         .from('services')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(6)
-      
+
       if (servicesData && servicesData.length > 0) {
         setServices(servicesData)
       } else {
-        // Fallback data if no services in database
+        // Fallback data for services
         setServices([
           {
             id: 1,
@@ -75,18 +175,18 @@ const Home: React.FC = () => {
         ])
       }
 
-      // Load testimonials from database
+      // Load testimonials from Supabase
       const { data: storiesData } = await supabase
         .from('stories')
         .select('*')
         .eq('featured', true)
         .order('created_at', { ascending: false })
         .limit(3)
-      
+
       if (storiesData && storiesData.length > 0) {
         setTestimonials(storiesData)
       } else {
-        // Fallback data
+        // Fallback data for testimonials
         setTestimonials([
           {
             id: 1,
@@ -98,26 +198,39 @@ const Home: React.FC = () => {
           }
         ])
       }
+      const token = localStorage.getItem('api_access_token') || ''
 
-      // Load partners from database
-      const { data: partnersData } = await supabase
-        .from('partners')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6)
-      
-      if (partnersData && partnersData.length > 0) {
-        setPartners(partnersData)
+      // Load partners from custom API
+      const response = await fetch('https://learnx-crm-production.up.railway.app/api/v1/partners/get-list', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+
+      });
+
+      if (!response.ok) {
+        throw new Error('Hamkorlarni olishda xato yuz berdi');
+      }
+
+      const partnersData = await response.json();
+
+      // API javobini Partners interfeysiga moslashtirish
+      const formattedPartners = partnersData.map((partner: any) => ({
+        id: partner.id,
+        name: partner.name.en, // name.en dan foydalanamiz
+        logo: partner.logo_url // logo_url ni logo sifatida ishlatamiz
+      }));
+
+
+      if (formattedPartners && formattedPartners.length > 0) {
+        setPartners(formattedPartners);
       } else {
-        // Fallback data
-        setPartners([
-          { id: 1, name: "Harvard University", logo: "https://images.pexels.com/photos/267885/pexels-photo-267885.jpeg?auto=compress&cs=tinysrgb&w=200" },
-          { id: 2, name: "MIT", logo: "https://images.pexels.com/photos/159711/books-bookstore-book-reading-159711.jpeg?auto=compress&cs=tinysrgb&w=200" },
-          { id: 3, name: "Stanford", logo: "https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=200" }
-        ])
+        // Fallback data for partners
       }
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error('Ma\'lumotlarni yuklashda xato:', error);
       // Use fallback data on error
       setServices([
         {
@@ -126,21 +239,32 @@ const Home: React.FC = () => {
           description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
           icon: "FileText",
           color: "blue"
+        },
+        {
+          id: 2,
+          title: "Work & Travel",
+          description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
+          icon: "Plane",
+          color: "green"
+        },
+        {
+          id: 3,
+          title: "Ta'lim granti",
+          description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
+          icon: "BookOpen",
+          color: "purple"
         }
       ])
-      setTestimonials([])
-      setPartners([])
+      setTestimonials([]);
     }
   }
 
-const stats = [
-  { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
-  { number: "50+", label: "Hamkor universitetlar", icon: Globe },
-  { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
-  { number: "5+", label: "Yillik tajriba", icon: Award }
-];
-
-
+  const stats = [
+    { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
+    { number: "50+", label: "Hamkor universitetlar", icon: Globe },
+    { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
+    { number: "5+", label: "Yillik tajriba", icon: Award }
+  ];
 
   const getIcon = (iconName: string) => {
     const icons = {
@@ -169,10 +293,10 @@ const stats = [
       <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/90 to-purple-600/90"></div>
-        
+
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
@@ -188,19 +312,19 @@ const stats = [
                   <Star className="h-4 w-4 text-yellow-400" />
                   <span>{t('home.hero.span')}</span>
                 </motion.div>
-                
+
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   {t('home.hero.title')}
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
                     {t('home.hero.subtitle')}
                   </span>
                 </h1>
-                
+
                 <p className="text-xl text-blue-100 leading-relaxed max-w-2xl">
                   {t('home.hero.description')}
                 </p>
               </div>
-              
+
               <div className="flex flex-col items-start sm:items-center space-y-2 gap-4 sm:flex-row ">
                 <motion.div
                   whileHover={{ scale: 1.05 }}
@@ -214,7 +338,8 @@ const stats = [
                     <ArrowRight className="h-5 w-5" />
                   </Link>
                 </motion.div>
-                
+
+
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
@@ -228,8 +353,8 @@ const stats = [
                 </motion.div>
               </div>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.4, duration: 0.8 }}
@@ -264,7 +389,7 @@ const stats = [
           <div className="bg-white rounded-2xl shadow-xl p-8">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
-                <motion.div 
+                <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -277,10 +402,7 @@ const stats = [
                   <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
                     {stat.number}
                   </div>
-                 <div className="text-gray-600 font-medium">{t(stat.label)}</div>
-
-                  
-
+                  <div className="text-gray-600 font-medium">{t(stat.label)}</div>
                 </motion.div>
               ))}
             </div>
@@ -291,7 +413,7 @@ const stats = [
       {/* Services Section */}
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -318,9 +440,9 @@ const stats = [
                 <div className={`w-16 h-16 rounded-xl flex items-center justify-center mb-6 ${getColorClasses(service.color)} group-hover:scale-110 transition-transform`}>
                   {getIcon(service.icon)}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">{t('services.title')}</h3>
-                <p className="text-gray-600 mb-6 leading-relaxed">{t('services.description')}</p>
-                <Link 
+                <h3 className="text-xl font-bold text-gray-900 mb-4">{service.title}</h3>
+                <p className="text-gray-600 mb-6 leading-relaxed">{service.description}</p>
+                <Link
                   to="/services"
                   className="text-blue-600 font-semibold hover:text-blue-700 transition-colors inline-flex items-center space-x-2 group"
                 >
@@ -336,7 +458,7 @@ const stats = [
       {/* Testimonials */}
       <section className="bg-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -364,8 +486,8 @@ const stats = [
                 </div>
                 <p className="text-gray-700 mb-6 italic leading-relaxed">"{testimonial.text}"</p>
                 <div className="flex items-center space-x-4">
-                  <img 
-                    src={testimonial.image} 
+                  <img
+                    src={testimonial.image}
                     alt={testimonial.name}
                     className="w-12 h-12 rounded-full object-cover"
                   />
@@ -383,7 +505,7 @@ const stats = [
       {/* Partners Section */}
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -395,6 +517,7 @@ const stats = [
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
 
+
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
             {partners.map((partner: any, index) => (
               <motion.div
@@ -405,12 +528,13 @@ const stats = [
                 whileHover={{ scale: 1.05 }}
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
-                <img 
-                  src={partner.logo} 
+                <img
+                  src={partner.logo}
                   alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />
               </motion.div>
+
             ))}
           </div>
         </div>

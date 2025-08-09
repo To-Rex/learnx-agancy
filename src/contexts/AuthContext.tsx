@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true
-    
+
     // Check for stored admin user data
     const storedAdminUser = localStorage.getItem('admin_user')
     if (storedAdminUser) {
@@ -49,13 +49,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
-        
+
         if (error) {
           console.error('Session error:', error)
         }
-        
+
         console.log('Initial session:', session)
-        
+
         if (mounted) {
           setSession(session)
           setUser(session?.user ?? null)
@@ -71,22 +71,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     }
-    
+
     initializeAuth()
 
     // Listen for auth changes with debounce
     let timeoutId: NodeJS.Timeout
-    
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log('Auth state change:', event, session)
-      
+
       // Clear previous timeout
       if (timeoutId) {
         clearTimeout(timeoutId)
       }
-      
+
       // Debounce auth state changes
       timeoutId = setTimeout(async () => {
         if (mounted) {
@@ -124,176 +124,173 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string) => {
+    // Supabase yordamida ro'yxatdan o'tish
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-    })
-    return { data, error }
-  }
+    });
+
+    console.log('signUp data:', data);
+    console.log('signUp error:', error);
+
+    // Supabase session ichidan access token olish
+    const accessToken = data?.session?.access_token || null;
+
+    if (accessToken) {
+      // Tokenni localStorage ga saqlash
+      localStorage.setItem('token', accessToken);
+
+      try {
+        // O'z API ga Supabase tokenni yuborish
+        const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({ access_token: accessToken }),  // API tokenni body orqali ham qabul qilsa
+        });
+
+        if (!apiResponse.ok) {
+          throw new Error(`API xatolik: ${apiResponse.status}`);
+        }
+
+        const apiData = await apiResponse.json();
+        console.log('API dan access token:', apiData);
+
+        // API dan olingan access tokenni ham localStorage ga saqlash (agar mavjud bo'lsa)
+        if (apiData.token) {
+          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem('client_id', apiData?.client?.id);
+
+          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
+
+        }
+
+      } catch (apiError) {
+        console.error('API bilan ishlashda xato:', apiError);
+      }
+    }
+
+    return { data, error };
+  };
+
+
 
   const signIn = async (email: string, password: string) => {
-    setLoading(true)
-    
+    setLoading(true);
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
-    })
-    
-    if (!error && data.user) {
-      // Force immediate state update
-      setUser(data.user)
-      setSession(data.session)
-      await checkAdminStatus(data.user)
+    });
+
+    console.log('signIn data:', data);
+    console.log('signIn error:', error);
+
+    const accessToken = data?.session?.access_token || null;
+    if (accessToken) {
+      localStorage.setItem('token', accessToken);
+      console.log('Access token saved:', accessToken);
+
+      // API ga Supabase tokenni yuborish
+      try {
+        const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
+          method: 'POST',  // API talab qilsa POST
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,  // Supabase tokenni yuboramiz
+          },
+          body: JSON.stringify({ access_token: accessToken }),
+          // Agar APIga body kerak bo‘lsa, mana shunday yuboring:
+          // body: JSON.stringify({ someData: 'value' }),
+        });
+
+        if (!apiResponse.ok) {
+          throw new Error(`API xatolik: ${apiResponse.status}`);
+        }
+
+        const apiData = await apiResponse.json();
+        console.log('API dan access token:', apiData);
+
+        // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
+        if (apiData.token) {
+          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem('client_id', apiData?.client?.id);
+          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
+
+        }
+
+      } catch (apiError) {
+        console.error('API bilan ishlashda xato:', apiError);
+      }
     }
-    
-    setLoading(false)
-    return { data, error }
-  }
+
+    if (!error && data?.user) {
+      setUser(data.user);
+      setSession(data.session);
+      await checkAdminStatus(data.user);
+    }
+
+    setLoading(false);
+    return { data, error };
+  };
+
+
+
 
   const signInWithGoogle = async () => {
     setLoading(true)
-    
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'https://deft-gumdrop-6e6f8a.netlify.app/profile',
+        redirectTo: 'http://localhost:5173',
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
         }
       }
     })
-    
+
     if (error) setLoading(false)
     return { data, error }
   }
 
   const adminSignIn = async (username: string, password: string) => {
     try {
-      // First verify admin credentials
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('*')
-        .eq('username', username)
-        .maybeSingle()
+      setLoading(true);
+      const response = await fetch("https://learnx-crm-production.up.railway.app/api/v1/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ identifor: username, password })
+      });
+      const data = await response.json();
+      console.log('LearnX CRM javobi:', data);
 
-      if (error || !data) {
-        return { data: null, error: { message: 'Noto\'g\'ri login yoki parol' } }
+      if (!response.ok || !data?.token) {
+        return { data: null, error: { message: "Noto‘g‘ri login yoki parol" } };
       }
 
-      // Verify password
-      const { data: passwordCheck, error: passwordError } = await supabase
-        .rpc('verify_admin_password', {
-          input_username: username,
-          input_password: password
-        })
-      
-      if (passwordError) {
-        console.error('Password verification error:', passwordError)
-        return { data: null, error: { message: 'Parol tekshirishda xatolik' } }
+      const adminUsers = ['bron', 'admin', 'dev.dilshodjon'];
+      if (!adminUsers.includes(username)) {
+        return { data: null, error: { message: "Bu foydalanuvchi admin emas" } };
       }
 
-      if (passwordCheck) {
-        // Set admin state and store in localStorage
-        setIsAdmin(true)
-        localStorage.setItem('admin_user', JSON.stringify(data))
-        return { data: { user: { email: `${username}@admin.local`, role: data.role } }, error: null }
-      } else {
-        return { data: null, error: { message: 'Noto\'g\'ri parol' } }
-      }
+      setIsAdmin(true);
+      localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
+      localStorage.setItem('token', data?.token);
+      return { data: { success: true }, error: null };
     } catch (err) {
-      console.error('Admin login error:', err)
-      return { data: null, error: { message: 'Kirish jarayonida xatolik yuz berdi' } }
+      console.error('Admin login xatosi:', err);
+      return { data: null, error: { message: 'Kirish jarayonida xatolik yuz berdi' } };
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
-  // const adminSignIn = async (username: string, password: string) => {
-  //   try {
-  //     const { data, error } = await supabase
-  //       .from('admin_users')
-  //       .select('*')
-  //       .eq('username', username)
-  //       .maybeSingle()
-  
-  //     if (error || !data) {
-  //       return { data: null, error: { message: "Noto'g'ri login yoki parol" } }
-  //     }
-  
-  //     // 2. RPC orqali parolni tekshiramiz
-  //     const { data: passwordCheck, error: passwordError } = await supabase.rpc(
-  //       'verify_admin_password',
-  //       {
-  //         input_username: username,
-  //         input_password: password,
-  //       }
-  //     )
-  
-  //     if (passwordError) {
-  //       console.error('Password verification error:', passwordError)
-  //       return { data: null, error: { message: 'Parol tekshirishda xatolik' } }
-  //     }
-  
-  //     if (!passwordCheck) {
-  //       return { data: null, error: { message: "Noto'g'ri parol" } }
-  //     }
-  
-  //     const {
-  //       data: sessionData,
-  //       error: sessionError,
-  //     } = await supabase.auth.getSession()
-  
-  //     if (sessionError || !sessionData.session) {
-  //       return { data: null, error: { message: 'Session topilmadi' } }
-  //     }
-  
-  //     const accessToken = sessionData.session.access_token
-  
-  //     const response = await fetch('/api/v1/auth/login-with-supabase', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //         'Authorization': `Bearer ${accessToken}`,
-  //       },
-  //       body: JSON.stringify({
-  //         message: 'Admin kirishi muvaffaqiyatli bo‘ldi',
-  //         username: username,
-  //       }),
-  //     })
-      
-  
-  //     if (!response.ok) {
-  //       const text = await response.text()
-  //       throw new Error(`API xatolik: ${response.status} - ${text}`)
-  //     }
-  
-  //     const responseData = await response.json()
-  //     console.log('Backend javobi:', responseData)
-  
-  //     // 5. Lokal holatda adminni saqlaymiz
-  //     setIsAdmin(true)
-  //     localStorage.setItem('admin_user', JSON.stringify(data))
-  
-  //     return {
-  //       data: {
-  //         user: {
-  //           email: `${username}@admin.local`,
-  //           role: data.role,
-  //         },
-  //         apiResponse: responseData,
-  //       },
-  //       error: null,
-  //     }
-  //   } catch (err: any) {
-  //     console.error('Admin login error:', err)
-  //     return {
-  //       data: null,
-  //       error: {
-  //         message: err?.message || 'Kirish jarayonida xatolik yuz berdi',
-  //       },
-  //     }
-  //   }
-  // }
-  
+
+
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()

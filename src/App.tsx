@@ -23,10 +23,12 @@ const AppContent = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
+  const { user } = useAuth()
 
   useEffect(() => {
-    // Initialize storage buckets
-    initializeStorage()
+    if (user) {
+      initializeStorage()
+    }
     
     // Handle OAuth callback - check for tokens in URL hash
     const handleAuthCallback = async () => {
@@ -60,9 +62,9 @@ const AppContent = () => {
         }
         
         // Clear the hash from URL
-        window.history.replaceState(null, '', '/profile')
-        // Navigate to profile
-        navigate('/profile')
+        window.history.replaceState(null, '', '/')
+        // Navigate to 
+        navigate('/')
         return
       }
       
@@ -79,12 +81,11 @@ const AppContent = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event, session)
       if (event === 'SIGNED_IN' && session) {
-        navigate('/profile')
       }
     })
     
     return () => subscription.unsubscribe()
-  }, [navigate, location])
+  }, [navigate, location ,user])
 
   return (
     <div className="min-h-screen flex flex-col">
