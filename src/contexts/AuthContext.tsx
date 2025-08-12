@@ -125,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const accessToken = data?.session?.access_token || null;
 
     if (accessToken) {
-      localStorage.setItem('token', accessToken);
+      // Tokenni localStorage ga saqlash
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
 
       try {
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
@@ -143,7 +144,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const apiData = await apiResponse.json();
         if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
+          localStorage.setItem('client_id', apiData?.client?.id);
+
+          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
+
         }
 
       } catch (apiError) {
@@ -163,7 +168,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     const accessToken = data?.session?.access_token || null;
     if (accessToken) {
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
+      console.log('Access token saved:', accessToken);
+
       // API ga Supabase tokenni yuborish
       try {
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
@@ -184,7 +191,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
+          localStorage.setItem('client_id', apiData?.client?.id);
+          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
+
         }
 
       } catch (apiError) {
@@ -204,11 +214,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     setLoading(true)
-
+    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    console.log(baseUrl);
+    
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'http://localhost:5173',
+        redirectTo: `${baseUrl}/auth/callback`, // Redirect URL to handle the OAuth response
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -242,7 +254,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAdmin(true);
       localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
-      localStorage.setItem('token', data?.token);
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
       console.error('Admin login xatosi:', err);
