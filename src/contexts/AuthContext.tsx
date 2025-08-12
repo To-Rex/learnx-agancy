@@ -125,8 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const accessToken = data?.session?.access_token || null;
 
     if (accessToken) {
-      // Tokenni localStorage ga saqlash
-      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
+      localStorage.setItem('token', accessToken);
 
       try {
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
@@ -144,11 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const apiData = await apiResponse.json();
         if (apiData.token) {
-          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
-          localStorage.setItem('client_id', apiData?.client?.id);
-
-          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
-
+          localStorage.setItem('api_access_token', apiData?.token);
         }
 
       } catch (apiError) {
@@ -168,9 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
     const accessToken = data?.session?.access_token || null;
     if (accessToken) {
-      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
-      console.log('Access token saved:', accessToken);
-
+      localStorage.setItem('token', accessToken);
       // API ga Supabase tokenni yuborish
       try {
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
@@ -191,10 +184,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
-          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
-          localStorage.setItem('client_id', apiData?.client?.id);
-          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
-
+          localStorage.setItem('api_access_token', apiData?.token);
         }
 
       } catch (apiError) {
@@ -254,7 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAdmin(true);
       localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
-      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, data?.token);
+          localStorage.setItem('access_token', data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
       console.error('Admin login xatosi:', err);

@@ -151,7 +151,7 @@ const Admin: React.FC = () => {
     if (!contactToDelete) return;
 
     try {
-      const token = localStorage.getItem("token") || "";
+      const token = localStorage.getItem("access_token") || "";
       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/delete/${contactToDelete}`, {
         method: "DELETE",
         headers: {
@@ -281,7 +281,7 @@ const Admin: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
+            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -291,7 +291,7 @@ const Admin: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
+            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -319,7 +319,7 @@ const Admin: React.FC = () => {
     if (!serviceToDelete) return;
 
     try {
-      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
+      const token = localStorage.getItem('admin_access_token') || "";
       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/delete/${serviceToDelete}`, {
         method: "DELETE",
         headers: {
@@ -344,7 +344,6 @@ const Admin: React.FC = () => {
   const loadServices = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
       const res = await fetch(
         "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
         {
@@ -478,14 +477,13 @@ const Admin: React.FC = () => {
       rating: story.rating ?? 0,
       image: story.image || '',
     });
-    useEffect(() => {
-      fetchPartners()
-    }, [])
 
     setEditingItem(story);
     setShowStoryModal(true);
   };
-
+    useEffect(() => {
+      fetchPartners()
+    }, [])
   const handleSaveStory = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
