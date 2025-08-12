@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Users, Award } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
-import { supabase } from '../lib/supabase'
 import { useLanguage } from '../contexts/LanguageContext'
 
 const Contact: React.FC = () => {
@@ -22,25 +21,35 @@ const Contact: React.FC = () => {
     setLoading(true)
 
     try {
-      const { error } = await supabase
-        .from('contact_submissions')
-        .insert({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone || null,
-          subject: formData.subject,  
-          message: formData.message,
-          status: 'new',
-          created_at: new Date().toISOString()
-        })
+      const payload = {
+        id: crypto.randomUUID(),
+        client_id: "",
+        application_id: "",
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone || "",
+        service_id: formData.subject || "",
+        text: formData.message,
+        created_by: "",
+        uploaded_at: null,
+        created_at: new Date().toISOString()
+      }
+      const response = await fetch("https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/create", {
+        method: "POST",
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload)
+      })
 
-
-      if (error) throw error
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
 
       toast.success(t('contact.toast.success'))
       setFormData({ name: '', email: '', phone: '', subject: '', message: '' })
     } catch (error) {
-      console.error('Contact form error:', error)
+      console.error("Contact form API error:", error)
       toast.error(t('contact.toast.error'))
     } finally {
       setLoading(false)
@@ -120,28 +129,86 @@ const Contact: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
           {/* Contact Form */}
-          <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="bg-white p-8 rounded-2xl shadow-lg">
+          <motion.div
+            initial={{ opacity: 0, x: -50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8 }}
+            className="bg-white p-8 rounded-2xl shadow-lg max-w-3xl mx-auto"
+          >
             <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('contact.form.send')}</h2>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.name')} *</label>
-                  <input type="text" id="name" name="name" required value={formData.name} onChange={handleChange} placeholder={t('contact.form.namePlaceholder')} className="w-full px-4 py-3 border border-gray-300 outline-none rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {t('contact.form.name')} *
+                  </label>
+                  <input
+                    type="text"
+                    id="name"
+                    name="name"
+                    required
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder={t('contact.form.namePlaceholder')}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.email')} *</label>
-                  <input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} placeholder="email@example.com" className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {t('contact.form.email')} *
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="email@example.com"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.phone')}</label>
-                  <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleChange} placeholder="+998 90 123 45 67" className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 outline-none focus:ring-blue-500 focus:border-blue-500 transition-colors" />
+                  <label
+                    htmlFor="phone"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {t('contact.form.phone')}
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="+998 90 123 45 67"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  />
                 </div>
                 <div>
-                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.subject')} *</label>
-                  <select id="subject" name="subject" required value={formData.subject} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none focus:border-blue-500 transition-colors">
+                  <label
+                    htmlFor="subject"
+                    className="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    {t('contact.form.subject')} *
+                  </label>
+                  <select
+                    id="subject"
+                    name="subject"
+                    required
+                    value={formData.subject}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  >
                     <option value="">{t('contact.form.selectSubject')}</option>
                     <option value="visa">{t('contact.form.subjects.visa')}</option>
                     <option value="work-travel">{t('contact.form.subjects.workTravel')}</option>
@@ -153,15 +220,41 @@ const Contact: React.FC = () => {
               </div>
 
               <div>
-                <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">{t('contact.form.message')} *</label>
-                <textarea id="message" name="message" required rows={6} value={formData.message} onChange={handleChange} placeholder={t('contact.form.message')} className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none" />
+                <label
+                  htmlFor="message"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
+                  {t('contact.form.message')} *
+                </label>
+                <textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={6}
+                  value={formData.message}
+                  onChange={handleChange}
+                  placeholder={t('contact.form.message')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                />
               </div>
 
-              <button type="submit" disabled={loading} className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl">
-                {loading ? <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div> : (<><Send className="h-5 w-5" /><span>{t('contact.form.send')}</span></>)}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
+              >
+                {loading ? (
+                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    <span>{t('contact.form.send')}</span>
+                  </>
+                )}
               </button>
             </form>
           </motion.div>
+
 
           {/* Contact Info */}
           <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="space-y-8">

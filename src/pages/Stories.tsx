@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Star, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { supabase } from '../lib/supabase'
 import { useLanguage } from '../contexts/LanguageContext'
 
 const Stories: React.FC = () => {
@@ -22,29 +21,26 @@ const Stories: React.FC = () => {
 
   const loadStories = async () => {
     try {
-      const { data } = await supabase
-        .from('stories')
-        .select('*')
-        .order('created_at', { ascending: false })
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list") // API manzilini yozing
+      const data = await res.json()
 
       if (data && data.length > 0) {
-        setStories(data)
+        const mappedStories = data.map((item: any) => ({
+          id: item.id,
+          name: item.name || "",
+          country: item.country || "",
+          text: item.text || "",
+          rating: item.rating || 0,
+          image: item.image_url || "",
+          created_at: item.created_at
+        }))
+        setStories(mappedStories)
       } else {
-        setStories([
-          {
-            id: 1,
-            name: "Aziz Karimov",
-            country: "USA",
-            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim.",
-            rating: 5,
-            image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=300",
-            featured: true,
-            created_at: "2024-01-15"
-          }
-        ])
+        setStories([])
       }
     } catch (error) {
-      console.error('Stories loading error:', error)
+      console.error("Stories API load error:", error)
+      setStories([])
     } finally {
       setLoading(false)
     }
@@ -110,8 +106,8 @@ const Stories: React.FC = () => {
               key={country}
               onClick={() => setSelectedCountry(country)}
               className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedCountry === country
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-white text-gray-700 hover:bg-gray-100 shadow-sm'
                 }`}
             >
               {country === 'all' ? t('stories.all') : country}
@@ -153,7 +149,7 @@ const Stories: React.FC = () => {
 
                 {/* Text */}
                 <p className="text-gray-700 mb-6 leading-relaxed line-clamp-4">
-                  "{story.text}"
+                  {story.text}
                 </p>
 
                 {/* Info */}

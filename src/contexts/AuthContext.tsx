@@ -33,8 +33,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true
-
-    // Check for stored admin user data
     const storedAdminUser = localStorage.getItem('admin_user')
     if (storedAdminUser) {
       setIsAdmin(true)
@@ -44,8 +42,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return
     }
-
-    // Get initial session
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -71,10 +67,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     }
-
     initializeAuth()
-
-    // Listen for auth changes with debounce
     let timeoutId: NodeJS.Timeout
 
     const {
@@ -124,24 +117,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const signUp = async (email: string, password: string) => {
-    // Supabase yordamida ro'yxatdan o'tish
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
     });
 
-    console.log('signUp data:', data);
-    console.log('signUp error:', error);
-
-    // Supabase session ichidan access token olish
     const accessToken = data?.session?.access_token || null;
 
     if (accessToken) {
-      // Tokenni localStorage ga saqlash
       localStorage.setItem('token', accessToken);
 
       try {
-        // O'z API ga Supabase tokenni yuborish
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
           method: 'POST',
           headers: {
@@ -156,15 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         const apiData = await apiResponse.json();
-        console.log('API dan access token:', apiData);
-
-        // API dan olingan access tokenni ham localStorage ga saqlash (agar mavjud bo'lsa)
         if (apiData.token) {
           localStorage.setItem('api_access_token', apiData?.token);
-          localStorage.setItem('client_id', apiData?.client?.id);
-
-          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
-
         }
 
       } catch (apiError) {
@@ -175,8 +154,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { data, error };
   };
 
-
-
   const signIn = async (email: string, password: string) => {
     setLoading(true);
 
@@ -184,15 +161,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
     });
-
-    console.log('signIn data:', data);
-    console.log('signIn error:', error);
-
     const accessToken = data?.session?.access_token || null;
     if (accessToken) {
       localStorage.setItem('token', accessToken);
-      console.log('Access token saved:', accessToken);
-
       // API ga Supabase tokenni yuborish
       try {
         const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
@@ -202,8 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             'Authorization': `Bearer ${accessToken}`,  // Supabase tokenni yuboramiz
           },
           body: JSON.stringify({ access_token: accessToken }),
-          // Agar APIga body kerak bo‘lsa, mana shunday yuboring:
-          // body: JSON.stringify({ someData: 'value' }),
         });
 
         if (!apiResponse.ok) {
@@ -216,9 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
           localStorage.setItem('api_access_token', apiData?.token);
-          localStorage.setItem('client_id', apiData?.client?.id);
-          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
-
         }
 
       } catch (apiError) {
@@ -235,9 +201,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
     return { data, error };
   };
-
-
-
 
   const signInWithGoogle = async () => {
     setLoading(true)

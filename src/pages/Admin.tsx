@@ -96,7 +96,66 @@ const Admin: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+    const [contactToDelete, setContactToDelete] = useState<string | null>(null);
 
+
+
+  // Contact get 
+const fetchContacts = async () => {
+  setLoading(true)
+  try {
+    const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/get-list')
+    if (!res.ok) throw new Error('API xatolik')
+    const data = await res.json()
+    const formatted = data.map((item: any) => ({
+      ...item,
+      message: item.text,
+    }))
+    setContacts(formatted)
+  } catch (error) {
+    console.error(error)
+  } finally {
+    setLoading(false)
+  }
+}
+
+useEffect(() => {
+  fetchContacts()
+}, [])
+
+const handleDeleteContactClick = (id: string) => {
+  setContactToDelete(id);
+  setDeleteModalOpen(true);
+};
+
+const handleConfirmContactDelete = async () => {
+  if (!contactToDelete) return;
+
+  try {
+    const token = localStorage.getItem("token") || "";
+    const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/delete/${contactToDelete}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (res.ok) {
+      await fetchContacts(); // O'chirgandan keyin yangilash
+      setDeleteModalOpen(false);
+      setContactToDelete(null);
+    } else {
+      const errorData = await res.json();
+      toast(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
+    }
+  } catch (error) {
+    toast("Contactni o'chirishda xatolik yuz berdi");
+  }
+};
+
+
+  // service 
   const [serviceForm, setServiceForm] = useState({
     title: { en: "" },
     description: { en: "" },
@@ -104,7 +163,6 @@ const Admin: React.FC = () => {
     price: "",
     features: [],
   });
-
   const handleAddService = () => {
     setEditingItem(null);
     setServiceForm({
@@ -179,7 +237,6 @@ const Admin: React.FC = () => {
       alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
   };
-  //  Delete Service
   const handleDeleteServiceClick = (id: string) => {
     setServiceToDelete(id);
     setDeleteModalOpen(true);
@@ -210,7 +267,6 @@ const Admin: React.FC = () => {
       alert("Xizmatni o'chirishda xatolik yuz berdi");
     }
   };
-  // Load services
   const loadServices = async () => {
     setLoading(true);
     try {
@@ -219,7 +275,6 @@ const Admin: React.FC = () => {
         "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -269,55 +324,11 @@ const Admin: React.FC = () => {
     logo: '',
   });
   useEffect(() => {
-    loadData()
     fetchPartners()
   }, [])
-  // const [file, setFile ] = useState<File | null>(null)
-  // 
-  const loadData = async () => {
-    try {
-      // Load applications, users, stories, partners, contacts from Supabase
-      const { data: appData, error: appError } = await supabase.from('applications').select('*');
-      if (appError) throw appError;
-      setApplications(appData);
 
-      const { data: userData, error: userError } = await supabase.from('users').select('*');
-      if (userError) throw userError;
-      setUsers(userData);
-
-      const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
-      if (storyError) throw storyError;
-      setStories(storyData);
-
-      const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
-      if (partnerError) throw partnerError;
-      setPartners(partnerData);
-
-      const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
-      if (contactError) throw contactError;
-      setContacts(contactData);
-
-      // Update stats
-      setStats({
-        totalApplications: appData.length,
-        pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
-        approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
-        rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
-        totalUsers: userData.length,
-        totalServices: services.length,
-        totalStories: storyData.length,
-        totalPartners: partnerData.length,
-        totalContacts: contactData.length,
-        monthlyGrowth: 0, // Implement logic as needed
-        weeklyGrowth: 0, // Implement logic as needed
-      });
-    } catch (err) {
-      console.error('Maʼlumotlarni yuklashda xato:', err);
-    }
-  };
 
   useEffect(() => {
-    loadData();
     loadServices();
   }, []);
 
@@ -331,7 +342,6 @@ const Admin: React.FC = () => {
       if (error) throw error
 
       toast.success('Ariza holati yangilandi')
-      loadData()
     } catch (error) {
       console.error('Status update error:', error)
       toast.error('Holatni yangilashda xatolik')
@@ -369,7 +379,6 @@ const Admin: React.FC = () => {
       setShowStoryModal(false)
       setEditingItem(null)
       resetStoryForm()
-      loadData()
     } catch (error) {
       console.error('Story save error:', error)
       toast.error('Hikoyani saqlashda xatolik')
@@ -404,20 +413,13 @@ const Admin: React.FC = () => {
       setShowPartnerModal(false)
       setEditingItem(null)
       resetPartnerForm()
-      loadData()
     } catch (error) {
       console.error('Partner save error:', error)
       toast.error('Hamkorni saqlashda xatolik')
     }
   }
 
-  const handleDeleteItem = async (table: string, id: number) => {
-    const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
-    if (!confirmed) return;
 
-    const { error } = await supabase.from(table).delete().eq('id', id);
-    if (!error) fetchPartners();
-  };
   const fetchPartners = async () => {
     const { data, error } = await supabase.from('partners').select('*');
     if (!error) setPartners(data);
@@ -1254,8 +1256,8 @@ const Admin: React.FC = () => {
                               type="button"
                               onClick={() =>
                                 editingItem
-                                  ? editPartner(supabase, partnerForm, editingItem, setShowPartnerModal, setPartnerForm, loadData)
-                                  : savePartner(supabase, partnerForm, setShowPartnerModal, setPartnerForm, loadData)
+                                  ? editPartner(supabase, partnerForm, editingItem, setShowPartnerModal, setPartnerForm)
+                                  : savePartner(supabase, partnerForm, setShowPartnerModal, setPartnerForm)
                               }
                               className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
                             >
@@ -1296,7 +1298,7 @@ const Admin: React.FC = () => {
                                 <Edit className="h-4 w-4" />
                               </button>
                               <button
-                                onClick={() => deletePartner(supabase, partner.id, loadData)}
+                                onClick={() => deletePartner(supabase, partner.id)}
                                 className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -1333,72 +1335,111 @@ const Admin: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
                 >
-                  <div className="p-8 border-b border-white/20">
+                  <div className="p-8 border-b border-white/20 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-white flex items-center">
                       <Mail className="h-6 w-6 mr-3 text-teal-400" />
                       Murojatlar boshqaruvi
                     </h2>
                   </div>
 
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-white/5">
-                        <tr>
-                          {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
-                            <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/10">
-                        {contacts.map((contact: any, index) => (
-                          <motion.tr
-                            key={contact.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="hover:bg-white/5 transition-all duration-300"
+                  {/* Bu yerda scrollable qism */}
+                  <div className="overflow-y-auto flex-grow px-6 pb-6">
+                    {loading ? (
+                      <div className="p-4 text-white">Yuklanmoqda...</div>
+                    ) : (
+                      <table className="w-full">
+                        <thead className="bg-white/5">
+                          <tr>
+                            {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
+                              <th
+                                key={header}
+                                className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
+                              >
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                          {contacts.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="text-center text-purple-200 py-8">
+                                Ma'lumot topilmadi
+                              </td>
+                            </tr>
+                          ) : (
+                            contacts.map((contact, index) => (
+                              <motion.tr
+                                key={contact.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="hover:bg-white/5 transition-all duration-300"
+                              >
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
+                                      <span className="text-white font-semibold text-sm">
+                                        {contact.name?.charAt(0)?.toUpperCase() || '-'}
+                                      </span>
+                                    </div>
+                                    <div className="font-semibold text-white">{contact?.name || '-'}</div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
+                                <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
+                                <td className="px-6 py-4">
+                                  <div className="max-w-xs truncate text-purple-200">{contact?.message || '-'}</div>
+                                </td>
+                                <td className="px-6 py-4 text-purple-200 text-sm">
+                                  {contact?.created_at
+                                    ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
+                                    : '-'}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center space-x-2">
+                                    <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </motion.tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                    {deleteModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                        <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-4">
+                          <button
+                            onClick={() => setDeleteModalOpen(false)}
+                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
                           >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
-                                  <span className="text-white font-semibold text-sm">
-                                    {contact.name?.charAt(0)?.toUpperCase()}
-                                  </span>
-                                </div>
-                                <div className="font-semibold text-white">{contact.name}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 text-purple-200">{contact.email}</td>
-                            <td className="px-6 py-4 text-purple-200">{contact.phone || '-'}</td>
-                            <td className="px-6 py-4">
-                              <div className="max-w-xs truncate text-purple-200">{contact.message}</div>
-                            </td>
-                            <td className="px-6 py-4 text-purple-200 text-sm">
-                              {new Date(contact.created_at).toLocaleDateString('uz-UZ')}
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center space-x-2">
-                                <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                                  <Eye className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteItem('contact_submissions', contact.id)}
-                                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmContactDelete}
+                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                          >
+                            O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   </div>
                 </motion.div>
+
               )}
             </AnimatePresence>
           </div>
