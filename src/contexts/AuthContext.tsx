@@ -244,7 +244,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAdmin(true);
       localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
-          localStorage.setItem('access_token', data?.token);
+          localStorage.setItem('admin_access_token', data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
       console.error('Admin login xatosi:', err);
