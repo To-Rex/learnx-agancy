@@ -138,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (accessToken) {
       // Tokenni localStorage ga saqlash
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
 
       try {
         // O'z API ga Supabase tokenni yuborish
@@ -160,10 +160,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // API dan olingan access tokenni ham localStorage ga saqlash (agar mavjud bo'lsa)
         if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
           localStorage.setItem('client_id', apiData?.client?.id);
 
-          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
+          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
 
         }
 
@@ -190,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const accessToken = data?.session?.access_token || null;
     if (accessToken) {
-      localStorage.setItem('token', accessToken);
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, accessToken);
       console.log('Access token saved:', accessToken);
 
       // API ga Supabase tokenni yuborish
@@ -215,9 +215,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
+          localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, apiData?.token);
           localStorage.setItem('client_id', apiData?.client?.id);
-          console.log('Token saqlandi:', localStorage.getItem('api_access_token'));
+          console.log('Token saqlandi:', localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY));
 
         }
 
@@ -279,7 +279,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAdmin(true);
       localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
-      localStorage.setItem('token', data?.token);
+      localStorage.setItem(import.meta.env.VITE_ACCESS_TOKEN_KEY, data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
       console.error('Admin login xatosi:', err);

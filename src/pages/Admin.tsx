@@ -22,32 +22,8 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
-import { editPartner } from '../functions/partnerfunctions'
-
-const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
-  Users,
-  FileText,
-  MessageSquare,
-  Settings,
-  BarChart3,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Search,
-  Filter,
-  Download,
-  X,
-  Home,
-  Clock,
-  CheckCircle,
-  Image,
-  Sparkles,
-  Crown,
-  Shield,
-  Activity,
-};
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
+import { string } from 'yup'
 
 // Define Services interface for type safety
 type Service = {
@@ -58,6 +34,25 @@ type Service = {
   price: string;
   features: { en: string }[];
 };
+
+interface Partner {
+  id: string;
+  image: string;
+  name: {
+    en: string;
+    uz: string;
+    ru: string;
+  };
+}
+
+interface PartnerForm {
+  name: {
+    en: string;
+    uz: string;
+    ru: string;
+  };
+  image: string;
+}
 
 const Admin: React.FC = () => {
   const navigate = useNavigate()
@@ -78,6 +73,30 @@ const Admin: React.FC = () => {
     weeklyGrowth: 0,
   });
 
+  const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
+    Users,
+    FileText,
+    MessageSquare,
+    Settings,
+    BarChart3,
+    Plus,
+    Edit,
+    Trash2,
+    Eye,
+    Search,
+    Filter,
+    Download,
+    X,
+    Home,
+    Clock,
+    CheckCircle,
+    Image,
+    Sparkles,
+    Crown,
+    Shield,
+    Activity,
+  };
+
   // Data states
   const [applications, setApplications] = useState([])
   const [users, setUsers] = useState([])
@@ -90,15 +109,66 @@ const Admin: React.FC = () => {
   const [editingItem, setEditingItem] = useState(null)
   const [editingService, setEditingService] = useState(null)
   const [file, setFile] = useState<File | null>(null);
-
   const [showStoryModal, setShowStoryModal] = useState(false);
-  const [showPartnerModal, setShowPartnerModal] = useState(false);
-  const [activeLanguage, setActiveLanguage] = useState('uz');
-  const [loading, setLoading] = useState(false);
+  const [showPartnerModal, setShowPartnerModal] = useState<boolean>(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [storyDelete, setStoryDelete] = useState<string | null>(null);
+  const [partnerDeleteModal, setPartnerDeleteModal] = useState(false);
+  const [partnerToDelete, setPartnerToDelete] = useState<string | null>(null);
+  const [partnerForm, setPartnerForm] = useState({
+    name: {
+      en : "",
+      uz: "",
+      ru: "",
+    },
+    image: '',
+    image_file:  null
+  });
+
+  const loadData = async () => {
+    try {
+      // Load applications, users, stories, partners, contacts from Supabase
+      const { data: appData, error: appError } = await supabase.from('applications').select('*');
+      if (appError) throw appError;
+      setApplications(appData);
+
+      const { data: userData, error: userError } = await supabase.from('users').select('*');
+      if (userError) throw userError;
+      setUsers(userData);
+
+      const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
+      if (storyError) throw storyError;
+      setStories(storyData);
+
+      const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
+      if (partnerError) throw partnerError;
+      setPartners(partnerData);
+
+      const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
+      if (contactError) throw contactError;
+      setContacts(contactData);
+
+      // Update stats
+      setStats({
+        totalApplications: appData.length,
+        pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
+        approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
+        rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
+        totalUsers: userData.length,
+        totalServices: services.length,
+        totalStories: storyData.length,
+        totalPartners: partnerData.length,
+        totalContacts: contactData.length,
+        monthlyGrowth: 0, // Implement logic as needed
+        weeklyGrowth: 0, // Implement logic as needed
+      });
+    } catch (err) {
+      console.error('Maʼlumotlarni yuklashda xato:', err);
+    }
+  };
 
   const [serviceForm, setServiceForm] = useState({
     title: { en: "" },
@@ -153,7 +223,7 @@ const Admin: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -163,7 +233,7 @@ const Admin: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -192,7 +262,7 @@ const Admin: React.FC = () => {
     if (!serviceToDelete) return;
 
     try {
-      const token = localStorage.getItem("token") || "";
+      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/delete/${serviceToDelete}`, {
         method: "DELETE",
         headers: {
@@ -210,6 +280,7 @@ const Admin: React.FC = () => {
         alert(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
       }
     } catch (error) {
+      console.error("Xizmatni o'chirishda xatolik:", error);
       alert("Xizmatni o'chirishda xatolik yuz berdi");
     }
   };
@@ -217,7 +288,7 @@ const Admin: React.FC = () => {
   const loadServices = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("api_access_token") || "";
+      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
       const res = await fetch(
         "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
         {
@@ -253,75 +324,340 @@ const Admin: React.FC = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     loadServices();
   }, []);
 
 
-  const [storyForm, setStoryForm] = useState({
+//  load story
+const [storyForm, setStoryForm] = useState({
+  name: '',
+  country: '',
+  text: '',
+  rating: 5,
+  image: '',
+});
+
+const loadStory = async () => {
+  try {
+    const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list") // API manzilini yozing
+    const data = await res.json()
+
+    if (data && data.length > 0) {
+      const mappedStories = data.map((item: any) => ({
+        id: item.id,
+        name: item.name || "",
+        country: item.country || "",
+        text: item.text || "",
+        rating: item.rating || 0,
+        image: item.image_url || "",
+        created_at: item.created_at
+      }))
+      setStories(mappedStories)
+    } else {
+      setStories([])
+    }
+  } catch (error) {
+    console.error("Stories API load error:", error)
+    setStories([])
+  } finally {
+    setLoading(false)
+  }
+}
+useEffect(() => {
+  loadStory();
+}, []);
+
+const handleDeleteStoryClick = (id: string) => {
+  setStoryDelete(id);
+  setStoryDeleteModal(true);
+};
+
+const handleConfirmStoryDelete = async () => {
+  if (!storyDelete) return;
+
+  try {
+    const token = localStorage.getItem("your_access_token_key_here") || "";
+    const res = await fetch(
+      `https://learnx-crm-production.up.railway.app/api/v1/client-stories/delete/${storyDelete}`,
+      {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    if (res.ok) {
+      loadStory();
+      setStoryDeleteModal(false);
+      setStoryDelete(null);
+    } else {
+      const errorData = await res.json();
+      toast.error(errorData.message || res.statusText);
+    }
+  } catch (error) {
+    console.error(error);
+    toast.error("Xizmatni o'chirishda xatolik yuz berdi");
+  }
+};
+
+const handleAddStory = () => {
+  setEditingItem(null);
+  setStoryForm({
     name: '',
     country: '',
-    text: { uz: '', en: '', ru: '' },
+    text: '',
     rating: 5,
     image: '',
-    featured: false,
   });
+  setShowStoryModal(true);
+};
 
-  const [partnerForm, setPartnerForm] = useState<PartnerForm>({
-    name: '',
-    logo: '',
+const handleEditStory = (story: any) => {
+  setStoryForm({
+    name: typeof story.name === "string" ? story.name : story.name?.en || "",
+    country: story.country || '',
+    text: story.text || '',
+    rating: story.rating ?? 0,
+    image: story.image || '',
   });
-  useEffect(() => {
-    loadData()
-    fetchPartners()
-  }, [])
-  // const [file, setFile ] = useState<File | null>(null)
-  // 
-  const loadData = async () => {
+  setEditingItem(story);
+  setShowStoryModal(true);
+};
+
+const handleSaveStory = async () => {
+  try {
+    const token = localStorage.getItem("your_access_token_key_here") || "";
+
+    if (!token) {
+      alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
+      return;
+    }
+
+    // FormData ishlatamiz (fayl bo'lsa ham ishlaydi, matn bo'lsa ham)
+    const formData = new FormData();
+    console.log(JSON.stringify(storyForm));
+    console.log(storyForm);
+    
+    
+    formData.append("json_data", JSON.stringify({name: storyForm.name, country: storyForm.country, text: storyForm.text, rating: storyForm.rating, }));
+    formData.append("name", storyForm.name);
+    formData.append("country", storyForm.country);
+    formData.append("rating", String(storyForm.rating));
+    formData.append("text", JSON.stringify(storyForm.text));
+
+    console.log('storyForm.image::::::', storyForm.image);
+    
+   if (storyForm.image) {
+    formData.append("file", storyForm.image);
+    }
+    let url = "https://learnx-crm-production.up.railway.app/api/v1/client-stories/create";
+    let method = "POST";
+
+    if (editingItem && editingItem.id) {
+      url = `https://learnx-crm-production.up.railway.app/api/v1/client-stories/update/${editingItem.id}`;
+      method = "PUT";
+    }
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    let responseData = null;
     try {
-      // Load applications, users, stories, partners, contacts from Supabase
-      const { data: appData, error: appError } = await supabase.from('applications').select('*');
-      if (appError) throw appError;
-      setApplications(appData);
+      responseData = await res.json(); // JSON parse qilishga urinamiz
+    } catch (error) {
+      console.log(error);
+      
+      responseData = null; // bo'sh javob bo'lsa
+    }
 
-      const { data: userData, error: userError } = await supabase.from('users').select('*');
-      if (userError) throw userError;
-      setUsers(userData);
+    if (res.ok) {
+      toast.success("Muvaffaqiyatli saqlandi");
+      setShowStoryModal(false);
+      loadStory();
+    } else {
+      console.error("Xatolik:", responseData?.message || res.statusText);
+      alert("Xizmatni saqlashda xatolik: " + (responseData?.message || res.statusText));
+    }
+  } catch (error) {
+    console.error("Kutilmagan xatolik:", error);
+    alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
+  }
+};
 
-      const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
-      if (storyError) throw storyError;
-      setStories(storyData);
 
-      const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
-      if (partnerError) throw partnerError;
-      setPartners(partnerData);
+// load partners 
+const loadPartners = async ()=> {
+  try{
+    const res =  await fetch("https://learnx-crm-production.up.railway.app/api/v1/partners/get-list", {
+      method: 'GET',
+      headers:{'Authorization': `Bearer ${localStorage.getItem("your_access_token_key_here") || ""}`,}
+    })
+    const data = await res.json()
+    if(data && data.length > 0){
+      const mappedPartners = data.map((item: any) => ({
+        id: item.id || "",
+        image: item.image_url || "",
+        name: {
+          en: item.name?.en || "",
+          uz: item.name?.uz || "",
+          ru: item.name?.ru || "",
+        },
+      }))
+      setPartners(mappedPartners)
+    }else{
+      setPartners([])
+    }
+  }catch(error){
+    console.error("Hamkorlarni yuklashda xatolik:", error);
+  }finally{
+    setLoading(false);
+  }
+}
+  useEffect(() => {
+    loadPartners();
+  }, []);
 
-      const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
-      if (contactError) throw contactError;
-      setContacts(contactData);
+  const handleDeletePartnerClick = (id: string) => {
+    setPartnerToDelete(id);
+    setPartnerDeleteModal(true);
+  }
 
-      // Update stats
-      setStats({
-        totalApplications: appData.length,
-        pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
-        approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
-        rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
-        totalUsers: userData.length,
-        totalServices: services.length,
-        totalStories: storyData.length,
-        totalPartners: partnerData.length,
-        totalContacts: contactData.length,
-        monthlyGrowth: 0, // Implement logic as needed
-        weeklyGrowth: 0, // Implement logic as needed
+  const handleConfirmPartnerDelete = async () => {
+    if (!partnerToDelete) return;
+
+    try {
+      const token = localStorage.getItem("your_access_token_key_here") || "";
+      const res = await fetch(
+        `https://learnx-crm-production.up.railway.app/api/v1/partners/delete/${partnerToDelete}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (res.ok) {
+       loadPartners();
+       setPartnerDeleteModal(false);
+       setPartnerToDelete(null);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || res.statusText);
+      }
+    } catch (error) {
+      console.error('Hamkorni o\'chirishda xatolik:', error);
+      toast.error('Hamkorni o\'chirishda xatolik yuz berdi');
+    }
+  }
+
+  const handleAddPartners = () => {
+    setEditingItem(null);
+    setPartnerForm({
+      name: {
+        en: '', 
+        uz: '',
+        ru: '',
+      },
+      image: '',
+    });
+    setShowPartnerModal(true);
+  };
+
+  const handleEditPartners = (partner: any) => {
+    setPartnerForm({
+      name : {
+        en: partner.name?.en || '',
+        uz: partner.name?.uz || '',
+        ru: partner.name?.ru || '',
+      },
+      image: partner.image || '',
+    });
+    setEditingItem(partner);
+    setShowPartnerModal(true);
+  };
+
+  const handleSavePartners = async () => {
+    try {
+      const token = localStorage.getItem("your_access_token_key_here") || "";
+  
+      if (!token) {
+        alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
+        return;
+      }
+      const formData = new FormData();
+      // formData.append("name", JSON.stringify(partnerForm.name));
+      formData.append("name_ru", partnerForm.name.ru || '');
+      formData.append("name_uz", partnerForm.name.uz || '');
+      formData.append("name_en", partnerForm.name.en || '');
+      formData.append("json_data", JSON.stringify({...partnerForm, "image_url": partnerForm.image}));  
+
+      console.log(`partnerForm.image::::::`, partnerForm.image_file);
+      
+      if (partnerForm.image_file) {
+        console.log(`partnerForm.image_file=========`, partnerForm.image_file);
+
+        formData.append("file", partnerForm.image_file);
+      }
+      let url = "https://learnx-crm-production.up.railway.app/api/v1/partners/create";
+      let method = "POST";
+  
+      if (editingItem && editingItem.id) {
+        url = `https://learnx-crm-production.up.railway.app/api/v1/partners/update/${editingItem.id}`;
+        method = "PUT";
+      }
+  
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
       });
-    } catch (err) {
-      console.error('Maʼlumotlarni yuklashda xato:', err);
+  
+      let responseData = '';
+      try {
+        responseData = await res.json(); // JSON parse qilishga urinamiz
+      } catch (error) {
+        console.log(error);
+        
+        responseData = ''; // bo'sh javob bo'lsa
+      }
+  
+      if (res.ok) {
+        toast.success("Muvaffaqiyatli saqlandi");
+        setShowPartnerModal(false);
+        loadPartners();
+      } else {
+        console.error("Xatolik:", responseData?.message || res.statusText);
+        alert("Xizmatni saqlashda xatolik: " + (responseData?.message || res.statusText));
+      }
+    } catch (error) {
+      console.error("Kutilmagan xatolik:", error);
+      alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
   };
+  // const isUrl = async (str:string) => {
+  //   try {
+  //     new URL(str);
+  //     return true;
+  //   } catch {
+  //     return false;
+  //   }
+  // }
 
   useEffect(() => {
     loadData();
     loadServices();
+    loadStory()
   }, []);
 
   const handleUpdateApplicationStatus = async (applicationId: string, newStatus: string) => {
@@ -340,78 +676,6 @@ const Admin: React.FC = () => {
       toast.error('Holatni yangilashda xatolik')
     }
   }
-  const handleSaveStory = async () => {
-    try {
-      const storyData = {
-        name: storyForm.name,
-        country: storyForm.country,
-        rating: storyForm.rating,
-        image: storyForm.image,
-        featured: storyForm.featured,
-        text_translations: storyForm.text
-      }
-
-      if (editingItem) {
-        const { error } = await supabase
-          .from('stories')
-          .update(storyData)
-          .eq('id', editingItem)
-
-        if (error) throw error
-        toast.success('Hikoya yangilandi')
-      } else {
-        const { error } = await supabase
-          .from('stories')
-          .insert(storyData)
-
-        if (error) throw error
-        toast.success('Yangi hikoya qo\'shildi')
-      }
-
-      setShowStoryModal(false)
-      setEditingItem(null)
-      resetStoryForm()
-      loadData()
-    } catch (error) {
-      console.error('Story save error:', error)
-      toast.error('Hikoyani saqlashda xatolik')
-    }
-  }
-
-  // const handleSavePartner = async () => {
-  //   try {
-  //     const partnerData = {
-  //       name: partnerForm.name,
-  //       logo: partnerForm.logo,
-  //       name_translations: partnerForm.name,
-  //     }
-
-  //     if (editingItem) {
-  //       const { error } = await supabase
-  //         .from('partners')
-  //         .update(partnerData)
-  //         .eq('id', editingItem.id)
-        
-  //       if (error) throw error
-  //       toast.success('Hamkor yangilandi')
-  //     } else {
-  //       const { error } = await supabase
-  //         .from('partners')
-  //         .insert(partnerData)
-        
-  //       if (error) throw error
-  //       toast.success('Yangi hamkor qo\'shildi')
-  //     }
-
-  //     setShowPartnerModal(false)
-  //     setEditingItem(null)
-  //     resetPartnerForm()
-  //     loadData()
-  //   } catch (error) {
-  //     console.error('Partner save error:', error)
-  //     toast.error('Hamkorni saqlashda xatolik')
-  //   }
-  // }
 
   const handleDeleteItem = async (table: string, id: number) => {
     const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
@@ -426,31 +690,6 @@ const Admin: React.FC = () => {
     if (!error) setPartners(data);
   };
 
-  const resetStoryForm = () => {
-    setStoryForm({
-      name: '',
-      country: '',
-      text: { uz: '', en: '', ru: '' },
-      rating: 5,
-      image: '',
-      featured: false
-    })
-  }
-
-  // const resetPartnerForm = () => {
-  //   setEditingItem(null);
-  //   setPartnerForm({
-  //     name: { uz: '', en: '', ru: '' },
-  //     description: { uz: '', en: '', ru: '' },
-  //     logo: '',
-  //     website: '',
-  //     country: '',
-  //     established: '',
-  //     ranking: ''
-  //   });
-  //   setFile(null);
-  // };
-  
   const handleSignOut = async () => {
     await signOut()
     navigate('/admin/login')
@@ -464,17 +703,7 @@ const Admin: React.FC = () => {
     { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
     { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' }
   ]
-  const handleAddPartners = async (e) => {
-    e.preventDefault()
-    const { error } = await supabase.from('partners').insert({
-      name,
-    })
-    if (error) {
-      console.error('Error adding partner:', error)
-    } else {
-      toast.success('Hamkor qo\'shildi')
-    }
-  }
+
   const getStatusColor = (status: string) => {
   }
   const getStatusText = (status: string) => {
@@ -489,17 +718,6 @@ const Admin: React.FC = () => {
         return 'Noma\'lum'
     }
   }
-
-  // const handleAddPartners = async (e) => {
-  //   e.preventDefault()
-  //   const {error} = await supabase.from('partners').insert({
-  //     name,
-  //   })
-  //   if(error){
-  //     console.error('Error adding partner:', error)
-  //   }else {
-  //     toast.success('Hamkor qo\'shildi')}
-  // }
 
   if (loading) {
     return (
@@ -517,71 +735,6 @@ const Admin: React.FC = () => {
       </div>
     )
   }
-
-  // partners uchun funksiyalar
-  interface Partner {
-    id: string;
-    name: string;
-    logo: string;
-  }
-  
-  interface PartnerForm {
-    name: string;
-    logo: string;
-  }
-
-    const resetPartnerForm = () => {
-      setEditingItem(null);
-      setPartnerForm({ name: '', logo: '' });
-      setFile(null);
-    };
-  
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const selectedFile = e.target.files?.[0] || null;
-      setFile(selectedFile);
-    };
-
-    const handleInputChangeStory = (e) => {
-      const { name, value, type, checked } = e.target;
-      setStoryForm((prev) => ({
-        ...prev,
-        [name]: type === "checkbox" ? checked : value
-      }));
-    };
-    const handleFileChange = async (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-  
-      const fileName = `${Date.now()}_${file.name}`;
-      const { error } = await supabase.storage
-        .from("story-images")
-        .upload(fileName, file);
-  
-      if (!error) {
-        const { data: publicUrl } = supabase.storage
-          .from("story-images")
-          .getPublicUrl(fileName);
-  
-        setStoryForm((prev) => ({ ...prev, image: publicUrl.publicUrl }));
-      }
-    };
-    const deleteStory = async (id) => {
-      const res = await fetch(`${API_BASE}/stories/${id}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Hikoyani o‘chirishda xatolik");
-      return await res.json();
-    };
-
-    const addStory = async (story) => {
-      const res = await fetch(`${API_BASE}/stories`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(story),
-      });
-      if (!res.ok) throw new Error("Hikoya qo‘shishda xatolik");
-      return await res.json();
-    };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -1079,6 +1232,7 @@ const Admin: React.FC = () => {
 
                 </>
               )}
+
               {activeTab === 'stories' && (
                 <>
                 <motion.div
@@ -1095,10 +1249,7 @@ const Admin: React.FC = () => {
                         Hikoyalar boshqaruvi
                       </h2>
                       <button 
-                        onClick={() => {
-                          resetStoryForm()
-                          setShowStoryModal(true)
-                        }}
+                        onClick={handleAddStory}
                         className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                       >
                         <Plus className="h-4 w-4" />
@@ -1106,75 +1257,6 @@ const Admin: React.FC = () => {
                       </button>
                     </div>
                   </div>
-                  {showStoryModal && (
-                    <div className="fixed inset-0 -top-[460px] backdrop-blur-md z-50 flex items-center justify-center p-4">
-                      <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
-                        <div className="flex justify-between items-center mb-4">
-                          <h2 className="text-2xl text-center font-bold text-white">
-                            {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
-                          </h2>
-                          <button onClick={() => setShowStoryModal(false)}
-                            className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
-                            <X className="w-5 h-5 text-white" />
-                          </button>
-                        </div>
-
-                        {/* Form */}
-                        <div className="space-y-6">
-                          <div>
-                            <label className="block text-white text-sm font-semibold mb-2">
-                              Ismi, familiyasi
-                            </label>
-                            <input type="text" name="name"
-                              // value={formData.name}
-                              // onChange={handleInputChange}
-                              placeholder="Enter name"
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
-                              required
-                            />
-                            <label className="block text-white text-sm font-semibold mt-4 my-2">Qaysi mamlakat</label>
-                            <input type="text" placeholder='Enter country'
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
-                              required/>
-                          </div>
-                          <div>
-                            <label className="block text-white text-sm font-semibold mb-2">Tavsif</label>
-                            <textarea
-                              name="description"
-                              // value={formData.description}
-                              // onChange={handleInputChange}
-                              placeholder="Xizmat haqida batafsil ma'lumot"
-                              rows={2}
-                              className="w-full px-3 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300 resize-none"
-                              required
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
-                            <input type="file" name="price"
-                              // value={formData.price}
-                              // onChange={handleInputChange}
-                              placeholder="299" min="0"
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
-                              required
-                            />
-                          </div>
-                          {/* Form Buttons */}
-                          <div className="flex gap-4 pt-2">
-                            <button type="button" onClick={() => setShowStoryModal(false)}
-                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">
-                              Bekor qilish
-                            </button>
-                            <button type="button" onClick={handleSaveStory}
-                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
-                              Saqlash
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                   
                   <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -1208,24 +1290,13 @@ const Admin: React.FC = () => {
                                   </div>
                                 )}
                                 <button
-                                  onClick={() => {
-                                    setEditingItem(story)
-                                    setStoryForm({
-                                      name: story.name,
-                                      country: story.country,
-                                      text: story.text_translations || { uz: story.text, en: '', ru: '' },
-                                      rating: story.rating,
-                                      image: story.image,
-                                      featured: story.featured
-                                    })
-                                    setShowStoryModal(true)
-                                  }}
+                                  onClick={() => handleEditStory(story)}
                                   className="p-1 text-blue-400 hover:bg-blue-500/20 rounded"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </button>
                                 <button
-                                  onClick={() => handleDeleteItem('stories', story.id)}
+                                  onClick={() => handleDeleteStoryClick(story.id)}
                                   className="p-1 text-red-400 hover:bg-red-500/20 rounded"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -1244,10 +1315,125 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
                 </motion.div>
+
+                {storyDeleteModal && (
+                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                      <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                      <div className="flex justify-end space-x-4">
+                        <button
+                          onClick={() => setStoryDeleteModal(false)}
+                          className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                        >
+                          Bekor qilish
+                        </button>
+                        <button
+                          onClick={handleConfirmStoryDelete}
+                          className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                        >
+                          O'chirish
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {showStoryModal && (
+                    <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4">
+                      <div className="backdrop-blur-xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                        <div className="flex justify-between items-center mb-4">
+                          <h2 className="text-2xl text-center font-bold text-white">
+                            {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
+                          </h2>
+                          <button onClick={() => setShowStoryModal(false)}
+                            className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                            <X className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+
+                        {/* Form */}
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">
+                              Ismi, familiyasi
+                            </label>
+                            <input type="text" name="name"
+                              value={storyForm.name || ''}
+                              onChange={(e) =>
+                                setStoryForm({
+                                  ...storyForm,
+                                  name: e.target.value, // ✅ yangi qiymatni yozish
+                                })
+                              }
+                              placeholder="Enter name"
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required
+                            />
+                            <label className="block text-white text-sm font-semibold mt-4 my-2">Qaysi mamlakat</label>
+                            <input type="text"
+                            name="country"
+                            value={storyForm.country || ''}
+                             onChange={(e) =>
+                              setStoryForm({
+                                ...storyForm,
+                                country: e.target.value, // ✅ yangi qiymatni yozish 
+                              })
+                            } placeholder='Enter country'
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required/>
+                          </div>
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">Tavsif</label>
+                            <textarea
+                              name="description"
+                              value={storyForm.text || ''}
+                              onChange={(e) =>
+                                setStoryForm({
+                                  ...storyForm,
+                                  text: e.target.value
+                                })
+                              }
+                              placeholder="Xizmat haqida batafsil ma'lumot"
+                              rows={2}
+                              className="w-full px-3 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300 resize-none"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
+                            <input
+                              type="file"
+                              onChange={(e) =>
+                                setStoryForm({
+                                  ...storyForm,
+                                  image: e.target.files?.[0] // File object
+                                })
+                              }
+                              className='border w-full rounded-lg py-2 text-white'
+                            />
+
+                          </div>
+                          {/* Form Buttons */}
+                          <div className="flex gap-4 pt-2">
+                            <button type="button" onClick={() => setShowStoryModal(false)}
+                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">
+                              Bekor qilish
+                            </button>
+                            <button type="button" onClick={handleSaveStory}
+                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95">
+                              Saqlash
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                )}
               </>
               )}
 
               {activeTab === 'partners' && (
+                <>
                 <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1261,10 +1447,7 @@ const Admin: React.FC = () => {
                       Hamkorlar boshqaruvi
                     </h2>
                     <button
-                      onClick={() => {
-                        resetPartnerForm();
-                        setShowPartnerModal(true);
-                      }}
+                      onClick={handleAddPartners}
                       className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       <Plus className="h-4 w-4" />
@@ -1272,79 +1455,6 @@ const Admin: React.FC = () => {
                     </button>
                   </div>
                 </div>
-          
-                {showPartnerModal && (
-                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-purple-500 rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
-                      <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold text-white">
-                          {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
-                        </h2>
-                        <button
-                          onClick={() => setShowPartnerModal(false)}
-                          className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300"
-                        >
-                          <X className="w-5 h-5 text-white" />
-                        </button>
-                      </div>
-          
-                      <div className="space-y-6">
-                        <div>
-                          <label className="block text-white text-sm font-semibold mb-2">Nomi (UZ)</label>
-                          <input
-                            type="text"
-                            value={partnerForm.name}
-                            onChange={(e) => setPartnerForm({ ...partnerForm, name: e.target.value })}
-                            placeholder="Nomi (UZ)"
-                            className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white"
-                            required
-                          />
-
-                          </div>
-                          <div>
-                            <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
-                            <input
-                              type="file"
-                              accept="image/png,image/jpeg"
-                              onChange={handleFileChange}
-                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/50 transition-all duration-300"
-                            />
-                            {partnerForm.logo && !file && (
-                              <div className="mt-2">
-                                <img
-                                  src={partnerForm.logo}
-                                  alt="Current logo"
-                                  className="h-16 w-16 object-contain rounded"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          {/* Boshqa maydonlar uchun shunga o'xshash inputlar qo'shilishi mumkin */}
-                          <div className="flex gap-4 pt-4">
-                            <button
-                              type="button"
-                              onClick={() => setShowPartnerModal(false)}
-                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
-                            >
-                              Bekor qilish
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                editingItem
-                                  ? editPartner(supabase, partnerForm, editingItem, setShowPartnerModal, setPartnerForm, loadData)
-                                  : savePartner(supabase, partnerForm, setShowPartnerModal, setPartnerForm, loadData)
-                              }
-                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105"
-                            >
-                              Saqlash
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                       {partners.map((partner: Partner, index: number) => (
@@ -1356,53 +1466,124 @@ const Admin: React.FC = () => {
                           className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
                         >
                           <div className="flex justify-between items-start mb-4">
-                            <h3 className="font-bold text-white text-lg group-hover:text-indigo-200 transition-colors">
-                              {partner.name}
-                            </h3>
+                            <div className='flex flex-col items-center'>
+                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.en}</h3>
+                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.ru}</h3>
+                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.uz}</h3>
+                            </div>
                             <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => {
-                                  setEditingItem(partner);
-                                  setPartnerForm({
-                                    name: partner.name,
-                                    logo: partner.logo,
-                                  });
-                                  setShowPartnerModal(true);
-                                }}
-                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
-                              >
+                              <button onClick={() => handleEditPartners(partner)}
+                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
                                 <Edit className="h-4 w-4" />
                               </button>
-                              <button
-                                onClick={() => deletePartner(supabase, partner.id, loadData)}
-                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                              >
+                              <button onClick={() => handleDeletePartnerClick(partner.id)}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
                           </div>
-                          {partner.logo && (
-                            <div className="mb-4 h-32 bg-white/5 rounded-lg flex items-center justify-center overflow-hidden">
-                              <img src={partner.logo} alt={partner.name} className="max-h-full max-w-full object-contain" />
+                          {partner.image && (
+                            <div className="h-48 overflow-hidden">
+                              <img src={partner.image} alt={partner.name} 
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                              />
                             </div>
                           )}
-                          {partner.description && (
-                            <p className="text-purple-200 text-sm mb-3 leading-relaxed">{partner.description}</p>
-                          )}
-                          <div className="flex justify-between items-center text-sm">
-                            <span className="text-indigo-300">{partner.country}</span>
-                            {partner.ranking && (
-                              <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 rounded-full text-xs font-semibold">
-                                #{partner.ranking}
-                              </span>
-                            )}
-                          </div>
                         </motion.div>
                       ))}
                     </div>
                   </div>
                 </motion.div>
 
+                {partnerDeleteModal && (
+                  <div className='fixed inset-0  bg-black/40 flex justify-center items-center rounded-md '>
+                    <div className='backdrop-blur-xl p-6 rounded-lg bg-white/20 ml-24 max-w-[570px]'>
+                      <h1 className='text-2xl text-center text-white font-600 pb-4'>Haqiqatdan ham o'chirmoqchimisiz</h1>
+                      <div className='flex justify-center items-center gap-4 pt-4 ml-36'>
+                        <button 
+                          onClick={() => setPartnerDeleteModal(false)}
+                          className='py-3 px-10 text-white bg-green-600 rounded-lg font-[600] hover:bg-green-700 duration-300'>Bekor qilish
+                        </button>
+                        <button
+                          onClick={handleConfirmPartnerDelete}
+                          className='py-3 px-14 text-white bg-red-600 rounded-lg font-[600] hover:bg-red-700 duration-300'>O'chirish
+                         </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {showPartnerModal && (
+                  <div className="fixed inset-0 z-50 flex top-22 bg-black/30 items-center justify-center p-4">
+                    <div className="backdrop-blur-xl rounded-xl mt-32 ml-32 p-6 w-full max-w-xl max-h-[90vh] border border-white/20 shadow-xl">
+                      <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-2xl font-bold text-white">
+                          {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
+                        </h2>
+                        <button onClick={() => setShowPartnerModal(false)}
+                          className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                          <X className="w-5 h-5 text-white" />
+                        </button>
+                      </div>
+          
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (En)</label>
+                          <input type="text" name="name_en"
+                            value={partnerForm.name.en}
+                            onChange={(e) => setPartnerForm({...partnerForm, name: { ...partnerForm.name, en: e.target.value } })}  
+                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
+                        </div>
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Ru)</label>
+                          <input type="text" name="name_ru"
+                            value={partnerForm.name.ru}
+                            onChange={(e) => setPartnerForm({...partnerForm, name: { ...partnerForm.name, ru: e.target.value } })}  
+                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
+                        </div>
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Uz)</label>
+                          <input type="text" name="name_uz"
+                            value={partnerForm.name.uz}
+                            onChange={((e) => setPartnerForm({...partnerForm, name: {...partnerForm.name, uz: e.target.value}}))}
+                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
+                        </div>
+                        <div>
+                          <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
+                          <input  accept="image/png,image/jpeg, image/jpg, image/webp, image/svg"
+                          type="file"
+                          onChange={(e) =>
+                            setPartnerForm({...partnerForm, image_file: e.target.files?.[0] || null,})
+                          }
+                        
+                            className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"/>
+                          {partnerForm.image && !file && (
+                            <div className="mt-2">
+                              <img src={partnerForm.image} alt="Current image"
+                                className="h-16 w-16 object-contain rounded"/>
+                            </div>
+                          )}
+                        </div>
+                          <div className="flex gap-4 pt-4">
+                            <button
+                              type="button"
+                              onClick={() => setShowPartnerModal(false)}
+                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
+                            >
+                              Bekor qilish
+                            </button>
+                            <button
+                              onClick={handleSavePartners}
+                              type="button"
+                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
+                            >
+                              Saqlash
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                )}
+              </>
               )}
 
               {activeTab === 'contacts' && (
