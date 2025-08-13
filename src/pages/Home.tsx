@@ -42,10 +42,10 @@ interface Partners {
 }
 
 const icons = {
-  FileText,
-  Users,
-  Globe,
+  FileText, Users, Globe, Star, TrendingUp, Award, CheckCircle,
+  Plane, GraduationCap, Briefcase, Heart, BookOpen
 }
+
 
 const getIcon = (iconName: string) => {
   const IconComponent = icons[iconName as keyof typeof icons] || FileText
@@ -70,8 +70,7 @@ const stats = [
 ]
 
 const Home: React.FC = () => {
-  const { t } = useLanguage()
-
+  const { t, translateApi, language } = useLanguage()
   const [services, setServices] = useState<Service[]>([])
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
@@ -85,23 +84,40 @@ const Home: React.FC = () => {
       const token = localStorage.getItem('api_access_token') || ''
 
       // Services
+      // Services
+      // Services yuklash
       const servicesRes = await fetch(
-        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list',
+        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list'
       )
       if (!servicesRes.ok) throw new Error('Xizmatlar olishda xato')
+
       const servicesData = await servicesRes.json()
-      const normalizedServices = Array.isArray(servicesData) ? servicesData.map((item: any) => ({
-        id: item.id,
-        title: item.title?.en || '',
-        description: item.description?.en || '',
-        price: item.price || '',
-        featured: item.featured || false,
-        icon: item.icon?.Name || 'FileText',
-        color: item.icon?.Color?.toLowerCase() || 'blue',
-        features: Array.isArray(item.features) ? item.features.map((f: any) => f.en || '') : [],
-        duration: item.duration || undefined,
-      })) : []
+
+      const normalizedServices: Service[] = Array.isArray(servicesData)
+        ? await Promise.all(
+          servicesData.map(async (item: any) => {
+            // translateApi async, foydalanuvchi tiliga mos tarjima qiladi
+            const translatedItem = await translateApi(item)
+
+            return {
+              id: item.id,
+              title: translatedItem.title || '',            // avtomatik tarjima
+              description: translatedItem.description || '',// avtomatik tarjima
+              price: item.price || '',
+              featured: item.featured || false,
+              icon: item.icon?.name || 'FileText',
+              color: item.icon?.color?.toLowerCase() || 'blue',
+              features: translatedItem.features || [],      // avtomatik tarjima
+              duration: item.duration || undefined,
+            }
+          })
+        )
+        : []
+
       setServices(normalizedServices)
+
+
+
 
       // Testimonials
       const testimonialsRes = await fetch('https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list')
@@ -140,9 +156,9 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     loadAllData()
-  }, [])
+  }, [language])
 
-   if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
