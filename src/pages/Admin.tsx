@@ -114,17 +114,74 @@ const Admin: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+
+
+
+  // Contact get 
+  const fetchContacts = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/get-list')
+      if (!res.ok) throw new Error('API xatolik')
+      const data = await res.json()
+      const formatted = data.map((item: any) => ({
+        ...item,
+        message: item.text,
+      }))
+      setContacts(formatted)
+    } catch (error) {
+      console.error(error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchContacts()
+  }, [])
+
+  const handleDeleteContactClick = (id: string) => {
+    setContactToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmContactDelete = async () => {
+    if (!contactToDelete) return;
+
+    try {
+      const token = localStorage.getItem("access_token") || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/contact-msgs/delete/${contactToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        await fetchContacts(); // O'chirgandan keyin yangilash
+        setDeleteModalOpen(false);
+        setContactToDelete(null);
+      } else {
+        const errorData = await res.json();
+        toast(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
+      }
+    } catch (error) {
+      toast("Contactni o'chirishda xatolik yuz berdi");
+    }
+  };
   const [storyDelete, setStoryDelete] = useState<string | null>(null);
   const [partnerDeleteModal, setPartnerDeleteModal] = useState(false);
   const [partnerToDelete, setPartnerToDelete] = useState<string | null>(null);
   const [partnerForm, setPartnerForm] = useState({
     name: {
-      en : "",
+      en: "",
       uz: "",
       ru: "",
     },
     image: '',
-    image_file:  null
+    image_file: null
   });
 
   const loadData = async () => {
@@ -169,6 +226,8 @@ const Admin: React.FC = () => {
     }
   };
 
+
+  // service 
   const [serviceForm, setServiceForm] = useState({
     title: { en: "" },
     description: { en: "" },
@@ -176,7 +235,6 @@ const Admin: React.FC = () => {
     price: "",
     features: [],
   });
-
   const handleAddService = () => {
     setEditingItem(null);
     setServiceForm({
@@ -222,7 +280,7 @@ const Admin: React.FC = () => {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
+            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -232,7 +290,7 @@ const Admin: React.FC = () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || ""}`,
+            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
           },
           body: JSON.stringify(payload),
         });
@@ -251,7 +309,6 @@ const Admin: React.FC = () => {
       alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
   };
-  //  Delete Service
   const handleDeleteServiceClick = (id: string) => {
     setServiceToDelete(id);
     setDeleteModalOpen(true);
@@ -261,7 +318,7 @@ const Admin: React.FC = () => {
     if (!serviceToDelete) return;
 
     try {
-      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
+      const token = localStorage.getItem('admin_access_token') || "";
       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/delete/${serviceToDelete}`, {
         method: "DELETE",
         headers: {
@@ -283,16 +340,13 @@ const Admin: React.FC = () => {
       alert("Xizmatni o'chirishda xatolik yuz berdi");
     }
   };
-  // Load services
   const loadServices = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem(import.meta.env.VITE_ACCESS_TOKEN_KEY) || "";
       const res = await fetch(
         "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
         }
@@ -329,197 +383,200 @@ const Admin: React.FC = () => {
   }, []);
 
 
-//  load story
-const [storyForm, setStoryForm] = useState({
-  name: '',
-  country: '',
-  text: '',
-  rating: 5,
-  image: '',
-});
-
-const loadStory = async () => {
-  try {
-    const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list") // API manzilini yozing
-    const data = await res.json()
-
-    if (data && data.length > 0) {
-      const mappedStories = data.map((item: any) => ({
-        id: item.id,
-        name: item.name || "",
-        country: item.country || "",
-        text: item.text || "",
-        rating: item.rating || 0,
-        image: item.image_url || "",
-        created_at: item.created_at
-      }))
-      setStories(mappedStories)
-    } else {
-      setStories([])
-    }
-  } catch (error) {
-    console.error("Stories API load error:", error)
-    setStories([])
-  } finally {
-    setLoading(false)
-  }
-}
-useEffect(() => {
-  loadStory();
-}, []);
-
-const handleDeleteStoryClick = (id: string) => {
-  setStoryDelete(id);
-  setStoryDeleteModal(true);
-};
-
-const handleConfirmStoryDelete = async () => {
-  if (!storyDelete) return;
-
-  try {
-    const token = localStorage.getItem("your_access_token_key_here") || "";
-    const res = await fetch(
-      `https://learnx-crm-production.up.railway.app/api/v1/client-stories/delete/${storyDelete}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (res.ok) {
-      loadStory();
-      setStoryDeleteModal(false);
-      setStoryDelete(null);
-    } else {
-      const errorData = await res.json();
-      toast.error(errorData.message || res.statusText);
-    }
-  } catch (error) {
-    console.error(error);
-    toast.error("Xizmatni o'chirishda xatolik yuz berdi");
-  }
-};
-
-const handleAddStory = () => {
-  setEditingItem(null);
-  setStoryForm({
+  //  load story
+  const [storyForm, setStoryForm] = useState({
     name: '',
     country: '',
     text: '',
     rating: 5,
     image: '',
   });
-  setShowStoryModal(true);
-};
 
-const handleEditStory = (story: any) => {
-  setStoryForm({
-    name: typeof story.name === "string" ? story.name : story.name?.en || "",
-    country: story.country || '',
-    text: story.text || '',
-    rating: story.rating ?? 0,
-    image: story.image || '',
-  });
-  setEditingItem(story);
-  setShowStoryModal(true);
-};
+  const loadStory = async () => {
+    try {
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list") // API manzilini yozing
+      const data = await res.json()
 
-const handleSaveStory = async () => {
-  try {
-    const token = localStorage.getItem("your_access_token_key_here") || "";
-
-    if (!token) {
-      alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
-      return;
+      if (data && data.length > 0) {
+        const mappedStories = data.map((item: any) => ({
+          id: item.id,
+          name: item.name || "",
+          country: item.country || "",
+          text: item.text || "",
+          rating: item.rating || 0,
+          image: item.image_url || "",
+          created_at: item.created_at
+        }))
+        setStories(mappedStories)
+      } else {
+        setStories([])
+      }
+    } catch (error) {
+      console.error("Stories API load error:", error)
+      setStories([])
+    } finally {
+      setLoading(false)
     }
+  }
+  useEffect(() => {
+    loadStory();
+  }, []);
 
-    // FormData ishlatamiz (fayl bo'lsa ham ishlaydi, matn bo'lsa ham)
-    const formData = new FormData();
-    console.log(JSON.stringify(storyForm));
-    console.log(storyForm);
-    
-    
-    formData.append("json_data", JSON.stringify({name: storyForm.name, country: storyForm.country, text: storyForm.text, rating: storyForm.rating, }));
-    formData.append("name", storyForm.name);
-    formData.append("country", storyForm.country);
-    formData.append("rating", String(storyForm.rating));
-    formData.append("text", JSON.stringify(storyForm.text));
+  const handleDeleteStoryClick = (id: string) => {
+    setStoryDelete(id);
+    setStoryDeleteModal(true);
+  };
 
-    console.log('storyForm.image::::::', storyForm.image);
-    
-   if (storyForm.image) {
-    formData.append("file", storyForm.image);
+  const handleConfirmStoryDelete = async () => {
+    if (!storyDelete) return;
+
+    try {
+      const token = localStorage.getItem("your_access_token_key_here") || "";
+      const res = await fetch(
+        `https://learnx-crm-production.up.railway.app/api/v1/client-stories/delete/${storyDelete}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        loadStory();
+        setStoryDeleteModal(false);
+        setStoryDelete(null);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.message || res.statusText);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Xizmatni o'chirishda xatolik yuz berdi");
     }
-    let url = "https://learnx-crm-production.up.railway.app/api/v1/client-stories/create";
-    let method = "POST";
+  };
 
-    if (editingItem && editingItem.id) {
-      url = `https://learnx-crm-production.up.railway.app/api/v1/client-stories/update/${editingItem.id}`;
-      method = "PUT";
-    }
+  const handleAddStory = () => {
+    setEditingItem(null);
+    setStoryForm({
+      name: '',
+      country: '',
+      text: '',
+      rating: 5,
+      image: '',
+    });
+    setShowStoryModal(true);
+  };
 
-    const res = await fetch(url, {
-      method,
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: formData,
+  const handleEditStory = (story: any) => {
+    setStoryForm({
+      name: typeof story.name === "string" ? story.name : story.name?.en || "",
+      country: story.country || '',
+      text: story.text || '',
+      rating: story.rating ?? 0,
+      image: story.image || '',
     });
 
-    let responseData = null;
+    setEditingItem(story);
+    setShowStoryModal(true);
+  };
+    useEffect(() => {
+      fetchPartners()
+    }, [])
+  const handleSaveStory = async () => {
     try {
-      responseData = await res.json(); // JSON parse qilishga urinamiz
-    } catch (error) {
-      console.log(error);
-      
-      responseData = null; // bo'sh javob bo'lsa
-    }
+      const token = localStorage.getItem("your_access_token_key_here") || "";
 
-    if (res.ok) {
-      toast.success("Muvaffaqiyatli saqlandi");
-      setShowStoryModal(false);
-      loadStory();
-    } else {
-      console.error("Xatolik:", responseData?.message || res.statusText);
-      alert("Xizmatni saqlashda xatolik: " + (responseData?.message || res.statusText));
-    }
-  } catch (error) {
-    console.error("Kutilmagan xatolik:", error);
-    alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
-  }
-};
+      if (!token) {
+        alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
+        return;
+      }
+
+      // FormData ishlatamiz (fayl bo'lsa ham ishlaydi, matn bo'lsa ham)
+      const formData = new FormData();
+      console.log(JSON.stringify(storyForm));
+      console.log(storyForm);
 
 
-// load partners 
-const loadPartners = async ()=> {
-  try{
-    const res =  await fetch("https://learnx-crm-production.up.railway.app/api/v1/partners/get-list", {
-      method: 'GET',
-      headers:{'Authorization': `Bearer ${localStorage.getItem("your_access_token_key_here") || ""}`,}
-    })
-    const data = await res.json()
-    if(data && data.length > 0){
-      const mappedPartners = data.map((item: any) => ({
-        id: item.id || "",
-        image: item.image_url || "",
-        name: {
-          en: item.name?.en || "",
-          uz: item.name?.uz || "",
-          ru: item.name?.ru || "",
+      formData.append("json_data", JSON.stringify({ name: storyForm.name, country: storyForm.country, text: storyForm.text, rating: storyForm.rating, }));
+      formData.append("name", storyForm.name);
+      formData.append("country", storyForm.country);
+      formData.append("rating", String(storyForm.rating));
+      formData.append("text", JSON.stringify(storyForm.text));
+
+      console.log('storyForm.image::::::', storyForm.image);
+
+      if (storyForm.image) {
+        formData.append("file", storyForm.image);
+      }
+      let url = "https://learnx-crm-production.up.railway.app/api/v1/client-stories/create";
+      let method = "POST";
+
+      if (editingItem && editingItem.id) {
+        url = `https://learnx-crm-production.up.railway.app/api/v1/client-stories/update/${editingItem.id}`;
+        method = "PUT";
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      }))
-      setPartners(mappedPartners)
-    }else{
-      setPartners([])
+        body: formData,
+      });
+
+      let responseData = null;
+      try {
+        responseData = await res.json(); // JSON parse qilishga urinamiz
+      } catch (error) {
+        console.log(error);
+
+        responseData = null; // bo'sh javob bo'lsa
+      }
+
+      if (res.ok) {
+        toast.success("Muvaffaqiyatli saqlandi");
+        setShowStoryModal(false);
+        loadStory();
+      } else {
+        console.error("Xatolik:", responseData?.message || res.statusText);
+        alert("Xizmatni saqlashda xatolik: " + (responseData?.message || res.statusText));
+      }
+    } catch (error) {
+      console.error("Kutilmagan xatolik:", error);
+      alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
-  }catch(error){
-    console.error("Hamkorlarni yuklashda xatolik:", error);
-  }finally{
-    setLoading(false);
+  };
+
+
+  // load partners 
+  const loadPartners = async () => {
+    try {
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/partners/get-list", {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem("your_access_token_key_here") || ""}`, }
+      })
+      const data = await res.json()
+      if (data && data.length > 0) {
+        const mappedPartners = data.map((item: any) => ({
+          id: item.id || "",
+          image: item.image_url || "",
+          name: {
+            en: item.name?.en || "",
+            uz: item.name?.uz || "",
+            ru: item.name?.ru || "",
+          },
+        }))
+        setPartners(mappedPartners)
+      } else {
+        setPartners([])
+      }
+    } catch (error) {
+      console.error("Hamkorlarni yuklashda xatolik:", error);
+    } finally {
+      setLoading(false);
+    }
   }
-}
   useEffect(() => {
     loadPartners();
   }, []);
@@ -543,11 +600,11 @@ const loadPartners = async ()=> {
           },
         }
       );
-  
+
       if (res.ok) {
-       loadPartners();
-       setPartnerDeleteModal(false);
-       setPartnerToDelete(null);
+        loadPartners();
+        setPartnerDeleteModal(false);
+        setPartnerToDelete(null);
       } else {
         const errorData = await res.json();
         toast.error(errorData.message || res.statusText);
@@ -562,7 +619,7 @@ const loadPartners = async ()=> {
     setEditingItem(null);
     setPartnerForm({
       name: {
-        en: '', 
+        en: '',
         uz: '',
         ru: '',
       },
@@ -573,7 +630,7 @@ const loadPartners = async ()=> {
 
   const handleEditPartners = (partner: any) => {
     setPartnerForm({
-      name : {
+      name: {
         en: partner.name?.en || '',
         uz: partner.name?.uz || '',
         ru: partner.name?.ru || '',
@@ -587,7 +644,7 @@ const loadPartners = async ()=> {
   const handleSavePartners = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
-  
+
       if (!token) {
         alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
         return;
@@ -597,10 +654,10 @@ const loadPartners = async ()=> {
       formData.append("name_ru", partnerForm.name.ru || '');
       formData.append("name_uz", partnerForm.name.uz || '');
       formData.append("name_en", partnerForm.name.en || '');
-      formData.append("json_data", JSON.stringify({...partnerForm, "image_url": partnerForm.image}));  
+      formData.append("json_data", JSON.stringify({ ...partnerForm, "image_url": partnerForm.image }));
 
       console.log(`partnerForm.image::::::`, partnerForm.image_file);
-      
+
       if (partnerForm.image_file) {
         console.log(`partnerForm.image_file=========`, partnerForm.image_file);
 
@@ -608,12 +665,12 @@ const loadPartners = async ()=> {
       }
       let url = "https://learnx-crm-production.up.railway.app/api/v1/partners/create";
       let method = "POST";
-  
+
       if (editingItem && editingItem.id) {
         url = `https://learnx-crm-production.up.railway.app/api/v1/partners/update/${editingItem.id}`;
         method = "PUT";
       }
-  
+
       const res = await fetch(url, {
         method,
         headers: {
@@ -621,16 +678,16 @@ const loadPartners = async ()=> {
         },
         body: formData,
       });
-  
+
       let responseData = '';
       try {
         responseData = await res.json(); // JSON parse qilishga urinamiz
       } catch (error) {
         console.log(error);
-        
+
         responseData = ''; // bo'sh javob bo'lsa
       }
-  
+
       if (res.ok) {
         toast.success("Muvaffaqiyatli saqlandi");
         setShowPartnerModal(false);
@@ -644,17 +701,9 @@ const loadPartners = async ()=> {
       alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
   };
-  // const isUrl = async (str:string) => {
-  //   try {
-  //     new URL(str);
-  //     return true;
-  //   } catch {
-  //     return false;
-  //   }
-  // }
+
 
   useEffect(() => {
-    loadData();
     loadServices();
     loadStory()
   }, []);
@@ -669,20 +718,46 @@ const loadPartners = async ()=> {
       if (error) throw error
 
       toast.success('Ariza holati yangilandi')
-      loadData()
     } catch (error) {
       console.error('Status update error:', error)
       toast.error('Holatni yangilashda xatolik')
     }
   }
 
-  const handleDeleteItem = async (table: string, id: number) => {
-    const confirmed = window.confirm("Haqiqatan ham o'chirmoqchimisiz?");
-    if (!confirmed) return;
-  
-    const { error } = await supabase.from(table).delete().eq('id', id);
-    if (!error) fetchPartners();
-  };
+  // const handleSavePartner = async () => {
+  //   try {
+  //     const partnerData = {
+  //       name: partnerForm.name,
+  //       logo: partnerForm.logo,
+  //       name_translations: partnerForm.name,
+  //     }
+
+  //     if (editingItem) {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .update(partnerData)
+  //         .eq('id', editingItem?.id)
+
+  //       if (error) throw error
+  //       toast.success('Hamkor yangilandi')
+  //     } else {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .insert(partnerData)
+
+  //       if (error) throw error
+  //       toast.success('Yangi hamkor qo\'shildi')
+  //     }
+
+  //     setShowPartnerModal(false)
+  //     setEditingItem(null)
+  //     resetPartnerForm()
+  //   } catch (error) {
+  //     console.error('Partner save error:', error)
+  //     toast.error('Hamkorni saqlashda xatolik')
+  //   }
+  // }
+
 
   const fetchPartners = async () => {
     const { data, error } = await supabase.from('partners').select('*');
@@ -1234,112 +1309,112 @@ const loadPartners = async ()=> {
 
               {activeTab === 'stories' && (
                 <>
-                <motion.div
-                  key="stories"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
-                >
-                  <div className="p-8 border-b border-white/20">
-                    <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-bold text-white flex items-center">
-                        <MessageSquare className="h-6 w-6 mr-3 text-purple-400" />
-                        Hikoyalar boshqaruvi
-                      </h2>
-                      <button 
-                        onClick={handleAddStory}
-                        className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Yangi hikoya</span>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {stories.map((story: any, index) => (
-                        <motion.div
-                          key={story.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 group hover:scale-105"
-                        >
-                          {story.image && (
-                            <div className="h-48 overflow-hidden">
-                              <img 
-                                src={story.image} 
-                                alt={story.name}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              />
-                            </div>
-                          )}
-                          <div className="p-6">
-                            <div className="flex justify-between items-start mb-3">
-                              <div>
-                                <h3 className="font-bold text-white">{story.name}</h3>
-                                <p className="text-sm text-purple-200">{story.country}</p>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                {story.featured && (
-                                  <div className="p-1 bg-yellow-500/20 rounded-full">
-                                    <Star className="h-4 w-4 text-yellow-400 fill-current" />
-                                  </div>
-                                )}
-                                <button
-                                  onClick={() => handleEditStory(story)}
-                                  className="p-1 text-blue-400 hover:bg-blue-500/20 rounded"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteStoryClick(story.id)}
-                                  className="p-1 text-red-400 hover:bg-red-500/20 rounded"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </button>
-                              </div>
-                            </div>
-                            <p className="text-purple-200 text-sm line-clamp-3 mb-3">{story.text}</p>
-                            <div className="flex items-center">
-                              {[...Array(story.rating)].map((_, i) => (
-                                <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
-                              ))}
-                            </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-
-                {storyDeleteModal && (
-                  <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
-                      <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
-                      <div className="flex justify-end space-x-4">
+                  <motion.div
+                    key="stories"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
+                  >
+                    <div className="p-8 border-b border-white/20">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-white flex items-center">
+                          <MessageSquare className="h-6 w-6 mr-3 text-purple-400" />
+                          Hikoyalar boshqaruvi
+                        </h2>
                         <button
-                          onClick={() => setStoryDeleteModal(false)}
-                          className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                          onClick={handleAddStory}
+                          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
-                          Bekor qilish
-                        </button>
-                        <button
-                          onClick={handleConfirmStoryDelete}
-                          className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
-                        >
-                          O'chirish
+                          <Plus className="h-4 w-4" />
+                          <span>Yangi hikoya</span>
                         </button>
                       </div>
                     </div>
-                  </div>
-                )}
 
-                {showStoryModal && (
-                    <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4">
-                      <div className="backdrop-blur-xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                    <div className="p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {stories.map((story: any, index) => (
+                          <motion.div
+                            key={story.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 group hover:scale-105"
+                          >
+                            {story.image && (
+                              <div className="h-48 overflow-hidden">
+                                <img
+                                  src={story.image}
+                                  alt={story.name}
+                                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                />
+                              </div>
+                            )}
+                            <div className="p-6">
+                              <div className="flex justify-between items-start mb-3">
+                                <div>
+                                  <h3 className="font-bold text-white">{story.name}</h3>
+                                  <p className="text-sm text-purple-200">{story.country}</p>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {story.featured && (
+                                    <div className="p-1 bg-yellow-500/20 rounded-full">
+                                      <Star className="h-4 w-4 text-yellow-400 fill-current" />
+                                    </div>
+                                  )}
+                                  <button
+                                    onClick={() => handleEditStory(story)}
+                                    className="p-1 text-blue-400 hover:bg-blue-500/20 rounded"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteStoryClick(story.id)}
+                                    className="p-1 text-red-400 hover:bg-red-500/20 rounded"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                              <p className="text-purple-200 text-sm line-clamp-3 mb-3">{story.text}</p>
+                              <div className="flex items-center">
+                                {[...Array(story.rating)].map((_, i) => (
+                                  <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {storyDeleteModal && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                        <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-4">
+                          <button
+                            onClick={() => setStoryDeleteModal(false)}
+                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                          >
+                            Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmStoryDelete}
+                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                          >
+                            O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {showStoryModal && (
+                    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
+                      <div className="backdrop-blur-3xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                           <h2 className="text-2xl text-center font-bold text-white">
                             {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
@@ -1370,16 +1445,16 @@ const loadPartners = async ()=> {
                             />
                             <label className="block text-white text-sm font-semibold mt-4 my-2">Qaysi mamlakat</label>
                             <input type="text"
-                            name="country"
-                            value={storyForm.country || ''}
-                             onChange={(e) =>
-                              setStoryForm({
-                                ...storyForm,
-                                country: e.target.value, // ✅ yangi qiymatni yozish 
-                              })
-                            } placeholder='Enter country'
+                              name="country"
+                              value={storyForm.country || ''}
+                              onChange={(e) =>
+                                setStoryForm({
+                                  ...storyForm,
+                                  country: e.target.value, // ✅ yangi qiymatni yozish 
+                                })
+                              } placeholder='Enter country'
                               className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
-                              required/>
+                              required />
                           </div>
                           <div>
                             <label className="block text-white text-sm font-semibold mb-2">Tavsif</label>
@@ -1427,242 +1502,287 @@ const loadPartners = async ()=> {
                         </div>
                       </div>
                     </div>
-                )}
-              </>
+                  )}
+                </>
               )}
 
               {activeTab === 'partners' && (
                 <>
-                <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
-              >
-                <div className="p-8 border-b border-white/20">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
-                      <Building className="h-6 w-6 mr-3 text-indigo-400" />
-                      Hamkorlar boshqaruvi
-                    </h2>
-                    <button
-                      onClick={handleAddPartners}
-                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-                    >
-                      <Plus className="h-4 w-4" />
-                      <span>Yangi hamkor</span>
-                    </button>
-                  </div>
-                </div>
-                  <div className="p-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {partners.map((partner: Partner, index: number) => (
-                        <motion.div
-                          key={partner.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <div className='flex flex-col items-center'>
-                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.en}</h3>
-                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.ru}</h3>
-                              <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.uz}</h3>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <button onClick={() => handleEditPartners(partner)}
-                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                                <Edit className="h-4 w-4" />
-                              </button>
-                              <button onClick={() => handleDeletePartnerClick(partner.id)}
-                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300">
-                                <Trash2 className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                          {partner.image && (
-                            <div className="h-48 overflow-hidden">
-                              <img src={partner.image} alt={partner.name} 
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                              />
-                            </div>
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  </div>
-                </motion.div>
-
-                {partnerDeleteModal && (
-                  <div className='fixed inset-0  bg-black/40 flex justify-center items-center rounded-md '>
-                    <div className='backdrop-blur-xl p-6 rounded-lg bg-white/20 ml-24 max-w-[570px]'>
-                      <h1 className='text-2xl text-center text-white font-600 pb-4'>Haqiqatdan ham o'chirmoqchimisiz</h1>
-                      <div className='flex justify-center items-center gap-4 pt-4 ml-36'>
-                        <button 
-                          onClick={() => setPartnerDeleteModal(false)}
-                          className='py-3 px-10 text-white bg-green-600 rounded-lg font-[600] hover:bg-green-700 duration-300'>Bekor qilish
-                        </button>
-                        <button
-                          onClick={handleConfirmPartnerDelete}
-                          className='py-3 px-14 text-white bg-red-600 rounded-lg font-[600] hover:bg-red-700 duration-300'>O'chirish
-                         </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {showPartnerModal && (
-                  <div className="fixed inset-0 z-50 flex top-22 bg-black/30 items-center justify-center p-4">
-                    <div className="backdrop-blur-xl rounded-xl mt-32 ml-32 p-6 w-full max-w-xl max-h-[90vh] border border-white/20 shadow-xl">
-                      <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold text-white">
-                          {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
+                  >
+                    <div className="p-8 border-b border-white/20">
+                      <div className="flex justify-between items-center">
+                        <h2 className="text-2xl font-bold text-white flex items-center">
+                          <Building className="h-6 w-6 mr-3 text-indigo-400" />
+                          Hamkorlar boshqaruvi
                         </h2>
-                        <button onClick={() => setShowPartnerModal(false)}
-                          className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
-                          <X className="w-5 h-5 text-white" />
+                        <button
+                          onClick={handleAddPartners}
+                          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-xl hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                        >
+                          <Plus className="h-4 w-4" />
+                          <span>Yangi hamkor</span>
                         </button>
                       </div>
-          
-                      <div className="space-y-6">
-                        <div>
-                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (En)</label>
-                          <input type="text" name="name_en"
-                            value={partnerForm.name.en}
-                            onChange={(e) => setPartnerForm({...partnerForm, name: { ...partnerForm.name, en: e.target.value } })}  
-                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
-                        </div>
-                        <div>
-                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Ru)</label>
-                          <input type="text" name="name_ru"
-                            value={partnerForm.name.ru}
-                            onChange={(e) => setPartnerForm({...partnerForm, name: { ...partnerForm.name, ru: e.target.value } })}  
-                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
-                        </div>
-                        <div>
-                          <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Uz)</label>
-                          <input type="text" name="name_uz"
-                            value={partnerForm.name.uz}
-                            onChange={((e) => setPartnerForm({...partnerForm, name: {...partnerForm.name, uz: e.target.value}}))}
-                            className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white"/>
-                        </div>
-                        <div>
-                          <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
-                          <input  accept="image/png,image/jpeg, image/jpg, image/webp, image/svg"
-                          type="file"
-                          onChange={(e) =>
-                            setPartnerForm({...partnerForm, image_file: e.target.files?.[0] || null,})
-                          }
-                        
-                            className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"/>
-                          {partnerForm.image && !file && (
-                            <div className="mt-2">
-                              <img src={partnerForm.image} alt="Current image"
-                                className="h-16 w-16 object-contain rounded"/>
-                            </div>
-                          )}
-                        </div>
-                          <div className="flex gap-4 pt-4">
-                            <button
-                              type="button"
-                              onClick={() => setShowPartnerModal(false)}
-                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
-                            >
-                              Bekor qilish
-                            </button>
-                            <button
-                              onClick={handleSavePartners}
-                              type="button"
-                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
-                            >
-                              Saqlash
-                            </button>
-                          </div>
-                        </div>
-                      </div>
                     </div>
-                )}
-              </>
-              )}
-
-              {activeTab === 'contacts' && (
-                <motion.div
-                  key="contacts"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
-                >
-                  <div className="p-8 border-b border-white/20">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
-                      <Mail className="h-6 w-6 mr-3 text-teal-400" />
-                      Murojatlar boshqaruvi
-                    </h2>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full">
-                      <thead className="bg-white/5">
-                        <tr>
-                          {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
-                            <th key={header} className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
-                              {header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/10">
-                        {contacts.map((contact: any, index) => (
-                          <motion.tr
-                            key={contact.id}
+                    <div className="p-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {partners.map((partner: Partner, index: number) => (
+                          <motion.div
+                            key={partner.id}
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: index * 0.05 }}
-                            className="hover:bg-white/5 transition-all duration-300"
+                            transition={{ delay: index * 0.1 }}
+                            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
                           >
-                            <td className="px-6 py-4">
-                              <div className="flex items-center">
-                                <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
-                                  <span className="text-white font-semibold text-sm">
-                                    {contact.name?.charAt(0)?.toUpperCase()}
-                                  </span>
-                                </div>
-                                <div className="font-semibold text-white">{contact.name}</div>
+                            <div className="flex justify-between items-start mb-4">
+                              <div className='flex flex-col items-center'>
+                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.en}</h3>
+                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.ru}</h3>
+                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.uz}</h3>
                               </div>
-                            </td>
-                            <td className="px-6 py-4 text-purple-200">{contact.email}</td>
-                            <td className="px-6 py-4 text-purple-200">{contact.phone || '-'}</td>
-                            <td className="px-6 py-4">
-                              <div className="max-w-xs truncate text-purple-200">{contact.message}</div>
-                            </td>
-                            <td className="px-6 py-4 text-purple-200 text-sm">
-                              {new Date(contact.created_at).toLocaleDateString('uz-UZ')}
-                            </td>
-                            <td className="px-6 py-4">
                               <div className="flex items-center space-x-2">
-                                <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                                  <Eye className="h-4 w-4" />
+                                <button onClick={() => handleEditPartners(partner)}
+                                  className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                  <Edit className="h-4 w-4" />
                                 </button>
-                                <button
-                                  onClick={() => handleDeleteItem('contact_submissions', contact.id)}
-                                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                                >
+                                <button onClick={() => handleDeletePartnerClick(partner.id)}
+                                  className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300">
                                   <Trash2 className="h-4 w-4" />
                                 </button>
                               </div>
-                            </td>
-                          </motion.tr>
+                            </div >
+                            {
+                              partner.image && (
+                                <div className="h-48 overflow-hidden">
+                                  <img src={partner.image} alt={partner.name}
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                  />
+                                </div>
+                              )
+                            }
+                          </motion.div >
                         ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </motion.div>
+                      </div >
+                    </div >
+                  </motion.div >
+
+                  {partnerDeleteModal && (
+                    <div className='fixed inset-0  bg-black/40 flex justify-center items-center rounded-md '>
+                      <div className='backdrop-blur-xl p-6 rounded-lg bg-white/20 ml-24 max-w-[570px]'>
+                        <h1 className='text-2xl text-center text-white font-600 pb-4'>Haqiqatdan ham o'chirmoqchimisiz</h1>
+                        <div className='flex justify-center items-center gap-4 pt-4 ml-36'>
+                          <button
+                            onClick={() => setPartnerDeleteModal(false)}
+                            className='py-3 px-10 text-white bg-green-600 rounded-lg font-[600] hover:bg-green-700 duration-300'>Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmPartnerDelete}
+                            className='py-3 px-14 text-white bg-red-600 rounded-lg font-[600] hover:bg-red-700 duration-300'>O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {
+                    showPartnerModal && (
+                      <div className="fixed inset-0 z-100 flex -top- bg-black/30 items-center justify-center p-4">
+                        <div className="backdrop-blur-xl rounded-xl mt-32 ml-32 p-6 w-full max-w-xl max-h-[80vh] border border-white/20 shadow-xl">
+                          <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white">
+                              {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
+                            </h2>
+                            <button onClick={() => setShowPartnerModal(false)}
+                              className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                              <X className="w-5 h-5 text-white" />
+                            </button>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (En)</label>
+                              <input type="text" name="name_en"
+                                value={partnerForm.name.en}
+                                onChange={(e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, en: e.target.value } })}
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                            </div>
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Ru)</label>
+                              <input type="text" name="name_ru"
+                                value={partnerForm.name.ru}
+                                onChange={(e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, ru: e.target.value } })}
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                            </div>
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Uz)</label>
+                              <input type="text" name="name_uz"
+                                value={partnerForm.name.uz}
+                                onChange={((e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, uz: e.target.value } }))}
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                            </div>
+                            <div>
+                              <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
+                              <input accept="image/png,image/jpeg, image/jpg, image/webp, image/svg"
+                                type="file"
+                                onChange={(e) =>
+                                  setPartnerForm({ ...partnerForm, image_file: e.target.files?.[0] || null, })
+                                }
+
+                                className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300" />
+                              {partnerForm.image && !file && (
+                                <div className="mt-2">
+                                  <img src={partnerForm.image} alt="Current image"
+                                    className="h-16 w-16 object-contain rounded" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex gap-4 pt-4">
+                              <button
+                                type="button"
+                                onClick={() => setShowPartnerModal(false)}
+                                className="flex-1 px-6 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
+                              >
+                                Bekor qilish
+                              </button>
+                              <button
+                                onClick={handleSavePartners}
+                                type="button"
+                                className="flex-1 px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
+                              >
+                                Saqlash
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }
+                </>
               )}
-            </AnimatePresence>
-          </div>
-        </div>
-      </div>
-    </div>
+
+              {
+                activeTab === 'contacts' && (
+                  <motion.div
+                    key="contacts"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
+                  >
+                    <div className="p-8 border-b border-white/20 flex-shrink-0">
+                      <h2 className="text-2xl font-bold text-white flex items-center">
+                        <Mail className="h-6 w-6 mr-3 text-teal-400" />
+                        Murojatlar boshqaruvi
+                      </h2>
+                    </div>
+
+                    {/* Bu yerda scrollable qism */}
+                    <div className="overflow-y-auto flex-grow px-6 pb-6">
+                      {loading ? (
+                        <div className="p-4 text-white">Yuklanmoqda...</div>
+                      ) : (
+                        <table className="w-full">
+                          <thead className="bg-white/5">
+                            <tr>
+                              {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
+                                <th
+                                  key={header}
+                                  className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
+                                >
+                                  {header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/10">
+                            {contacts.length === 0 ? (
+                              <tr>
+                                <td colSpan={6} className="text-center text-purple-200 py-8">
+                                  Ma'lumot topilmadi
+                                </td>
+                              </tr>
+                            ) : (
+                              contacts.map((contact, index) => (
+                                <motion.tr
+                                  key={contact.id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: index * 0.05 }}
+                                  className="hover:bg-white/5 transition-all duration-300"
+                                >
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center">
+                                      <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
+                                        <span className="text-white font-semibold text-sm">
+                                          {contact.name?.charAt(0)?.toUpperCase() || '-'}
+                                        </span>
+                                      </div>
+                                      <div className="font-semibold text-white">{contact?.name || '-'}</div>
+                                    </div>
+                                  </td>
+                                  <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
+                                  <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
+                                  <td className="px-6 py-4">
+                                    <div className="max-w-xs truncate text-purple-200">{contact?.message || '-'}</div>
+                                  </td>
+                                  <td className="px-6 py-4 text-purple-200 text-sm">
+                                    {contact?.created_at
+                                      ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
+                                      : '-'}
+                                  </td>
+                                  <td className="px-6 py-4">
+                                    <div className="flex items-center space-x-2">
+                                      <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                        <Eye className="h-4 w-4" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </motion.tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      )}
+                      {deleteModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                            <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                            <div className="flex justify-end space-x-4">
+                              <button
+                                onClick={() => setDeleteModalOpen(false)}
+                                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                              >
+                                Bekor qilish
+                              </button>
+                              <button
+                                onClick={handleConfirmContactDelete}
+                                className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                              >
+                                O'chirish
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+
+                )
+              }
+            </AnimatePresence >
+          </div >
+        </div >
+      </div >
+    </div >
   )
 }
 

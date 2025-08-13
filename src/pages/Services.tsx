@@ -67,13 +67,12 @@ const Services: React.FC = () => {
     setLoading(true)
     setError(null)
     try {
-      const token = localStorage.getItem('api_access_token') || ''
+      // const token = localStorage.getItem('your_access_token_key_here') || ''
 
       const res = await fetch(
         'https://learnx-crm-production.up.railway.app/api/v1/services/get-list',
         {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
           },
         }
