@@ -137,7 +137,13 @@ const Home: React.FC = () => {
     loadAllData()
   }, [])
 
-  if (loading) return <div className="text-center py-20">Yuklanmoqda...</div>
+   if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
   if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
 
   return (
