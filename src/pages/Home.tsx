@@ -4,10 +4,16 @@ import {
   ArrowRight, FileText, Users, Globe, Star,
   TrendingUp,
   Award,
-  CheckCircle
+  CheckCircle,
+  Plane,
+  GraduationCap,
+  Briefcase,
+  Heart,
+  BookOpen
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 interface Service {
   id: string
@@ -29,11 +35,10 @@ interface Testimonial {
   rating: number
   image: string
 }
-
-interface Partner {
-  id: string
-  name: string
-  logo: string
+interface Partners {
+  id: string // UUID string sifatida
+  name: string // name.en dan olinadi
+  image: string // logo_url dan olinadi
 }
 
 const icons = {
@@ -334,13 +339,55 @@ const Home: React.FC = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
                 <img
-                  src={partner.logo}
-                  alt={partner.name?.en}
+                  src={partner.image}
+                  alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />
               </motion.div>
             )) : <p className="text-center text-gray-500">Hamkorlar ma'lumotlari topilmadi.</p>}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-14 md:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              {t('home.cta.title')}
+            </h2>
+            <p className="text-xl mb-12 md:mb-8 max-w-2xl mx-auto text-blue-100">
+              {t('home.cta.description')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-9 md:gap-4 justify-center">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to="/apply"
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-12 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
+                >
+                  {t('home.cta.apply')}
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to="/contact"
+                  className="border-2 border-white/30 text-white px-16 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
+                >
+                  {t('home.cta.contact')}
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>
