@@ -23,7 +23,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
-import { string } from 'yup'
 
 // Define Services interface for type safety
 type Service = {
@@ -702,14 +701,7 @@ const Admin: React.FC = () => {
       alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
     }
   };
-  // const isUrl = async (str:string) => {
-  //   try {
-  //     new URL(str);
-  //     return true;
-  //   } catch {
-  //     return false;
-  //   }
-  // }
+
 
   useEffect(() => {
     loadServices();
@@ -732,39 +724,39 @@ const Admin: React.FC = () => {
     }
   }
 
-  const handleSavePartner = async () => {
-    try {
-      const partnerData = {
-        name: partnerForm.name,
-        logo: partnerForm.logo,
-        name_translations: partnerForm.name,
-      }
+  // const handleSavePartner = async () => {
+  //   try {
+  //     const partnerData = {
+  //       name: partnerForm.name,
+  //       logo: partnerForm.logo,
+  //       name_translations: partnerForm.name,
+  //     }
 
-      if (editingItem) {
-        const { error } = await supabase
-          .from('partners')
-          .update(partnerData)
-          .eq('id', editingItem?.id)
+  //     if (editingItem) {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .update(partnerData)
+  //         .eq('id', editingItem?.id)
 
-        if (error) throw error
-        toast.success('Hamkor yangilandi')
-      } else {
-        const { error } = await supabase
-          .from('partners')
-          .insert(partnerData)
+  //       if (error) throw error
+  //       toast.success('Hamkor yangilandi')
+  //     } else {
+  //       const { error } = await supabase
+  //         .from('partners')
+  //         .insert(partnerData)
 
-        if (error) throw error
-        toast.success('Yangi hamkor qo\'shildi')
-      }
+  //       if (error) throw error
+  //       toast.success('Yangi hamkor qo\'shildi')
+  //     }
 
-      setShowPartnerModal(false)
-      setEditingItem(null)
-      resetPartnerForm()
-    } catch (error) {
-      console.error('Partner save error:', error)
-      toast.error('Hamkorni saqlashda xatolik')
-    }
-  }
+  //     setShowPartnerModal(false)
+  //     setEditingItem(null)
+  //     resetPartnerForm()
+  //   } catch (error) {
+  //     console.error('Partner save error:', error)
+  //     toast.error('Hamkorni saqlashda xatolik')
+  //   }
+  // }
 
 
   const fetchPartners = async () => {
@@ -1421,8 +1413,8 @@ const Admin: React.FC = () => {
                   )}
 
                   {showStoryModal && (
-                    <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4">
-                      <div className="backdrop-blur-xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
+                      <div className="backdrop-blur-3xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                           <h2 className="text-2xl text-center font-bold text-white">
                             {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
@@ -1598,10 +1590,10 @@ const Admin: React.FC = () => {
                   )}
                   {
                     showPartnerModal && (
-                      <div className="fixed inset-0 z-50 flex top-22 bg-black/30 items-center justify-center p-4">
-                        <div className="backdrop-blur-xl rounded-xl mt-32 ml-32 p-6 w-full max-w-xl max-h-[90vh] border border-white/20 shadow-xl">
-                          <div className="flex justify-between items-center mb-8">
-                            <h2 className="text-2xl font-bold text-white">
+                      <div className="fixed inset-0 z-100 flex -top- bg-black/30 items-center justify-center p-4">
+                        <div className="backdrop-blur-xl rounded-xl mt-32 ml-32 p-6 w-full max-w-xl max-h-[80vh] border border-white/20 shadow-xl">
+                          <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold text-white">
                               {editingItem ? 'Hamkorni tahrirlash' : 'Yangi hamkor qo‘shish'}
                             </h2>
                             <button onClick={() => setShowPartnerModal(false)}
@@ -1610,27 +1602,27 @@ const Admin: React.FC = () => {
                             </button>
                           </div>
 
-                          <div className="space-y-6">
+                          <div className="space-y-4">
                             <div>
                               <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (En)</label>
                               <input type="text" name="name_en"
                                 value={partnerForm.name.en}
                                 onChange={(e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, en: e.target.value } })}
-                                className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
                             </div>
                             <div>
                               <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Ru)</label>
                               <input type="text" name="name_ru"
                                 value={partnerForm.name.ru}
                                 onChange={(e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, ru: e.target.value } })}
-                                className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
                             </div>
                             <div>
                               <label className="block text-white text-sm font-semibold mb-2">Hamkor nomi (Uz)</label>
                               <input type="text" name="name_uz"
                                 value={partnerForm.name.uz}
                                 onChange={((e) => setPartnerForm({ ...partnerForm, name: { ...partnerForm.name, uz: e.target.value } }))}
-                                className="w-full px-4 py-3 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
+                                className="w-full px-4 py-2 outline-none bg-white/10 border border-white/30 rounded-lg text-white focus:border-white focus:ring-2 focus:ring-white" />
                             </div>
                             <div>
                               <label className="block text-white text-sm font-semibold mb-2">Rasm</label>
@@ -1640,7 +1632,7 @@ const Admin: React.FC = () => {
                                   setPartnerForm({ ...partnerForm, image_file: e.target.files?.[0] || null, })
                                 }
 
-                                className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300" />
+                                className="w-full px-4 py-2 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300" />
                               {partnerForm.image && !file && (
                                 <div className="mt-2">
                                   <img src={partnerForm.image} alt="Current image"
@@ -1652,14 +1644,14 @@ const Admin: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => setShowPartnerModal(false)}
-                                className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
+                                className="flex-1 px-6 py-2 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300"
                               >
                                 Bekor qilish
                               </button>
                               <button
                                 onClick={handleSavePartners}
                                 type="button"
-                                className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
+                                className="flex-1 px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
                               >
                                 Saqlash
                               </button>

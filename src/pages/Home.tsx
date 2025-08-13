@@ -4,10 +4,16 @@ import {
   ArrowRight, FileText, Users, Globe, Star,
   TrendingUp,
   Award,
-  CheckCircle
+  CheckCircle,
+  Plane,
+  GraduationCap,
+  Briefcase,
+  Heart,
+  BookOpen
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
+import { supabase } from '../lib/supabase'
 
 interface Service {
   id: string
@@ -29,11 +35,10 @@ interface Testimonial {
   rating: number
   image: string
 }
-
-interface Partner {
-  id: string
-  name: string
-  logo: string
+interface Partners {
+  id: string // UUID string sifatida
+  name: string // name.en dan olinadi
+  image: string // logo_url dan olinadi
 }
 
 const icons = {
@@ -137,6 +142,172 @@ const Home: React.FC = () => {
     loadAllData()
   }, [])
 
+  const icons = {
+    FileText,
+    Plane,
+    Users,
+    GraduationCap,
+    Briefcase,
+    Heart,
+    BookOpen,
+    Globe,
+    Award,
+  }
+
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    try {
+      // Load services from Supabase
+      const { data: servicesData } = await supabase
+        .from('services')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(6)
+
+      if (servicesData && servicesData.length > 0) {
+        setServices(servicesData)
+      } else {
+        // Fallback data for services
+        setServices([
+          {
+            id: 1,
+            title: "Visa olishga yordam",
+            description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
+            icon: "FileText",
+            color: "blue"
+          },
+          {
+            id: 2,
+            title: "Work & Travel",
+            description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
+            icon: "Plane",
+            color: "green"
+          },
+          {
+            id: 3,
+            title: "Ta'lim granti",
+            description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
+            icon: "BookOpen",
+            color: "purple"
+          }
+        ])
+      }
+
+      // Load testimonials from Supabase
+      const { data: storiesData } = await supabase
+        .from('stories')
+        .select('*')
+        .eq('featured', true)
+        .order('created_at', { ascending: false })
+        .limit(3)
+
+      if (storiesData && storiesData.length > 0) {
+        setTestimonials(storiesData)
+      } else {
+        // Fallback data for testimonials
+        setTestimonials([
+          {
+            id: 1,
+            name: "Aziz Karimov",
+            country: "AQSh",
+            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.",
+            rating: 5,
+            image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150"
+          }
+        ])
+      }
+      const token = localStorage.getItem('api_access_token') || ''
+
+      // Load partners from custom API
+      const response = await fetch('https://learnx-crm-production.up.railway.app/api/v1/partners/get-list', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+
+      });
+
+      if (!response.ok) {
+        throw new Error('Hamkorlarni olishda xato yuz berdi');
+      }
+
+      const partnersData = await response.json();
+
+      // API javobini Partners interfeysiga moslashtirish
+      const formattedPartners = partnersData.map((partner: any) => ({
+        id: partner.id,
+        name: partner.name.en, // name.en dan foydalanamiz
+        image: partner.image_url // logo_url ni logo sifatida ishlatamiz
+      }));
+
+
+      if (formattedPartners && formattedPartners.length > 0) {
+        setPartners(formattedPartners);
+      } else {
+        // Fallback data for partners
+      }
+    } catch (error) {
+      console.error('Ma\'lumotlarni yuklashda xato:', error);
+      // Use fallback data on error
+      setServices([
+        {
+          id: 1,
+          title: "Visa olishga yordam",
+          description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
+          icon: "FileText",
+          color: "blue"
+        },
+        {
+          id: 2,
+          title: "Work & Travel",
+          description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
+          icon: "Plane",
+          color: "green"
+        },
+        {
+          id: 3,
+          title: "Ta'lim granti",
+          description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
+          icon: "BookOpen",
+          color: "purple"
+        }
+      ])
+      setTestimonials([]);
+    }
+  }
+
+  const stats = [
+    { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
+    { number: "50+", label: "Hamkor universitetlar", icon: Globe },
+    { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
+    { number: "5+", label: "Yillik tajriba", icon: Award }
+  ];
+
+  const getIcon = (iconName: string) => {
+    const icons = {
+      FileText: FileText,
+      Plane: Plane,
+      BookOpen: BookOpen,
+      Users: Users
+    }
+    const IconComponent = icons[iconName as keyof typeof icons] || FileText
+    return <IconComponent className="h-8 w-8" />
+  }
+
+  const getColorClasses = (color: string) => {
+    const colors = {
+      blue: "text-blue-600 bg-blue-50 hover:bg-blue-100",
+      green: "text-green-600 bg-green-50 hover:bg-green-100",
+      purple: "text-purple-600 bg-purple-50 hover:bg-purple-100",
+      orange: "text-orange-600 bg-orange-50 hover:bg-orange-100"
+    }
+    return colors[color as keyof typeof colors] || colors.blue
+  }
   if (loading) return <div className="text-center py-20">Yuklanmoqda...</div>
   if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
 
@@ -328,13 +499,55 @@ const Home: React.FC = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
                 <img
-                  src={partner.logo}
-                  alt={partner.name?.en}
+                  src={partner.image}
+                  alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />
               </motion.div>
             )) : <p className="text-center text-gray-500">Hamkorlar ma'lumotlari topilmadi.</p>}
           </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-14 md:py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl lg:text-4xl font-bold mb-6">
+              {t('home.cta.title')}
+            </h2>
+            <p className="text-xl mb-12 md:mb-8 max-w-2xl mx-auto text-blue-100">
+              {t('home.cta.description')}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-9 md:gap-4 justify-center">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to="/apply"
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-12 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
+                >
+                  {t('home.cta.apply')}
+                </Link>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Link
+                  to="/contact"
+                  className="border-2 border-white/30 text-white px-16 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
+                >
+                  {t('home.cta.contact')}
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
     </div>

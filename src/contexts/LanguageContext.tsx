@@ -1,6 +1,4 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-// import { GraduationCap, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
-// import { Link } from 'react-router-dom';
 
 export type Language = 'uz' | 'en' | 'ru';
 
@@ -1150,7 +1148,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setLanguage(lang);
     localStorage.setItem('language', lang);
   };
-
+  
   // const t = (key: string, params: Record<string, any> = {}): string => {
   //   const translation = translations[language][key as keyof typeof translations[typeof language]];
   //   if (!translation) {
