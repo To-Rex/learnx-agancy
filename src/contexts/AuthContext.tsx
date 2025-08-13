@@ -236,9 +236,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { data, error };
   };
 
-
-
-
   const signInWithGoogle = async () => {
     setLoading(true)
     const baseUrl = `${window.location.protocol}//${window.location.host}`;

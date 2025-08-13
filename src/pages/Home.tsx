@@ -58,7 +58,7 @@ interface Testimonials {
 interface Partners {
   id: string // UUID string sifatida
   name: string // name.en dan olinadi
-  logo: string // logo_url dan olinadi
+  image: string // logo_url dan olinadi
 }
 
 const Home: React.FC = () => {
@@ -220,7 +220,7 @@ const Home: React.FC = () => {
       const formattedPartners = partnersData.map((partner: any) => ({
         id: partner.id,
         name: partner.name.en, // name.en dan foydalanamiz
-        logo: partner.logo_url // logo_url ni logo sifatida ishlatamiz
+        image: partner.image_url // logo_url ni logo sifatida ishlatamiz
       }));
 
 
@@ -529,7 +529,7 @@ const Home: React.FC = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
                 <img
-                  src={partner.logo}
+                  src={partner.image}
                   alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />
@@ -539,6 +539,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
 
       {/* CTA Section */}
       <section className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 text-white py-14 md:py-20">

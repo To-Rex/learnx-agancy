@@ -99,7 +99,7 @@ const Profile: React.FC = () => {
           setDocuments(documentsWithUrls)
         }
       } catch (error) {
-        console.log('Storage bucket mavjud emas, hujjatlar yuklanmadi')
+        console.error('Storage bucket mavjud emas, hujjatlar yuklanmadi, xatolik:', error)
         setDocuments([])
       }
     } catch (error) {

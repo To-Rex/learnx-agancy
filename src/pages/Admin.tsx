@@ -23,7 +23,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
-import { string } from 'yup'
 
 // Define Services interface for type safety
 type Service = {
