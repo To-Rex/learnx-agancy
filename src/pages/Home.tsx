@@ -339,7 +339,7 @@ const Home: React.FC = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
                 <img
-                  src={partner.image}
+                  src={partner.logo}
                   alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />

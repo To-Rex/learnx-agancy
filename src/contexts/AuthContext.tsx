@@ -268,15 +268,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
-    setIsAdmin(false)
-    setLoading(false)
-    localStorage.removeItem('admin_user')
-    return { error }
+ const signOut = async () => {
+  setLoading(true);
+
+  try {
+    // Supabase sessiyasini tozalash
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Supabase signOut xato:", error);
+
+    // React state-larni tozalash
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+
+    // localStorage va sessionStorage ni tozalash
+    localStorage.removeItem('admin_user');
+    localStorage.removeItem('supabase_token');
+    localStorage.removeItem('api_access_token');
+    localStorage.clear(); // Agar butun localStorage ni tozalash kerak bo‘lsa
+    sessionStorage.clear();
+
+    // Foydalanuvchini login sahifasiga yo'naltirish
+    window.location.href = "/login";
+
+  } catch (err) {
+    console.error("Logout xato:", err);
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const value = {
     user,
