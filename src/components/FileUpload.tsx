@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
 import { Upload, X, CheckCircle, AlertCircle, FileText, Image } from 'lucide-react'
-import { uploadFile, STORAGE_BUCKETS } from '../lib/storage'
 import { useAuth } from '../contexts/AuthContext'
 import toast from 'react-hot-toast'
+
+const apiDomain = 'https://learnx-crm-production.up.railway.app/api/v1'; // API bazaviy manzili (avvalgi koddan olingan)
 
 interface FileUploadProps {
   onFileUploaded: (filePath: string, fileName: string) => void
   acceptedTypes?: string[]
   maxSize?: number // in MB
-  bucket?: string
   label: string
   required?: boolean
   currentFile?: string
@@ -18,7 +18,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onFileUploaded,
   acceptedTypes = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
   maxSize = 5,
-  bucket = STORAGE_BUCKETS.DOCUMENTS,
   label,
   required = false,
   currentFile
@@ -49,37 +48,43 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setUploading(true)
 
     try {
-      const timestamp = Date.now()
-      const fileName = `${timestamp}-${file.name}`
-      const filePath = `${user.id}/${fileName}`
+      const apiToken = localStorage.getItem('api_access_token');
+      const clientId = localStorage.getItem('client_id');
 
-      const { data, error } = await uploadFile(bucket, filePath, file)
-
-      if (error) {
-        console.error('File upload error:', error)
-        if (error.message?.includes('Bucket not found')) {
-          toast.error('📁 Storage bucket yaratilmagan!\n\nYechim: Migration faylini ishga tushiring', {
-            duration: 5000,
-            style: {
-              background: '#fef3c7',
-              color: '#d97706',
-              fontSize: '14px',
-              padding: '16px',
-              borderRadius: '12px'
-            }
-          })
-        } else {
-          toast.error('Fayl yuklashda xatolik: ' + error.message)
-        }
-      } else {
-        toast.success('Fayl muvaffaqiyatli yuklandi')
-        onFileUploaded(filePath, file.name)
+      if (!apiToken || !clientId) {
+        throw new Error('API token yoki Client ID topilmadi');
       }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('client_id', clientId);
+      // Agar kerak bo'lsa, qo'shimcha maydonlar qo'shing, masalan: formData.append('document_type', 'passport');
+
+      const response = await fetch(`${apiDomain}/files/upload`, { // Bu endpointni o'zingizning API ga moslashtiring (masalan, /clients/documents/upload)
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Fayl yuklash xatosi: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      const result = await response.json();
+      // API javobida filePath va fileName bo'lishi kerak, masalan: { file_path: 'path/to/file', file_name: 'original-name.ext' }
+      const filePath = result.file_path;
+      const fileName = result.file_name || file.name;
+
+      toast.success('Fayl muvaffaqiyatli yuklandi');
+      onFileUploaded(filePath, fileName);
     } catch (error) {
-      console.error('Upload error:', error)
-      toast.error('Fayl yuklashda xatolik yuz berdi')
+      console.error('Upload error:', error);
+      toast.error(`Fayl yuklashda xatolik: ${error.message}`);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
   }
 
