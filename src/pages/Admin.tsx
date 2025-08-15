@@ -229,8 +229,8 @@ const Admin: React.FC = () => {
 
   // service 
   const [serviceForm, setServiceForm] = useState({
-    title: { en: "" },
-    description: { en: "" },
+    title: { uz: "", en: "", ru: "" },
+    description: { uz: "", en: "", ru: "" },
     icon: { name: "Book", color: "orange" },
     price: "",
     features: [],
@@ -238,8 +238,8 @@ const Admin: React.FC = () => {
   const handleAddService = () => {
     setEditingItem(null);
     setServiceForm({
-      title: { en: "" },
-      description: { en: "" },
+      title: { uz: "", en: "", ru: "" },
+      description: { uz: "", en: "", ru: "" },
       icon: { name: "Book", color: "orange" },
       price: "",
       features: [],
@@ -248,13 +248,13 @@ const Admin: React.FC = () => {
   };
   const handleEditService = (service: any) => {
     setServiceForm({
-      title: service.title || { en: "" },
-      description: service.description || { en: "" },
+      title: service.title || { uz: "", en: "", ru: "" },
+      description: service.description || { uz: "", en: "", ru: "" },
       icon: service.icon || { name: "Book", color: "orange" },
       price: service.price || "",
       features: Array.isArray(service.features)
         ? service.features.map((f: any) =>
-          typeof f === "string" ? { en: f } : f
+          typeof f === "string" ? { uz: f, en: f, ru: f } : f
         )
         : [],
     });
@@ -359,13 +359,14 @@ const Admin: React.FC = () => {
 
       const normalizedData = servicesArray.map((item: any) => ({
         id: item.id || "",
-        title: item.title || { en: "" },
-        description: item.description || { en: "" },
+        title: item.title || { uz: "", en: "", ru: "" },
+        description: item.description || { uz: "", en: "", ru: "" },
         price: item.price || "",
         icon: {
           name: item.icon?.name || "FileText",
           color: item.icon?.color ? item.icon.color.toLowerCase() : "blue",
-        }, features: Array.isArray(item.features)
+        },
+        features: Array.isArray(item.features)
           ? item.features
           : [],
       }));
@@ -480,9 +481,9 @@ const Admin: React.FC = () => {
     setEditingItem(story);
     setShowStoryModal(true);
   };
-    useEffect(() => {
-      fetchPartners()
-    }, [])
+  useEffect(() => {
+    fetchPartners()
+  }, [])
   const handleSaveStory = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
@@ -1169,14 +1170,14 @@ const Admin: React.FC = () => {
                               </div>
                             </div>
                             <h3 className={`font-bold  text-white text-lg group-hover:text-purple-200 transition-colors flex items-center space-x-2`}>
-                              <span>{service.title.en}</span>
+                              <span>{service.title.uz}</span>
                             </h3>
                             <p className="text-purple-200 mb-2 text-sm leading-relaxed">
-                              {service.description.en}
+                              {service.description.uz}
                             </p>
 
                             <p className="text-purple-300 mb-4 text-sm">
-                              <strong>Features:</strong> {service.features.map(f => f.en).join(", ")}
+                              <strong>Features:</strong> {service.features.map(f => f.uz).join(", ")}
                             </p>
 
 
@@ -1199,7 +1200,8 @@ const Admin: React.FC = () => {
                   {/* Modal oynasi */}
                   {showServiceModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-lg border border-white/20">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-lg border border-white/20 
+                    max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-white">
                             {editingItem ? "Xizmatni tahrirlash" : "Yangi xizmat"}
@@ -1214,7 +1216,22 @@ const Admin: React.FC = () => {
                         </div>
                         <div className="space-y-4">
                           <div>
-                            <label className="block text-white mb-1">Mavzu</label>
+                            <label className="block text-white mb-1">Mavzu (UZ)</label>
+                            <input
+                              type="text"
+                              value={serviceForm.title.uz}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  title: { ...serviceForm.title, uz: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Mavzu (EN)</label>
                             <input
                               type="text"
                               value={serviceForm.title.en}
@@ -1229,13 +1246,54 @@ const Admin: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-white mb-1">Tavsif</label>
+                            <label className="block text-white mb-1">Mavzu (RU)</label>
+                            <input
+                              type="text"
+                              value={serviceForm.title.ru}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  title: { ...serviceForm.title, ru: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (UZ)</label>
+                            <textarea
+                              value={serviceForm.description.uz}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  description: { ...serviceForm.description, uz: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (EN)</label>
                             <textarea
                               value={serviceForm.description.en}
                               onChange={(e) =>
                                 setServiceForm({
                                   ...serviceForm,
                                   description: { ...serviceForm.description, en: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (RU)</label>
+                            <textarea
+                              value={serviceForm.description.ru}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  description: { ...serviceForm.description, ru: e.target.value },
                                 })
                               }
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
@@ -1251,7 +1309,21 @@ const Admin: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-white mb-1">Xususiyat (vergul bilan)</label>
+                            <label className="block text-white mb-1">Xususiyat (UZ vergul bilan)</label>
+                            <input
+                              type="text"
+                              value={serviceForm.features.map((f) => f.uz).join(", ")}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  features: e.target.value.split(",").map((f) => ({ uz: f.trim() })),
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Xususiyat (EN vergul bilan)</label>
                             <input
                               type="text"
                               value={serviceForm.features.map((f) => f.en).join(", ")}
@@ -1259,6 +1331,20 @@ const Admin: React.FC = () => {
                                 setServiceForm({
                                   ...serviceForm,
                                   features: e.target.value.split(",").map((f) => ({ en: f.trim() })),
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Xususiyat (RU vergul bilan)</label>
+                            <input
+                              type="text"
+                              value={serviceForm.features.map((f) => f.ru).join(", ")}
+                              onChange={(e) =>
+                                setServiceForm({
+                                  ...serviceForm,
+                                  features: e.target.value.split(",").map((f) => ({ ru: f.trim() })),
                                 })
                               }
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
