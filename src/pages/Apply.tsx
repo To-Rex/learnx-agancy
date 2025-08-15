@@ -1,29 +1,31 @@
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { supabase } from '../lib/supabase'
 import * as yup from 'yup'
 import { useNavigate, Link } from 'react-router-dom'
-import { Upload, FileText, User, Mail, Phone, MapPin, Calendar, GraduationCap, Briefcase, CheckCircle, X } from 'lucide-react'
+import { FileText, User, Briefcase, CheckCircle, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import toast, { Toaster } from 'react-hot-toast'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import FileUpload from '../components/FileUpload'
 import { STORAGE_BUCKETS } from '../lib/storage'
+import useFormPersist from 'react-hook-form-persist'
 
 const schema = yup.object({
   firstName: yup.string().required('Ism majburiy'),
   lastName: yup.string().required('Familiya majburiy'),
-  email: yup.string().email('Noto\'g\'ri email format').required('Email majburiy'),
-  phone: yup.string().required('Telefon raqam majburiy'),
-  birthDate: yup.date().required('Tug\'ilgan sana majburiy'),
-  address: yup.string().required('Manzil majburiy'),
+  email: yup.string().email('Noto\'g\'ri email format'),
+  telegram : yup.string().required('Telegram username majburiy').matches(/^@/, 'Telegram username @ bilan boshlanishi kerak'),
+  phone1: yup.string(),
+  phone2: yup.string(),
+  // birthDate: yup.date().required('Tug\'ilgan sana majburiy'),
+  // address: yup.string().required('Manzil majburiy'),
   education: yup.string().required('Ta\'lim darajasi majburiy'),
   program: yup.string().required('Dastur majburiy'),
   country: yup.string().required('Davlat majburiy'),
   experience: yup.string(),
-  motivation: yup.string().required('Motivatsiya xati majburiy').min(100, 'Kamida 100 ta belgi')
+  // motivation: yup.string().required('Motivatsiya xati majburiy').min(100, 'Kamida 100 ta belgi')
 })
 
 const Apply: React.FC = () => {
@@ -34,16 +36,24 @@ const Apply: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(1)
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: string }>({})
   const [formData, setFormData] = useState<any>({})
-
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, formState: { errors }, watch, setValue } = useForm({
     resolver: yupResolver(schema)
   })
 
+  useFormPersist('applyFormData', {
+    watch,
+    setValue,
+    storage: window.localStorage,
+    exclude: [] // Hujjatlar localStorage’da saqlanmaydi
+  })
+
+  const program  = watch('program')
+
   const steps = [
     { id: 1, title: t('apply.step1'), icon: User },
-    { id: 2, title: t('apply.step2'), icon: GraduationCap },
-    { id: 3, title: t('apply.step3'), icon: Briefcase },
-    { id: 4, title: t('apply.step4'), icon: FileText }
+    { id: 2, title: t('apply.step3'), icon: Briefcase },
+    // { id: 3, title: t('apply.step2'), icon: GraduationCap },
+    { id: 3, title: t('apply.step4'), icon: FileText }
   ]
 
   const programs = [
@@ -60,12 +70,16 @@ const Apply: React.FC = () => {
   ]
 
   const requiredDocuments = [
-    { key: 'passport', label: 'Pasport nusxasi', required: true },
-    { key: 'photo', label: 'Foto 3x4', required: true },
-    { key: 'diploma', label: 'Diplom/Attestat', required: true },
-    { key: 'transcript', label: 'Akademik ma\'lumotnoma', required: false },
-    { key: 'cv', label: 'CV/Resume', required: false },
-    { key: 'motivation', label: 'Motivatsiya xati', required: false }
+    { key: 'passport', label: 'Pasport nusxasi', required: false },
+    { key: 'photo', label: 'Foto 3x4', required: false },
+    { key: 'diploma', label: 'Diplom/Attestat', required: false },
+    { key: 'transcript', label: 'Akademik ma\'lumotnoma', required: false  },
+    // { key: 'cv', label: 'CV/Resume', required: false },
+    // { key: 'motivation', label: 'Motivatsiya xati', required: false },
+    { key : 'father', label: 'Otasini pasporti', required: false },
+    { key: 'mother', label: 'Onasini pasporti', required: false },
+    { key: 'birth-certificate', label: 'Tug\'ilganlik guvohnomasi', required: false },
+    { key : 'other', label: 'Nigoh hujjatlari', required: true }
   ]
 
   const handleFileUpload = (key: string) => (filePath: string, fileName: string) => {
@@ -79,94 +93,296 @@ const Apply: React.FC = () => {
   }
 
   const removeFile = (key: string) => {
-    setUploadedFiles(prev => ({ ...prev, [key]: '' }))
+    setUploadedFiles(prev => {
+      const newFiles = {...prev};
+      delete newFiles[key];
+      return newFiles;
+    });
     toast.success('Fayl o\'chirildi')
   }
 
   const onSubmit = async (data: any) => {
-    console.log('🚀 Form submitted with data:', data)
-    console.log('🔐 User:', user)
-    console.log('📝 Form validation passed')
-    console.log('📋 Current form data:', data)
-    
+    console.log('🚀 Forma yuborildi:', data);
+    console.log('🔐 Foydalanuvchi:', user);
+    console.log("📝 Forma tekshiruvi o'tdi");
+    console.log("📋 Joriy forma ma'lumotlari:", data);
+  
+    // Foydalanuvchi tizimga kirganligini tekshirish
     if (!user) {
-      toast.error('Ariza topshirish uchun tizimga kiring')
-      navigate('/login')
-      return
+      toast.error("Ariza topshirish uchun tizimga kiring");
+      navigate('/login');
+      return;
     }
-
-    console.log('✅ User authenticated:', user.id)
-    // Validate required fields
-    if (!data.firstName || !data.lastName || !data.email || !data.phone) {
-      toast.error('Barcha majburiy maydonlarni to\'ldiring')
-      return
+  
+    console.log('✅ Foydalanuvchi autentifikatsiya qilindi:', user.id);
+  
+    // Majburiy maydonlarni tekshirish
+    if (!data.firstName || !data.lastName || !data.email || !data.phone1 || !data.phone2 || !data.telegram ) {
+      toast.error("Barcha majburiy maydonlarni to'ldiring");
+      return;
     }
-
+  
     if (!data.program || !data.country) {
-      toast.error('Dastur va davlatni tanlang')
-      return
+      toast.error("Dastur va davlatni tanlang");
+      return;
     }
-    console.log('✅ Form validation passed')
-    
-    setUploading(true)
-    
+    console.log("✅ Forma tekshiruvi otdi");
+  
+    setUploading(true);
+    const requiredKeys = requiredDocuments.filter(doc => doc.required).map(doc => doc.key);
+    const missingDocs = requiredKeys.filter(key => !uploadedFiles[key]);
+    if (missingDocs.length > 0) {
+      toast.error(`Majburiy hujjatlar to'ldirilmagan: ${missingDocs.join(', ')}`);
+      return;
+    }
     try {
-      console.log('💾 Saving to database...')
-      
-      // Save application to database
-      console.log('📤 Preparing data for database...')
-      const { data: result, error } = await supabase
-        .from('applications')
-        .insert({
-          user_id: user.id,
-          full_name: `${data.firstName} ${data.lastName}`,
-          email: data.email,
-          phone: data.phone,
-          birth_date: data.birthDate,
-          education_level: data.education,
-          university: data.university || null,
-          major: data.major || null,
-          english_level: data.englishLevel || null,
-          passport_number: data.passportNumber || null,
-          program_type: data.program,
-          country_preference: data.country,
-          documents: uploadedFiles,
-          status: 'pending',
-          created_at: new Date().toISOString()
-        })
-
-      console.log('📊 Database response:', { result, error })
-      if (error) {
-        console.error('❌ Database error:', error)
-        throw error
+      console.log("📤 API uchun ma'lumotlar tayyorlanmoqda...");
+  
+      // API uchun ma'lumotlarni tayyorlash
+      const formDataPayload = {
+        user_id: user.id,
+        firstname: data.firstName || null,
+        lastname: data.lastName || null,
+        email: data.email,
+        phone1: data.phone1,
+        phone2: data.phone2,
+        telegram: data.telegram,
+        education_level: data.education,
+        university: data.university || null,
+        major: data.major || null,
+        english_level: data.englishLevel || null,
+        passport_number: data.passportNumber || null,
+        program_type: data.program,
+        country_preference: data.country,
+        documents: uploadedFiles,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+      };
+  
+      console.log("📊 APIga yuboriladigan ma'lumotlar:", formDataPayload);
+      const token = localStorage.getItem('api_access_token') || ''; // API tokenni olish
+      // Backend API'ga POST so'rov yuborish
+      const response = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/submit/${user.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Agar autentifikatsiya kerak bo'lsa, token qo'shing
+          'Authorization': `Bearer ${token}`, // Tokenni user objektidan oling
+        },
+        body: JSON.stringify(formDataPayload),
+      });
+  
+      // API javobini tekshirish
+      const result = await response.json();
+      console.log('📊 API javobi:', result);
+  
+      if (!response.ok) {
+        console.error('❌ API xatosi:', result);
+        throw new Error(result.message || "API so'rovida xatolik");
       }
-
-      console.log('✅ Application saved successfully:', result)
-      toast.success('Ariza muvaffaqiyatli topshirildi!')
-      console.log('🎉 Success message shown')
-      
-      // Reset form
-      setCurrentStep(1)
-      setUploadedFiles({})
-      setFormData({})
-      
-      // Redirect to profile after successful submission
-      console.log('🔄 Redirecting to profile...')
+  
+      console.log('✅ Ariza muvaffaqiyatli saqlandi:', result);
+      toast.success("Ariza muvaffaqiyatli topshirildi!");
+      console.log("🎉 Muvaffaqiyat xabari ko'rsatildi");
+  
+      // Formani tozalash
+      setCurrentStep(1);
+      setUploadedFiles({});
+      setFormData({});
+  
+      // Profilga yo'naltirish
+      console.log("🔄 Profilga yo'naltirilmoqda...");
       setTimeout(() => {
-        navigate('/profile')
-      }, 1500)
-      
+        navigate('/profile');
+      }, 1500);
     } catch (error) {
-      console.error('❌ Submit error:', error)
-      toast.error('Ariza topshirishda xatolik. Qaytadan urinib ko\'ring.')
-      console.log('💥 Error details:', error)
+      console.error('❌ Yuborish xatosi:', error);
+      toast.error("Ariza topshirishda xatolik. Qaytadan urinib ko'ring.");
+      console.log('💥 Xato tafsilotlari:', error);
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
+  
+
+
+  // const onSubmit = async (data: any) => {
+  //   // Foydalanuvchi tizimga kirganligini tekshirish
+  //   if (!user) {
+  //     toast.error('Tizimga kiring');
+  //     navigate('/login');
+  //     return;
+  //   }
+  
+  //   // Majburiy maydonlarni tekshirish
+  //   if (!data.email || !data.phone || !data.program || !data.country) {
+  //     toast.error('Barcha majburiy maydonlarni to\'ldiring');
+  //     return;
+  //   }
+  
+  //   // Hujjatlar mavjudligini tekshirish
+  //   const requiredKeys = requiredDocuments.filter(doc => doc.required).map(doc => doc.key);
+  //   const missingDocs = requiredKeys.filter(key => !uploadedFiles[key]);
+  //   if (missingDocs.length > 0) {
+  //     toast.error(`Majburiy hujjatlar to\'ldirilmagan: ${missingDocs.join(', ')}`);
+  //     return;
+  //   }
+  
+  //   setUploading(true);
+  
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('user_id', user.id);
+  //     formData.append('firstname', data.firstName);
+  //     formData.append('lastname', data.lastName)
+  //     formData.append('email', data.email);
+  //     formData.append('telegram', data.telegram);
+  //     formData.append('phone1', data.phone1);
+  //     formData.append('phone2', data.phone2);
+  //     formData.append('program_type', data.program);
+  //     formData.append('country_preference', data.country);
+  //     formData.append('status', 'pending');
+  
+  //     // Fayllarni qo‘shish
+  //     Object.keys(uploadedFiles).forEach(key => {
+  //       if (uploadedFiles[key]) {
+  //         // uploadedFiles[key] fayl yo'li yoki obyekt bo'lishi mumkin
+  //         // Agar fayl yo'li bo'lsa, backendga URL sifatida yuboriladi
+  //         formData.append(`documents[${key}]`, uploadedFiles[key]);
+  //       }
+  //     });
+  
+  //     // Yuboriladigan ma'lumotlarni konsolda ko'rish (faqat matn qismini)
+  //     console.log('Yuboriladigan ma\'lumotlar:', {
+  //       user_id: user.id,
+  //       firstname: data.firstName,
+  //       lastname: data.lastName,
+  //       email: data.email,
+  //       telegram: data.telegram,
+  //       phone1: data.phone1,
+  //       phone2: data.phone2,
+  //       program_type: data.program,
+  //       country_preference: data.country,
+  //       documents: Object.keys(uploadedFiles).reduce((acc, key) => ({
+  //         ...acc,
+  //         [key]: uploadedFiles[key],
+  //       }), {}),
+  //     });
+  
+  //     // APIga so'rov yuborish
+  //     const response = await fetch('https://learnx-crm-production.up.railway.app/api/v1/applications/create', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${user.token}`, // API tokenni olish
+  //       },
+  //       body: formData,
+  //     });
+  
+  //     if (response.ok) {
+  //       toast.success('Ariza muvaffaqiyatli topshirildi!');
+  //       setUploadedFiles({});
+  //       setTimeout(() => navigate('/profile'), 1500);
+  //     } else {
+  //       const errorText = await response.text();
+  //       toast.error(`Ariza topshirishda xatolik: ${errorText}`);
+  //     }
+  //   } catch (error) {
+  //     console.error('Xatolik:', error);
+  //     toast.error('Xatolik yuz berdi, qaytadan urinib ko\'ring.');
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
+
+  // const onSubmit = async (data: any) => {
+  //   // Foydalanuvchi tekshiruvi
+  //   if (!user) {
+  //     toast.error('Tizimga kiring');
+  //     navigate('/login');
+  //     return;
+  //   }
+
+  
+  //   // Majburiy maydonlarni tekshirish
+  //   if (!data.email || !data.phone1 || !data.program || !data.country) {
+  //     toast.error('Barcha majburiy maydonlarni to\'ldiring');
+  //     return;
+  //   }
+  
+  //   // Majburiy hujjatlar tekshiruvi
+  //   const requiredKeys = requiredDocuments.filter(doc => doc.required).map(doc => doc.key);
+  //   const missingDocs = requiredKeys.filter(key => !uploadedFiles[key]);
+  //   if (missingDocs.length > 0) {
+  //     toast.error(`Majburiy hujjatlar to'ldirilmagan: ${missingDocs.join(', ')}`);
+  //     return;
+  //   }
+  
+  //   setUploading(true);
+  
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('user_id', user.id);
+  //     formData.append('firstname', data.firstName || '');
+  //     formData.append('lastname', data.lastName || '');
+  //     formData.append('email', data.email);
+  //     formData.append('telegram', data.telegram || '');
+  //     formData.append('phone1', data.phone1 || '');
+  //     formData.append('phone2', data.phone2 || '');
+  //     formData.append('program_type', data.program);
+  //     formData.append('country_preference', data.country);
+  //     formData.append('status', 'pending');
+  
+  //     // Fayllarni qo‘shish
+  //     Object.keys(uploadedFiles).forEach(key => {
+  //       if (uploadedFiles[key]) {
+  //         formData.append(`documents[${key}]`, uploadedFiles[key]);
+  //       }
+  //     });
+  
+  //     // Yuboriladigan ma'lumotlarni tekshirish
+  //     console.log('Yuboriladigan ma\'lumotlar:', {
+  //       user_id: user.id,
+  //       firstname: data.firstName,
+  //       lastname: data.lastName,
+  //       email: data.email,
+  //       telegram: data.telegram,
+  //       phone1: data.phone1,
+  //       phone2: data.phone2,
+  //       program_type: data.program,
+  //       country_preference: data.country,
+  //       documents: uploadedFiles,
+  //     });
+  
+  //     // APIga so‘rov yuborish
+  //     const response = await fetch('https://learnx-crm-production.up.railway.app/api/v1/applications/create', {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${user.token}`, // Tokenni tekshirish
+  //       },
+  //       body: formData,
+  //     });
+  
+  //     if (response.ok) {
+  //       const result = await response.json();
+  //       console.log('API javobi:', result);
+  //       toast.success('Ariza muvaffaqiyatli topshirildi!');
+  //       setUploadedFiles({});
+  //       setTimeout(() => navigate('/profile'), 1500);
+  //     } else {
+  //       const errorText = await response.text();
+  //       console.error('API xatosi:', errorText);
+  //       toast.error(`Ariza topshirishda xatolik: ${errorText}`);
+  //     }
+  //   } catch (error) {
+  //     console.error('Xatolik:', error);
+  //     toast.error('Xatolik yuz berdi, qaytadan urinib ko\'ring.');
+  //   } finally {
+  //     setUploading(false);
+  //   }
+  // };
 
   const nextStep = () => {
-    if (currentStep < 4) setCurrentStep(currentStep + 1)
+    if (currentStep < 3) setCurrentStep(currentStep + 1)
   }
 
   const prevStep = () => {
@@ -226,21 +442,53 @@ const Apply: React.FC = () => {
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Telefon *
+                  Telegram username *
                 </label>
                 <input
-                  type="tel"
-                  {...register('phone')}
+                  type="text"
+                  {...register('telegram')}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="+998 90 123 45 67"
+                  placeholder="@telegram_username"
                 />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+                {errors.telegram && (
+                  <p className="text-red-500 text-sm mt-1">{errors.telegram.message}</p>
                 )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Telefon raqamingiz *
+                </label>
+                <input
+                  type="tel"
+                  {...register('phone1')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="+998 90 123 45 67"
+                />
+                {errors.phone1 && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone1.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Qo'shimcha telefon raqam *
+                </label>
+                <input
+                  type="tel"
+                  {...register('phone2')}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="+998 90 123 45 67"
+                />
+                {errors.phone2 && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone2.message}</p>
+                )}
+              </div>
+            </div>
+
+            {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Tug'ilgan sana *
@@ -268,63 +516,11 @@ const Apply: React.FC = () => {
                   <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
                 )}
               </div>
-            </div>
+            </div> */}
           </div>
         )
 
       case 2:
-        return (
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ta'lim darajasi *
-              </label>
-              <select
-                {...register('education')}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Tanlang</option>
-                <option value="high-school">O'rta maktab</option>
-                <option value="college">Kollej</option>
-                <option value="bachelor">Bakalavr</option>
-                <option value="master">Magistr</option>
-                <option value="phd">PhD</option>
-              </select>
-              {errors.education && (
-                <p className="text-red-500 text-sm mt-1">{errors.education.message}</p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ish tajribasi
-              </label>
-              <textarea
-                {...register('experience')}
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Ish tajribangizni qisqacha yozing..."
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Motivatsiya xati *
-              </label>
-              <textarea
-                {...register('motivation')}
-                rows={6}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Nima uchun bu dasturda qatnashmoqchisiz? (kamida 100 ta belgi)"
-              />
-              {errors.motivation && (
-                <p className="text-red-500 text-sm mt-1">{errors.motivation.message}</p>
-              )}
-            </div>
-          </div>
-        )
-
-      case 3:
         return (
           <div className="space-y-6">
             <div>
@@ -369,7 +565,59 @@ const Apply: React.FC = () => {
           </div>
         )
 
-      case 4:
+      // case 3:
+      //   return (
+      //     <div className="space-y-6">
+      //       <div>
+      //         <label className="block text-sm font-medium text-gray-700 mb-2">
+      //           Ta'lim darajasi *
+      //         </label>
+      //         <select
+      //           {...register('education')}
+      //           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      //         >
+      //           <option value="">Tanlang</option>
+      //           <option value="high-school">O'rta maktab</option>
+      //           <option value="college">Kollej</option>
+      //           <option value="bachelor">Bakalavr</option>
+      //           <option value="master">Magistr</option>
+      //           <option value="phd">PhD</option>
+      //         </select>
+      //         {errors.education && (
+      //           <p className="text-red-500 text-sm mt-1">{errors.education.message}</p>
+      //         )}
+      //       </div>
+
+      //       <div>
+      //         <label className="block text-sm font-medium text-gray-700 mb-2">
+      //           Ish tajribasi
+      //         </label>
+      //         <textarea
+      //           {...register('experience')}
+      //           rows={3}
+      //           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      //           placeholder="Ish tajribangizni qisqacha yozing..."
+      //         />
+      //       </div>
+
+      //       {/* <div>
+      //         <label className="block text-sm font-medium text-gray-700 mb-2">
+      //           Motivatsiya xati *
+      //         </label>
+      //         <textarea
+      //           {...register('motivation')}
+      //           rows={6}
+      //           className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+      //           placeholder="Nima uchun bu dasturda qatnashmoqchisiz? (kamida 100 ta belgi)"
+      //         />
+      //         {errors.motivation && (
+      //           <p className="text-red-500 text-sm mt-1">{errors.motivation.message}</p>
+      //         )}
+      //       </div> */}
+      //     </div>
+      //   )
+
+      case 3:
         return (
           <div className="space-y-6">
             <div className="bg-blue-50 p-4 rounded-lg">
@@ -391,6 +639,15 @@ const Apply: React.FC = () => {
                   required={doc.required}
                   currentFile={uploadedFiles[doc.key]}
                 />
+                {uploadedFiles[doc.key] && (
+                  <button
+                    type="button"
+                    onClick={() => removeFile(doc.key)}
+                    className="mt-2 text-red-600 hover:underline"
+                  >
+                    <X />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -471,7 +728,7 @@ const Apply: React.FC = () => {
                 {t('apply.back')}
               </button>
 
-              {currentStep < 4 ? (
+              {currentStep < 3 ? (
                 <button
                   type="button"
                   onClick={nextStep}
@@ -482,20 +739,16 @@ const Apply: React.FC = () => {
               ) : (
                 <button
                   type="submit"
-                  disabled={uploading}
+                  // disabled={uploading}
                   className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 font-semibold"
                 >
-                  {uploading ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      <span>{t('apply.submitting')}</span>
-                    </>
-                  ) : (
+                  
+                  {/* {uploading  ( */}
                     <>
                       <CheckCircle className="h-5 w-5" />
                       <span>{t('apply.submit')}</span>
                     </>
-                  )}
+                  {/* )} */}
                 </button>
               )}
             </div>

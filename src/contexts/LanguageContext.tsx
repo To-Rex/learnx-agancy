@@ -6,7 +6,100 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string, params?: Record<string, any>) => string;
+  translateApi: (data: any) => any;
 }
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+
+export const useLanguage = () => {
+  const context = useContext(LanguageContext);
+  if (!context) throw new Error('useLanguage must be used within a LanguageProvider');
+  return context;
+};
+
+export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [language, setLanguage] = useState<Language>('uz');
+
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem('language') as Language;
+    if (savedLanguage && ['uz', 'en', 'ru'].includes(savedLanguage)) {
+      setLanguage(savedLanguage);
+    }
+  }, []);
+
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
+    localStorage.setItem('language', lang);
+  };
+
+  const t = (key: string, params: Record<string, any> = {}): any => {
+    const langData = translations[language];
+
+    // 1. Flat access
+    if (key in langData) {
+      const flatResult = langData[key as keyof typeof langData];
+      if (typeof flatResult === 'string') {
+        return Object.keys(params).reduce(
+          (str, param) => str.replace(`{${param}}`, params[param]),
+          flatResult
+        );
+      }
+      return flatResult;
+    }
+
+    // 2. Nested access
+    const keys = key.split('.');
+    let nestedResult: any = langData;
+    for (const k of keys) {
+      nestedResult = nestedResult?.[k];
+      if (nestedResult === undefined) {
+        console.warn(`Translation missing for key: ${key} in language: ${language}`);
+        return key;
+      }
+    }
+
+    if (typeof nestedResult === 'string') {
+      return Object.keys(params).reduce(
+        (str, param) => str.replace(`{${param}}`, params[param]),
+        nestedResult
+      );
+    }
+
+    return nestedResult;
+  };
+
+  // 🔹 API ma'lumotlarini tilga moslab chiqaradigan funksiya
+  const translateApi = (data: any): any => {
+    if (!data || typeof data !== "object") return data;
+
+    // Agar data {uz, en, ru} bo'lsa -> faqat tanlangan tilni qaytaradi
+    if ("uz" in data && "en" in data && "ru" in data) {
+      return data[language];
+    }
+
+    // Agar array bo'lsa -> ichidagi har bir elementni tarjima qiladi
+    if (Array.isArray(data)) {
+      return data.map(item => translateApi(item));
+    }
+
+    // Agar object bo'lsa -> har bir maydonni tekshiradi
+    const translated: any = {};
+    for (const key of Object.keys(data)) {
+      translated[key] = translateApi(data[key]);
+    }
+    return translated;
+  };
+
+  const value = {
+    language,
+    setLanguage: handleSetLanguage,
+    t,
+    translateApi, // 🔹 qo‘shildi
+  };
+
+  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
+};
+
 
 const translations = {
   uz: {
@@ -81,7 +174,7 @@ const translations = {
       "ctaText": "Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating",
       "apply": "Ariza topshirish",
       "consultation": "Bepul maslahat"
-  },
+    },
 
     contact: {
       title: "Biz bilan bog'laning",
@@ -130,7 +223,7 @@ const translations = {
         }
       }
     },
-    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz":"Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz",
+    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz": "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz",
     " Qanday ishlaydi?": "Как это работает?",
     // Navigation
     'nav.home': 'Bosh sahifa',
@@ -343,7 +436,7 @@ const translations = {
     'common.no': 'Yo\'q',
     'common.required': 'Majburiy',
     'common.optional': 'Ixtiyoriy',
-    
+
 
     // Process page
     'process.step1.title': 'Bepul maslahat',
@@ -438,70 +531,70 @@ const translations = {
       }
     },
 
-    
-    
- stories: {
-    "title": "Success Stories",
+
+
+    stories: {
+      "title": "Success Stories",
       "subtitle": "Real stories of our students who trusted us and succeeded abroad",
-        "filterByCountry": "Filter by country:",
-          "all": "All",
-            "resultsTitle": "Our Results",
-              "resultsSubtitle": "The numbers speak for themselves",
-                "nextStory": "Let your story be the next!",
-                  "ctaText": "Contact us today and create your own success story",
-                    "apply": "Apply Now",
-                      "consultation": "Free Consultation"
+      "filterByCountry": "Filter by country:",
+      "all": "All",
+      "resultsTitle": "Our Results",
+      "resultsSubtitle": "The numbers speak for themselves",
+      "nextStory": "Let your story be the next!",
+      "ctaText": "Contact us today and create your own success story",
+      "apply": "Apply Now",
+      "consultation": "Free Consultation"
 
-},
+    },
 
-   
-      contact: {
-        title: "Contact Us",
-        subtitle: "Have questions? Need help? Our professional team is always ready to assist you.",
-        form: {
-          name: "Full Name",
-          namePlaceholder: "Enter your name",
-          email: "Email Address",
-          phone: "Phone Number",
-          subject: "Subject",
-          selectSubject: "Select a subject",
-          subjects: {
-            visa: "Visa Application",
-            workTravel: "Work & Travel",
-            education: "Education Grant",
-            consultation: "Consultation",
-            other: "Other"
-          },
-          message: "Message",
-          send: "Send Message"
+
+    contact: {
+      title: "Contact Us",
+      subtitle: "Have questions? Need help? Our professional team is always ready to assist you.",
+      form: {
+        name: "Full Name",
+        namePlaceholder: "Enter your name",
+        email: "Email Address",
+        phone: "Phone Number",
+        subject: "Subject",
+        selectSubject: "Select a subject",
+        subjects: {
+          visa: "Visa Application",
+          workTravel: "Work & Travel",
+          education: "Education Grant",
+          consultation: "Consultation",
+          other: "Other"
         },
-        toast: {
-          success: "Your message has been successfully sent! We will contact you soon.",
-          error: "An error occurred. Please try again."
-        },
-        contactInfo: {
-          phone: "Phone",
-          email: "Email",
-          address: "Address",
-          hours: "Working Hours"
-        },
-        location: "Our Location",
-        features: {
-          title: "Why Choose Us?",
-          support: {
-            title: "24/7 Support",
-            desc: "We are always ready to answer your questions"
-          },
-          team: {
-            title: "Professional Team",
-            desc: "Experienced specialists are here to help you"
-          },
-          free: {
-            title: "Free Consultation",
-            desc: "The initial consultation is completely free"
-          }
-        }
+        message: "Message",
+        send: "Send Message"
       },
+      toast: {
+        success: "Your message has been successfully sent! We will contact you soon.",
+        error: "An error occurred. Please try again."
+      },
+      contactInfo: {
+        phone: "Phone",
+        email: "Email",
+        address: "Address",
+        hours: "Working Hours"
+      },
+      location: "Our Location",
+      features: {
+        title: "Why Choose Us?",
+        support: {
+          title: "24/7 Support",
+          desc: "We are always ready to answer your questions"
+        },
+        team: {
+          title: "Professional Team",
+          desc: "Experienced specialists are here to help you"
+        },
+        free: {
+          title: "Free Consultation",
+          desc: "The initial consultation is completely free"
+        }
+      }
+    },
 
     // Navigation
     'nav.home': 'Home',
@@ -750,8 +843,8 @@ const translations = {
     'process.features.personal.title': 'Personal Approach',
     'process.features.personal.description': 'Individual plan for each client',
     'process.advantages': 'Our Advantages',
-    "Qanday ishlaydi?":"How does it work?",
-    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz":"We carry out all the necessary processes for studying or working abroad in 4 simple steps"
+    "Qanday ishlaydi?": "How does it work?",
+    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz": "We carry out all the necessary processes for studying or working abroad in 4 simple steps"
   },
   ru: {
     register: {
@@ -821,56 +914,56 @@ const translations = {
       "apply": "Подать заявку",
       "consultation": "Бесплатная консультация"
     },
-    
-      contact: {
-        title: "Свяжитесь с нами",
-        subtitle: "Есть вопросы? Нужна помощь? Наша профессиональная команда всегда готова помочь вам.",
-        form: {
-          name: "ФИО",
-          namePlaceholder: "Введите ваше имя",
-          email: "Электронная почта",
-          phone: "Номер телефона",
-          subject: "Тема",
-          selectSubject: "Выберите тему",
-          subjects: {
-            visa: "Оформление визы",
-            workTravel: "Work & Travel",
-            education: "Образовательный грант",
-            consultation: "Консультация",
-            other: "Другое"
-          },
-          message: "Сообщение",
-          send: "Отправить сообщение"
+
+    contact: {
+      title: "Свяжитесь с нами",
+      subtitle: "Есть вопросы? Нужна помощь? Наша профессиональная команда всегда готова помочь вам.",
+      form: {
+        name: "ФИО",
+        namePlaceholder: "Введите ваше имя",
+        email: "Электронная почта",
+        phone: "Номер телефона",
+        subject: "Тема",
+        selectSubject: "Выберите тему",
+        subjects: {
+          visa: "Оформление визы",
+          workTravel: "Work & Travel",
+          education: "Образовательный грант",
+          consultation: "Консультация",
+          other: "Другое"
         },
-        toast: {
-          success: "Ваше сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.",
-          error: "Произошла ошибка. Пожалуйста, попробуйте снова."
-        },
-        contactInfo: {
-          phone: "Телефон",
-          email: "Электронная почта",
-          address: "Адрес",
-          hours: "Часы работы"
-        },
-        location: "Наше местоположение",
-        features: {
-          title: "Почему выбирают нас?",
-          support: {
-            title: "Поддержка 24/7",
-            desc: "Всегда готовы ответить на ваши вопросы"
-          },
-          team: {
-            title: "Профессиональная команда",
-            desc: "Опытные специалисты помогут вам"
-          },
-          free: {
-            title: "Бесплатная консультация",
-            desc: "Первая консультация абсолютно бесплатна"
-          }
-        }
+        message: "Сообщение",
+        send: "Отправить сообщение"
       },
-    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz":"Мы осуществляем все необходимые процессы для обучения или работы за рубежом в 4 простых шага",
-    "Qanday ishlaydi?":"Как это работает?",
+      toast: {
+        success: "Ваше сообщение успешно отправлено! Мы свяжемся с вами в ближайшее время.",
+        error: "Произошла ошибка. Пожалуйста, попробуйте снова."
+      },
+      contactInfo: {
+        phone: "Телефон",
+        email: "Электронная почта",
+        address: "Адрес",
+        hours: "Часы работы"
+      },
+      location: "Наше местоположение",
+      features: {
+        title: "Почему выбирают нас?",
+        support: {
+          title: "Поддержка 24/7",
+          desc: "Всегда готовы ответить на ваши вопросы"
+        },
+        team: {
+          title: "Профессиональная команда",
+          desc: "Опытные специалисты помогут вам"
+        },
+        free: {
+          title: "Бесплатная консультация",
+          desc: "Первая консультация абсолютно бесплатна"
+        }
+      }
+    },
+    "Oddiy 4 bosqichda chet davlatlarga ta'lim olish yoki ishlash uchun barcha zarur jarayonlarni amalga oshiramiz": "Мы осуществляем все необходимые процессы для обучения или работы за рубежом в 4 простых шага",
+    "Qanday ishlaydi?": "Как это работает?",
     "services": {
       "whyChooseUs": "Почему выбирают нас?",
       "experience": "Более 5 лет опыта",
@@ -1124,151 +1217,3 @@ const translations = {
   },
 };
 
-const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
-
-export const useLanguage = () => {
-  const context = useContext(LanguageContext);
-  if (!context) {
-    throw new Error('useLanguage must be used within a LanguageProvider');
-  }
-  return context;
-};
-
-export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguage] = useState<Language>('uz');
-
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem('language') as Language;
-    if (savedLanguage && ['uz', 'en', 'ru'].includes(savedLanguage)) {
-      setLanguage(savedLanguage);
-    }
-  }, []);
-
-  const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang);
-    localStorage.setItem('language', lang);
-  };
-  
-  // const t = (key: string, params: Record<string, any> = {}): string => {
-  //   const translation = translations[language][key as keyof typeof translations[typeof language]];
-  //   if (!translation) {
-  //     console.warn(`Translation missing for key: ${key} in language: ${language}`);
-  //     return key;
-  //   }
-  //   if (typeof translation === 'string') {
-  //     return Object.keys(params).reduce(
-  //       (str, param) => str.replace(`{${param}}`, params[param]),
-  //       translation
-  //     );
-  //   }
-  //   return translation;
-  // };
-  const t = (key: string, params: Record<string, any> = {}): any => {
-    const langData = translations[language];
-
-    // 1. Try flat access first (e.g., "homeTitle")
-    if (key in langData) {
-      const flatResult = langData[key as keyof typeof langData];
-      if (typeof flatResult === 'string') {
-        return Object.keys(params).reduce(
-          (str, param) => str.replace(`{${param}}`, params[param]),
-          flatResult
-        );
-      }
-      return flatResult; // ✅ Return array or object if not a string
-    }
-
-    // 2. Nested access (e.g., "contact.contactInfo.phone")
-    const keys = key.split('.');
-    let nestedResult: any = langData;
-
-    for (const k of keys) {
-      nestedResult = nestedResult?.[k];
-      if (nestedResult === undefined) {
-        console.warn(`Translation missing for key: ${key} in language: ${language}`);
-        return key;
-      }
-    }
-
-    // ✅ Return result based on type
-    if (typeof nestedResult === 'string') {
-      return Object.keys(params).reduce(
-        (str, param) => str.replace(`{${param}}`, params[param]),
-        nestedResult
-      );
-    }
-
-    return nestedResult; // ✅ Now arrays like `t("register.benefits")` will work!
-  };
-
-
-  // const t = (key: string, params: Record<string, any> = {}): string => {
-  //   const langData = translations[language];
-
-  //   // 1. Try flat access first (for old translations like "homeTitle")
-  //   if (key in langData) {
-  //     let result = langData[key as keyof typeof langData];
-  //     if (typeof result === 'string') {
-  //       return Object.keys(params).reduce(
-  //         (str, param) => str.replace(`{${param}}`, params[param]),
-  //         result
-  //       );
-  //     }
-  //     return result;
-  //   }
-
-  //   // 2. Fallback to nested key access (for new deep keys like "contact.contactInfo.phone")
-  //   const keys = key.split('.');
-  //   let nestedResult: any = langData;
-
-  //   for (const k of keys) {
-  //     nestedResult = nestedResult?.[k];
-  //     if (nestedResult === undefined) {
-  //       console.warn(`Translation missing for key: ${key} in language: ${language}`);
-  //       return key;
-  //     }
-  //   }
-
-  //   if (typeof nestedResult === 'string') {
-  //     return Object.keys(params).reduce(
-  //       (str, param) => str.replace(`{${param}}`, params[param]),
-  //       nestedResult
-  //     );
-  //   }
-
-  //   return key;
-  // };
-
-
-  // const t = (key: string, params: Record<string, any> = {}): string => {
-  //   const keys = key.split('.');
-  //   let result: any = translations[language];
-
-  //   for (const k of keys) {
-  //     result = result?.[k];
-  //     if (result === undefined) {
-  //       console.warn(`Translation missing for key: ${key} in language: ${language}`);
-  //       return key;
-  //     }
-  //   }
-
-  //   if (typeof result === 'string') {
-  //     return Object.keys(params).reduce(
-  //       (str, param) => str.replace(`{${param}}`, params[param]),
-  //       result
-  //     );
-  //   }
-
-  //   return key;
-  // };
-
-
- 
-  const value = {
-    language,
-    setLanguage: handleSetLanguage,
-    t,
-  };
-
-  return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
-};

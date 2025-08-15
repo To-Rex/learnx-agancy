@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Session error:', error)
         }
 
-        console.log('Initial session:', session)
+        // console.log('Initial session:', session)
 
         if (mounted) {
           setSession(session)
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session)
+      // console.log('Auth state change:', event, session)
 
       // Clear previous timeout
       if (timeoutId) {
@@ -116,43 +116,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }
 
+  // AuthContext.tsx ichida bo'lishi kerak:
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    // 1. Avval Supabase orqali ro‘yxatdan o‘tkazamiz
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) return { data: null, error };
 
-    const accessToken = data?.session?.access_token || null;
-
-    if (accessToken) {
-      localStorage.setItem('token', accessToken);
-
-      try {
-        const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({ access_token: accessToken }),  // API tokenni body orqali ham qabul qilsa
-        });
-
-        if (!apiResponse.ok) {
-          throw new Error(`API xatolik: ${apiResponse.status}`);
-        }
-
-        const apiData = await apiResponse.json();
-        if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
-        }
-
-      } catch (apiError) {
-        console.error('API bilan ishlashda xato:', apiError);
-      }
+    const accessToken = data?.session?.access_token;
+    if (!accessToken) {
+      return { data: null, error: new Error('Supabase token olinmadi') };
     }
 
-    return { data, error };
+    // Tokenni vaqtincha saqlab qo'yish (agar kerak bo'lsa)
+    localStorage.setItem('supabase_token', accessToken);
+
+    try {
+      // 2. Supabase tokenni API ga yuboramiz
+      const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`, // header orqali
+        },
+        body: JSON.stringify({ access_token: accessToken }), // body orqali ham yuborish
+      });
+
+      if (!res.ok) {
+        throw new Error(`API xatolik: ${res.status}`);
+      }
+
+      const apiData = await res.json();
+
+      // 3. API tokenni saqlaymiz
+      if (apiData?.token) {
+        localStorage.setItem('api_access_token', apiData.token);
+      } else {
+        throw new Error('API token olinmadi');
+      }
+
+      return { data: apiData, error: null };
+    } catch (apiError) {
+      console.error('API bilan ishlashda xato:', apiError);
+      return { data: null, error: apiError };
+    }
   };
+
+
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);
@@ -203,24 +212,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const signInWithGoogle = async () => {
-    setLoading(true)
-    const baseUrl = `${window.location.protocol}//${window.location.host}`;
-    console.log(baseUrl);
-    
+    setLoading(true);
+    const baseUrl = window.location.origin; // localhost yoki domain
+    const redirectUrl = `${baseUrl}/auth/callback`;
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${baseUrl}/auth/callback`, // Redirect URL to handle the OAuth response
+        redirectTo: redirectUrl,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
-        }
-      }
-    })
+        },
+      },
+    });
 
-    if (error) setLoading(false)
-    return { data, error }
-  }
+
+    if (error) setLoading(false);
+    return { data, error };
+  };
+
 
   const adminSignIn = async (username: string, password: string) => {
     try {
@@ -244,7 +255,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setIsAdmin(true);
       localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
-          localStorage.setItem('admin_access_token', data?.token);
+      localStorage.setItem('admin_access_token', data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
       console.error('Admin login xatosi:', err);
@@ -257,15 +268,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    setUser(null)
-    setSession(null)
-    setIsAdmin(false)
-    setLoading(false)
-    localStorage.removeItem('admin_user')
-    return { error }
+ const signOut = async () => {
+  setLoading(true);
+
+  try {
+    // Supabase sessiyasini tozalash
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Supabase signOut xato:", error);
+
+    // React state-larni tozalash
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+
+    // localStorage va sessionStorage ni tozalash
+    localStorage.removeItem('admin_user');
+    localStorage.removeItem('supabase_token');
+    localStorage.removeItem('api_access_token');
+    localStorage.clear(); // Agar butun localStorage ni tozalash kerak bo‘lsa
+    sessionStorage.clear();
+
+    // Foydalanuvchini login sahifasiga yo'naltirish
+    window.location.href = "/login";
+
+  } catch (err) {
+    console.error("Logout xato:", err);
+  } finally {
+    setLoading(false);
   }
+};
+
 
   const value = {
     user,

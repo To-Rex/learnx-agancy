@@ -18,6 +18,7 @@ import Register from './pages/Register'
 import Profile from './pages/Profile'
 import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
+import AuthCallback from './pages/AuthCalback'
 
 const AppContent = () => {
   const navigate = useNavigate()
@@ -29,29 +30,28 @@ const AppContent = () => {
     if (user) {
       initializeStorage()
     }
-    
+
     // Handle OAuth callback - check for tokens in URL hash
     const handleAuthCallback = async () => {
       // Check both hash and search params
       const hash = window.location.hash.substring(1)
       const search = window.location.search.substring(1)
-      
+
       const hashParams = new URLSearchParams(hash)
       const searchParams = new URLSearchParams(search)
-      
+
       const accessToken = hashParams.get('access_token')
       const refreshToken = hashParams.get('refresh_token')
-      
+
       if (accessToken && refreshToken) {
         console.log('OAuth tokens found, processing...')
-        
+
         try {
           // Set the session using the tokens
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
-          })
-          
+          })          
           if (error) {
             console.error('Error setting session:', error)
           } else {
@@ -60,13 +60,14 @@ const AppContent = () => {
         } catch (err) {
           console.error('Error processing OAuth callback:', err)
         }
-        
+
         // Clear the hash from URL
         window.history.replaceState(null, '', '/')
         // Navigate to 
         navigate('/')
         return
       }
+      // const token = accessToken || searchParams.get('access_token')
       
       // Also check current session
       const { data } = await supabase.auth.getSession()
@@ -76,16 +77,18 @@ const AppContent = () => {
     }
 
     handleAuthCallback()
-    
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session)
+      // console.log('Auth state changed:', event, session)
       if (event === 'SIGNED_IN' && session) {
-      }
+        // console.log('User signed in:', session.user)
+        initializeStorage()
+      }      
     })
-    
+
     return () => subscription.unsubscribe()
-  }, [navigate, location ,user])
+  }, [navigate, location, user])
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -101,6 +104,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/auth/callback" element={<AuthCallback/>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
@@ -115,7 +119,7 @@ const AppContent = () => {
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAdmin } = useAuth()
   const navigate = useNavigate()
-  
+
   useEffect(() => {
     // Admin emas bo'lsa login sahifasiga yo'naltirish
     const adminUser = localStorage.getItem('admin_user')
@@ -123,13 +127,13 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
       navigate('/admin/login')
     }
   }, [isAdmin, navigate])
-  
+
   // Admin tekshiruvi
   const adminUser = localStorage.getItem('admin_user')
   if (!isAdmin && !adminUser) {
     return null // Login sahifasiga yo'naltirilmoqda
   }
-  
+
   return <>{children}</>
 }
 

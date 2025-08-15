@@ -42,10 +42,10 @@ interface Partners {
 }
 
 const icons = {
-  FileText,
-  Users,
-  Globe,
+  FileText, Users, Globe, Star, TrendingUp, Award, CheckCircle,
+  Plane, GraduationCap, Briefcase, Heart, BookOpen
 }
+
 
 const getIcon = (iconName: string) => {
   const IconComponent = icons[iconName as keyof typeof icons] || FileText
@@ -70,8 +70,7 @@ const stats = [
 ]
 
 const Home: React.FC = () => {
-  const { t } = useLanguage()
-
+  const { t, translateApi, language } = useLanguage()
   const [services, setServices] = useState<Service[]>([])
   const [testimonials, setTestimonials] = useState<Testimonial[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
@@ -85,23 +84,40 @@ const Home: React.FC = () => {
       const token = localStorage.getItem('api_access_token') || ''
 
       // Services
+      // Services
+      // Services yuklash
       const servicesRes = await fetch(
-        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list',
+        'https://learnx-crm-production.up.railway.app/api/v1/services/get-list'
       )
       if (!servicesRes.ok) throw new Error('Xizmatlar olishda xato')
+
       const servicesData = await servicesRes.json()
-      const normalizedServices = Array.isArray(servicesData) ? servicesData.map((item: any) => ({
-        id: item.id,
-        title: item.title?.en || '',
-        description: item.description?.en || '',
-        price: item.price || '',
-        featured: item.featured || false,
-        icon: item.icon?.Name || 'FileText',
-        color: item.icon?.Color?.toLowerCase() || 'blue',
-        features: Array.isArray(item.features) ? item.features.map((f: any) => f.en || '') : [],
-        duration: item.duration || undefined,
-      })) : []
+
+      const normalizedServices: Service[] = Array.isArray(servicesData)
+        ? await Promise.all(
+          servicesData.map(async (item: any) => {
+            // translateApi async, foydalanuvchi tiliga mos tarjima qiladi
+            const translatedItem = await translateApi(item)
+
+            return {
+              id: item.id,
+              title: translatedItem.title || '',            // avtomatik tarjima
+              description: translatedItem.description || '',// avtomatik tarjima
+              price: item.price || '',
+              featured: item.featured || false,
+              icon: item.icon?.name || 'FileText',
+              color: item.icon?.color?.toLowerCase() || 'blue',
+              features: translatedItem.features || [],      // avtomatik tarjima
+              duration: item.duration || undefined,
+            }
+          })
+        )
+        : []
+
       setServices(normalizedServices)
+
+
+
 
       // Testimonials
       const testimonialsRes = await fetch('https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list')
@@ -140,175 +156,15 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     loadAllData()
-  }, [])
+  }, [language])
 
-  const icons = {
-    FileText,
-    Plane,
-    Users,
-    GraduationCap,
-    Briefcase,
-    Heart,
-    BookOpen,
-    Globe,
-    Award,
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
   }
-
-
-  useEffect(() => {
-    loadData()
-  }, [])
-
-  const loadData = async () => {
-    try {
-      // Load services from Supabase
-      const { data: servicesData } = await supabase
-        .from('services')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(6)
-
-      if (servicesData && servicesData.length > 0) {
-        setServices(servicesData)
-      } else {
-        // Fallback data for services
-        setServices([
-          {
-            id: 1,
-            title: "Visa olishga yordam",
-            description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
-            icon: "FileText",
-            color: "blue"
-          },
-          {
-            id: 2,
-            title: "Work & Travel",
-            description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
-            icon: "Plane",
-            color: "green"
-          },
-          {
-            id: 3,
-            title: "Ta'lim granti",
-            description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
-            icon: "BookOpen",
-            color: "purple"
-          }
-        ])
-      }
-
-      // Load testimonials from Supabase
-      const { data: storiesData } = await supabase
-        .from('stories')
-        .select('*')
-        .eq('featured', true)
-        .order('created_at', { ascending: false })
-        .limit(3)
-
-      if (storiesData && storiesData.length > 0) {
-        setTestimonials(storiesData)
-      } else {
-        // Fallback data for testimonials
-        setTestimonials([
-          {
-            id: 1,
-            name: "Aziz Karimov",
-            country: "AQSh",
-            text: "LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.",
-            rating: 5,
-            image: "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=150"
-          }
-        ])
-      }
-      const token = localStorage.getItem('api_access_token') || ''
-
-      // Load partners from custom API
-      const response = await fetch('https://learnx-crm-production.up.railway.app/api/v1/partners/get-list', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-
-      });
-
-      if (!response.ok) {
-        throw new Error('Hamkorlarni olishda xato yuz berdi');
-      }
-
-      const partnersData = await response.json();
-
-      // API javobini Partners interfeysiga moslashtirish
-      const formattedPartners = partnersData.map((partner: any) => ({
-        id: partner.id,
-        name: partner.name.en, // name.en dan foydalanamiz
-        image: partner.image_url // logo_url ni logo sifatida ishlatamiz
-      }));
-
-
-      if (formattedPartners && formattedPartners.length > 0) {
-        setPartners(formattedPartners);
-      } else {
-        // Fallback data for partners
-      }
-    } catch (error) {
-      console.error('Ma\'lumotlarni yuklashda xato:', error);
-      // Use fallback data on error
-      setServices([
-        {
-          id: 1,
-          title: "Visa olishga yordam",
-          description: "Barcha turdagi vizalar uchun professional yordam va maslahat",
-          icon: "FileText",
-          color: "blue"
-        },
-        {
-          id: 2,
-          title: "Work & Travel",
-          description: "Amerika va Yevropa davlatlariga ishlash va sayohat dasturlari",
-          icon: "Plane",
-          color: "green"
-        },
-        {
-          id: 3,
-          title: "Ta'lim granti",
-          description: "Chet davlat universitetlarida bepul ta'lim olish imkoniyati",
-          icon: "BookOpen",
-          color: "purple"
-        }
-      ])
-      setTestimonials([]);
-    }
-  }
-
-  const stats = [
-    { number: "2000+", label: "Muvaffaqiyatli talabalar", icon: Users },
-    { number: "50+", label: "Hamkor universitetlar", icon: Globe },
-    { number: "98%", label: "Muvaffaqiyat foizi", icon: TrendingUp },
-    { number: "5+", label: "Yillik tajriba", icon: Award }
-  ];
-
-  const getIcon = (iconName: string) => {
-    const icons = {
-      FileText: FileText,
-      Plane: Plane,
-      BookOpen: BookOpen,
-      Users: Users
-    }
-    const IconComponent = icons[iconName as keyof typeof icons] || FileText
-    return <IconComponent className="h-8 w-8" />
-  }
-
-  const getColorClasses = (color: string) => {
-    const colors = {
-      blue: "text-blue-600 bg-blue-50 hover:bg-blue-100",
-      green: "text-green-600 bg-green-50 hover:bg-green-100",
-      purple: "text-purple-600 bg-purple-50 hover:bg-purple-100",
-      orange: "text-orange-600 bg-orange-50 hover:bg-orange-100"
-    }
-    return colors[color as keyof typeof colors] || colors.blue
-  }
-  if (loading) return <div className="text-center py-20">Yuklanmoqda...</div>
   if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
 
   return (
@@ -499,7 +355,7 @@ const Home: React.FC = () => {
                 className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
               >
                 <img
-                  src={partner.image}
+                  src={partner.logo}
                   alt={partner.name}
                   className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
                 />
