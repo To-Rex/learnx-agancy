@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.error('Session error:', error)
         }
 
-        console.log('Initial session:', session)
+        // console.log('Initial session:', session)
 
         if (mounted) {
           setSession(session)
@@ -73,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state change:', event, session)
+      // console.log('Auth state change:', event, session)
 
       // Clear previous timeout
       if (timeoutId) {

@@ -50,8 +50,7 @@ const AppContent = () => {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
-          })
-          
+          })          
           if (error) {
             console.error('Error setting session:', error)
           } else {
@@ -67,6 +66,7 @@ const AppContent = () => {
         navigate('/')
         return
       }
+      // const token = accessToken || searchParams.get('access_token')
       
       // Also check current session
       const { data } = await supabase.auth.getSession()
@@ -79,9 +79,11 @@ const AppContent = () => {
     
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session)
+      // console.log('Auth state changed:', event, session)
       if (event === 'SIGNED_IN' && session) {
-      }
+        // console.log('User signed in:', session.user)
+        initializeStorage()
+      }      
     })
     
     return () => subscription.unsubscribe()

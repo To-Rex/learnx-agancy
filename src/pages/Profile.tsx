@@ -123,6 +123,28 @@ const Profile: React.FC = () => {
     }
   }
 
+   // Chala arizani localStorage'dan yuklash
+   useEffect(() => {
+    const savedFormData = localStorage.getItem('applyFormData')
+    if (savedFormData && user) {
+      const formData = JSON.parse(savedFormData)
+      const isIncomplete = !formData.email || !formData.phone || !formData.program || !formData.country
+      const draftApplication = {
+        id: `draft-${Date.now()}`, // Unikal ID uchun vaqt belgilaymiz
+        user_id: user.id,
+        program_type: formData.program || 'Chala ariza',
+        country_preference: formData.country || 'Noma\'lum',
+        status: isIncomplete ? 'draft' : 'pending',
+        created_at: new Date().toISOString(),
+        form_data: formData
+      }
+      // Agar allaqachon mavjud bo'lmasa qo‘shish
+      if (!applications.some(app => app.status === 'draft')) {
+        setApplications(prev => [draftApplication, ...prev.filter(app => app.status !== 'draft')])
+      }
+    }
+  }, [user])
+
   const handleProfileSave = (profileData: any) => {
     setProfile(profileData)
     // Force reload profile data to get latest avatar
@@ -334,7 +356,7 @@ const Profile: React.FC = () => {
               transition={{ delay: 0.2 }}
               className="bg-white p-6 rounded-xl shadow-lg"
             >
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center justify-between mb-6 ">
                 <h3 className="text-xl font-bold text-gray-900">Mening arizalarim</h3>
                 <Link
                   to="/apply"
@@ -367,10 +389,21 @@ const Profile: React.FC = () => {
                           <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(app.status)}`}>
                             {getStatusText(app.status)}
                           </span>
-                          <button className="block mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
-                            <Eye className="h-3 w-3" />
-                            <span>Batafsil</span>
-                          </button>
+                          {app.status === 'draft' && (
+                            <Link
+                              to="/apply"
+                              className="block mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                            >
+                              <Edit className="h-3 w-3" />
+                              <span>Davom etish</span>
+                            </Link>
+                          )}
+                          {app.status !== 'draft' && (
+                            <button className="mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors">
+                              <Eye className="h-3 w-3" />
+                              <span>Batafsil</span>
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

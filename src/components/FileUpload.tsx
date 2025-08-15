@@ -1,17 +1,17 @@
-import React, { useState } from 'react'
-import { Upload, X, CheckCircle, AlertCircle, FileText, Image } from 'lucide-react'
-import { uploadFile, STORAGE_BUCKETS } from '../lib/storage'
-import { useAuth } from '../contexts/AuthContext'
-import toast from 'react-hot-toast'
+import React, { useState } from 'react';
+import { Upload, X, CheckCircle, FileText, Image } from 'lucide-react';
+import { uploadFile, STORAGE_BUCKETS } from '../lib/storage';
+import { useAuth } from '../contexts/AuthContext';
+import toast from 'react-hot-toast';
 
 interface FileUploadProps {
-  onFileUploaded: (filePath: string, fileName: string) => void
-  acceptedTypes?: string[]
-  maxSize?: number // in MB
-  bucket?: string
-  label: string
-  required?: boolean
-  currentFile?: string
+  onFileUploaded: (filePath: string, fileName: string) => void;
+  acceptedTypes?: string[];
+  maxSize?: number; // in MB
+  bucket?: string;
+  label: string;
+  required?: boolean;
+  currentFile?: string;
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
@@ -23,40 +23,40 @@ const FileUpload: React.FC<FileUploadProps> = ({
   required = false,
   currentFile
 }) => {
-  const [uploading, setUploading] = useState(false)
-  const [dragOver, setDragOver] = useState(false)
-  const { user } = useAuth()
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const { user } = useAuth();
 
   const handleFileSelect = async (file: File) => {
     if (!user) {
-      toast.error('Faylni yuklash uchun tizimga kiring')
-      return
+      toast.error('Faylni yuklash uchun tizimga kiring');
+      return;
     }
 
     // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`Fayl hajmi ${maxSize}MB dan katta bo'lmasligi kerak`)
-      return
+      toast.error(`Fayl hajmi ${maxSize}MB dan katta bo'lmasligi kerak`);
+      return;
     }
 
     // Validate file type
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase()
+    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
     if (!acceptedTypes.includes(fileExtension)) {
-      toast.error('Fayl turi qo\'llab-quvvatlanmaydi')
-      return
+      toast.error('Fayl turi qo\'llab-quvvatlanmaydi');
+      return;
     }
 
-    setUploading(true)
+    setUploading(true);
 
     try {
-      const timestamp = Date.now()
-      const fileName = `${timestamp}-${file.name}`
-      const filePath = `${user.id}/${fileName}`
+      const timestamp = Date.now();
+      const fileName = `${timestamp}-${file.name}`;
+      const filePath = `${user.id}/${fileName}`;
 
-      const { data, error } = await uploadFile(bucket, filePath, file)
+      const { data, error } = await uploadFile(bucket, filePath, file);
 
       if (error) {
-        console.error('File upload error:', error)
+        console.error('File upload error:', error);
         if (error.message?.includes('Bucket not found')) {
           toast.error('📁 Storage bucket yaratilmagan!\n\nYechim: Migration faylini ishga tushiring', {
             duration: 5000,
@@ -67,46 +67,46 @@ const FileUpload: React.FC<FileUploadProps> = ({
               padding: '16px',
               borderRadius: '12px'
             }
-          })
+          });
         } else {
-          toast.error('Fayl yuklashda xatolik: ' + error.message)
+          toast.error('Fayl yuklashda xatolik: ' + error.message);
         }
       } else {
-        toast.success('Fayl muvaffaqiyatli yuklandi')
-        onFileUploaded(filePath, file.name)
+        toast.success('Fayl muvaffaqiyatli yuklandi');
+        onFileUploaded(filePath, file.name);
       }
     } catch (error) {
-      console.error('Upload error:', error)
-      toast.error('Fayl yuklashda xatolik yuz berdi')
+      console.error('Upload error:', error);
+      toast.error('Fayl yuklashda xatolik yuz berdi');
     } finally {
-      setUploading(false)
+      setUploading(false);
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
+    e.preventDefault();
+    setDragOver(false);
     
-    const files = Array.from(e.dataTransfer.files)
+    const files = Array.from(e.dataTransfer.files);
     if (files.length > 0) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
+    const files = e.target.files;
     if (files && files.length > 0) {
-      handleFileSelect(files[0])
+      handleFileSelect(files[0]);
     }
-  }
+  };
 
   const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase()
+    const extension = fileName.split('.').pop()?.toLowerCase();
     if (['jpg', 'jpeg', 'png', 'webp'].includes(extension || '')) {
-      return <Image className="h-6 w-6" />
+      return <Image className="h-6 w-6" />;
     }
-    return <FileText className="h-6 w-6" />
-  }
+    return <FileText className="h-6 w-6" />;
+  };
 
   return (
     <div className="space-y-3">
@@ -140,8 +140,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
           } ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
           onDrop={handleDrop}
           onDragOver={(e) => {
-            e.preventDefault()
-            setDragOver(true)
+            e.preventDefault();
+            setDragOver(true);
           }}
           onDragLeave={() => setDragOver(false)}
         >
@@ -176,7 +176,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default FileUpload
+export default FileUpload;
