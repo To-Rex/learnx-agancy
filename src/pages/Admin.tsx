@@ -17,7 +17,8 @@ import {
   Crown,
   Shield,
   Activity,
-  Star
+  Star,
+  Image
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -31,7 +32,7 @@ type Service = {
   description: { en: string };
   icon: { name: string; color: string };
   price: string;
-  features: { en: string }[];
+  features: { uz: string, en: string, ru: string }[];
 };
 
 interface Partner {
@@ -228,6 +229,7 @@ const Admin: React.FC = () => {
 
 
   // service 
+  // --- STATES ---
   const [serviceForm, setServiceForm] = useState({
     title: { uz: "", en: "", ru: "" },
     description: { uz: "", en: "", ru: "" },
@@ -235,6 +237,13 @@ const Admin: React.FC = () => {
     price: "",
     features: [],
   });
+
+  // features uchun alohida tillar state
+  const [featuresUz, setFeaturesUz] = useState("");
+  const [featuresEn, setFeaturesEn] = useState("");
+  const [featuresRu, setFeaturesRu] = useState("");
+
+  // --- ADD SERVICE ---
   const handleAddService = () => {
     setEditingItem(null);
     setServiceForm({
@@ -244,71 +253,95 @@ const Admin: React.FC = () => {
       price: "",
       features: [],
     });
+    setFeaturesUz("");
+    setFeaturesEn("");
+    setFeaturesRu("");
     setShowServiceModal(true);
   };
+
+  // --- EDIT SERVICE ---
   const handleEditService = (service: any) => {
     setServiceForm({
       title: service.title || { uz: "", en: "", ru: "" },
       description: service.description || { uz: "", en: "", ru: "" },
       icon: service.icon || { name: "Book", color: "orange" },
       price: service.price || "",
-      features: Array.isArray(service.features)
-        ? service.features.map((f: any) =>
-          typeof f === "string" ? { uz: f, en: f, ru: f } : f
-        )
-        : [],
+      features: service.features || [],
     });
+
+    // Inputlarni to‘ldirish
+    setFeaturesUz((service.features || []).map(f => f.uz).join(", "));
+    setFeaturesEn((service.features || []).map(f => f.en).join(", "));
+    setFeaturesRu((service.features || []).map(f => f.ru).join(", "));
+
     setEditingItem(service);
     setShowServiceModal(true);
   };
 
+  // --- SAVE SERVICE ---
   const handleSaveService = async () => {
+    // Inputlardan massivga yig‘ish
+    const uzArr = featuresUz.split(",").map(f => f.trim());
+    const enArr = featuresEn.split(",").map(f => f.trim());
+    const ruArr = featuresRu.split(",").map(f => f.trim());
+
+    const features = uzArr.map((_, i) => ({
+      uz: uzArr[i] || "",
+      en: enArr[i] || "",
+      ru: ruArr[i] || ""
+    }));
+
+    const payload = {
+      title: serviceForm.title,
+      description: serviceForm.description,
+      icon: serviceForm.icon,
+      price: serviceForm.price,
+      features
+    };
+
     try {
-      const payload = {
-        title: serviceForm.title,
-        description: serviceForm.description,
-        icon: serviceForm.icon,
-        price: serviceForm.price,
-        features: serviceForm.features,
-      };
-
       let res;
-
       if (editingItem && editingItem.id) {
-        // Update mavjud xizmat
-        res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/update/${editingItem.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        // update
+        res = await fetch(
+          `https://learnx-crm-production.up.railway.app/api/v1/services/update/${editingItem.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
       } else {
-        // Yangi xizmat yaratish
-        res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/services/create", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
-          },
-          body: JSON.stringify(payload),
-        });
+        // create
+        res = await fetch(
+          "https://learnx-crm-production.up.railway.app/api/v1/services/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
       }
 
       if (res.ok) {
         setShowServiceModal(false);
-        loadServices(); // ro'yxatni yangilash
+        loadServices();
       } else {
         const errorData = await res.json();
-        console.error("Xatolik:", errorData.message || res.statusText);
-        alert("Xizmatni saqlashda xatolik yuz berdi: " + (errorData.message || res.statusText));
+        alert("Xizmatni saqlashda xatolik: " + (errorData.message || res.statusText));
       }
-    } catch (error) {
-      console.error("Xatolik:", error);
-      alert("Xizmatni saqlashda kutilmagan xatolik yuz berdi");
+    } catch (err) {
+      console.error(err);
+      alert("Kutilmagan xatolik yuz berdi");
     }
   };
+
   const handleDeleteServiceClick = (id: string) => {
     setServiceToDelete(id);
     setDeleteModalOpen(true);
@@ -1309,47 +1342,35 @@ const Admin: React.FC = () => {
                             />
                           </div>
                           <div>
-                            <label className="block text-white mb-1">Xususiyat (UZ vergul bilan)</label>
+                            <label className="block text-white mb-1">Xususiyat (UZ, vergul bilan)</label>
                             <input
                               type="text"
-                              value={serviceForm.features.map((f) => f.uz).join(", ")}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  features: e.target.value.split(",").map((f) => ({ uz: f.trim() })),
-                                })
-                              }
+                              value={featuresUz}
+                              onChange={e => setFeaturesUz(e.target.value)}
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
                             />
                           </div>
+
                           <div>
-                            <label className="block text-white mb-1">Xususiyat (EN vergul bilan)</label>
+                            <label className="block text-white mb-1">Xususiyat (EN, vergul bilan)</label>
                             <input
                               type="text"
-                              value={serviceForm.features.map((f) => f.en).join(", ")}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  features: e.target.value.split(",").map((f) => ({ en: f.trim() })),
-                                })
-                              }
+                              value={featuresEn}
+                              onChange={e => setFeaturesEn(e.target.value)}
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
                             />
                           </div>
+
                           <div>
-                            <label className="block text-white mb-1">Xususiyat (RU vergul bilan)</label>
+                            <label className="block text-white mb-1">Xususiyat (RU, vergul bilan)</label>
                             <input
                               type="text"
-                              value={serviceForm.features.map((f) => f.ru).join(", ")}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  features: e.target.value.split(",").map((f) => ({ ru: f.trim() })),
-                                })
-                              }
+                              value={featuresRu}
+                              onChange={e => setFeaturesRu(e.target.value)}
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
                             />
                           </div>
+
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => setShowServiceModal(false)}

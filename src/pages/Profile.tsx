@@ -1,26 +1,26 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import {  Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, X } from 'lucide-react'
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { useAuth } from '../contexts/AuthContext'
-import { supabase } from '../lib/supabase'
-import { getUserFiles, getFileUrl, deleteFile, STORAGE_BUCKETS } from '../lib/storage'
-import ProfileEditor from '../components/ProfileEditor'
-import FileUpload from '../components/FileUpload'
-import toast from 'react-hot-toast'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, CreditCard, CreditCardIcon, IdCard } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import { getFileUrl, deleteFile, STORAGE_BUCKETS } from '../lib/storage';
+import ProfileEditor from '../components/ProfileEditor';
+import FileUpload from '../components/FileUpload';
+import toast from 'react-hot-toast';
+
+const apiDomain = 'http://localhost:8080'; // API manzili
 
 const Profile: React.FC = () => {
-  const { user } = useAuth()
-  const [profile, setProfile] = useState<any>(null)
-  const [applications, setApplications] = useState([])
-  const [documents, setDocuments] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [showProfileEditor, setShowProfileEditor] = useState(false)
-  const [showDocumentUpload, setShowDocumentUpload] = useState(false)
-  const [selectedDocumentType, setSelectedDocumentType] = useState('')
-  const [showOtherDocuments, setShowOtherDocuments] = useState(false)
-  const [authLoading, setAuthLoading] = useState(true)
+  const { user } = useAuth();
+  const [profile, setProfile] = useState<any>(null);
+  const [applications, setApplications] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [showDocumentUpload, setShowDocumentUpload] = useState(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState('');
+  const [showOtherDocuments, setShowOtherDocuments] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
@@ -28,100 +28,78 @@ const Profile: React.FC = () => {
     { key: 'diploma', label: 'Diplom/Attestat', required: true },
     { key: 'transcript', label: 'Akademik ma\'lumotnoma', required: false },
     { key: 'cv', label: 'CV/Resume', required: false },
-    { key: 'motivation', label: 'Motivatsiya xati', required: false }
-  ]
+    { key: 'motivation', label: 'Motivatsiya xati', required: false },
+  ];
 
   useEffect(() => {
     if (user) {
-      loadProfileData()
-      setAuthLoading(false)
+      setAuthLoading(false);
     } else {
-      // Wait a bit for auth to initialize
       const timer = setTimeout(() => {
-        setAuthLoading(false)
-      }, 2000)
-      
-      return () => clearTimeout(timer)
+        setAuthLoading(false);
+      }, 2000);
+      return () => clearTimeout(timer);
     }
-  }, [user])
+  }, [user]);
 
-  const loadProfileData = async () => {
-    if (!user) return
-
-    setLoading(true)
+  const getProfile = async () => {
+    setLoading(true);
     try {
-      // Load profile
-      const { data: profileData } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle()
+      const apiToken = localStorage.getItem('api_access_token');
+      const clientId = localStorage.getItem('client_id');
 
-      if (profileData) {
-        setProfile(profileData)
-      } else {
-        // Create default profile if none exists
-        const defaultProfile = {
-          id: user.id,
-          full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url || null,
-          phone: '',
-          address: '',
-          birth_date: null,
-          bio: ''
-        }
-        setProfile(defaultProfile)
+      if (!apiToken || !clientId) {
+        throw new Error('API token yoki Client ID topilmadi. Iltimos, tizimga qayta kiring.');
       }
 
-      // Load applications
-      const { data: applicationsData } = await supabase
-        .from('applications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+      console.log('So‘rov yuborilmoqda:', {
+        url: `https://learnx-crm-production.up.railway.app/api/v1/clients/get/${clientId}`,
+        token: apiToken,
+        clientId: clientId,
+      });
 
-      if (applicationsData) {
-        setApplications(applicationsData)
+      const response = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/clients/get/${clientId}`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API xato javobi:', errorData);
+        throw new Error(`Profil API xatosi: ${response.status} - ${JSON.stringify(errorData)}`);
       }
 
-      // Load documents
-      try {
-        const { data: filesData } = await getUserFiles(user.id, STORAGE_BUCKETS.DOCUMENTS)
-        if (filesData) {
-          const documentsWithUrls = filesData.map(file => ({
-            name: file.name,
-            path: `${user.id}/${file.name}`,
-            uploaded: true,
-            date: file.created_at,
-            size: file.metadata?.size,
-            url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, `${user.id}/${file.name}`)
-          }))
-          setDocuments(documentsWithUrls)
-        }
-      } catch (error) {
-        console.error('Storage bucket mavjud emas, hujjatlar yuklanmadi, xatolik:', error)
-        setDocuments([])
-      }
+      const apiProfile = await response.json();
+      console.log('API Profil Javobi:', apiProfile);
+
+      setProfile({
+        full_name: apiProfile.full_name || '',
+        phone: apiProfile.phone || '',
+        email: apiProfile.email || '',
+        passport_number: apiProfile.passport_number || '',
+        avatar_url: apiProfile.avatar_url || null,
+        visa_type: apiProfile.visa_type || '',
+        direction: apiProfile.direction || '',
+        created_at: apiProfile.created_at || null,
+      });
+
+      toast.success('Profil ma\'lumotlari muvaffaqiyatli yuklandi');
     } catch (error) {
-      console.error('Error loading profile data:', error)
-      toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi')
-      // Set default profile on error
-      if (user) {
-        const defaultProfile = {
-          id: user.id,
-          full_name: user.user_metadata?.full_name || '',
-          avatar_url: user.user_metadata?.avatar_url || null,
-          phone: '',
-          address: '',
-          birth_date: null,
-          bio: ''
-        }
-        setProfile(defaultProfile)
-      }
+      console.error('Profil yuklashda xatolik:', error.message);
+      toast.error(`Ma'lumotlarni yuklashda xatolik: ${error.message}`);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    if (user) {
+      getProfile();
+    }
+  }, [user]);
 
    // Chala arizani localStorage'dan yuklash
    useEffect(() => {
@@ -146,10 +124,10 @@ const Profile: React.FC = () => {
   }, [user])
 
   const handleProfileSave = (profileData: any) => {
-    setProfile(profileData)
-    // Force reload profile data to get latest avatar
-    loadProfileData()
-  }
+    setProfile(profileData);
+    setShowProfileEditor(false);
+    getProfile(); // Yangi ma'lumotlarni qayta yuklash
+  };
 
   const handleDocumentUpload = (filePath: string, fileName: string) => {
     if (filePath) {
@@ -158,57 +136,57 @@ const Profile: React.FC = () => {
         path: filePath,
         uploaded: true,
         date: new Date().toISOString(),
-        url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, filePath)
-      }
-      setDocuments(prev => [...prev, newDocument])
-      setShowDocumentUpload(false)
-      setSelectedDocumentType('')
-      toast.success('Hujjat muvaffaqiyatli yuklandi')
+        url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, filePath),
+      };
+      setDocuments((prev) => [...prev, newDocument]);
+      setShowDocumentUpload(false);
+      setSelectedDocumentType('');
+      toast.success('Hujjat muvaffaqiyatli yuklandi');
     }
-  }
+  };
 
   const handleDeleteDocument = async (document: any) => {
-    if (!confirm('Hujjatni o\'chirmoqchimisiz?')) return
+    if (!confirm("Hujjatni o'chirmoqchimisiz?")) return;
 
     try {
-      const { error } = await deleteFile(STORAGE_BUCKETS.DOCUMENTS, document.path)
+      const { error } = await deleteFile(STORAGE_BUCKETS.DOCUMENTS, document.path);
       if (error) {
-        toast.error('Hujjatni o\'chirishda xatolik')
+        toast.error("Hujjatni o'chirishda xatolik");
       } else {
-        setDocuments(prev => prev.filter(doc => doc.path !== document.path))
-        toast.success('Hujjat o\'chirildi')
+        setDocuments((prev) => prev.filter((doc) => doc.path !== document.path));
+        toast.success("Hujjat o'chirildi");
       }
     } catch (error) {
-      console.error('Error deleting document:', error)
-      toast.error('Hujjatni o\'chirishda xatolik yuz berdi')
+      console.error('Error deleting document:', error);
+      toast.error('Hujjatni o\'chirishda xatolik yuz berdi');
     }
-  }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'text-yellow-600 bg-yellow-100'
+        return 'text-yellow-600 bg-yellow-100';
       case 'approved':
-        return 'text-green-600 bg-green-100'
+        return 'text-green-600 bg-green-100';
       case 'rejected':
-        return 'text-red-600 bg-red-100'
+        return 'text-red-600 bg-red-100';
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-gray-600 bg-gray-100';
     }
-  }
+  };
 
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
-        return 'Kutilmoqda'
+        return 'Kutilmoqda';
       case 'approved':
-        return 'Tasdiqlangan'
+        return 'Tasdiqlangan';
       case 'rejected':
-        return 'Rad etilgan'
+        return 'Rad etilgan';
       default:
-        return 'Noma\'lum'
+        return 'Noma\'lum';
     }
-  }
+  };
 
   if (loading || authLoading) {
     return (
@@ -220,7 +198,7 @@ const Profile: React.FC = () => {
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   if (!user) {
@@ -237,21 +215,20 @@ const Profile: React.FC = () => {
           </Link>
         </div>
       </div>
-    )
+    );
   }
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Shaxsiy kabinet</h1>
           <p className="text-gray-600 mt-2">Hisobingizni boshqaring va arizalaringizni kuzatib boring</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Info */}
           <div className="lg:col-span-1">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="bg-white p-6 rounded-xl shadow-lg"
@@ -292,8 +269,8 @@ const Profile: React.FC = () => {
                   <span className="text-gray-700">{profile?.phone || 'Telefon kiritilmagan'}</span>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <MapPin className="h-5 w-5 text-gray-400" />
-                  <span className="text-gray-700">{profile?.address || 'Manzil kiritilmagan'}</span>
+                  <IdCard className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-700">{profile?.passport_number || 'Manzil kiritilmagan'}</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-5 w-5 text-gray-400" />
@@ -303,7 +280,7 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowProfileEditor(true)}
                 className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
               >
@@ -312,8 +289,7 @@ const Profile: React.FC = () => {
               </button>
             </motion.div>
 
-            {/* Quick Stats */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
@@ -347,10 +323,8 @@ const Profile: React.FC = () => {
             </motion.div>
           </div>
 
-          {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            {/* Applications */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -423,8 +397,7 @@ const Profile: React.FC = () => {
               )}
             </motion.div>
 
-            {/* Documents */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
@@ -433,20 +406,20 @@ const Profile: React.FC = () => {
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-bold text-gray-900">Hujjatlarim</h3>
                 <div className="flex space-x-2">
-                  <button 
+                  <button
                     onClick={() => {
-                      setSelectedDocumentType('required')
-                      setShowDocumentUpload(true)
+                      setSelectedDocumentType('required');
+                      setShowDocumentUpload(true);
                     }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
                   >
                     <Upload className="h-4 w-4" />
                     <span>Kerakli hujjat</span>
                   </button>
-                  <button 
+                  <button
                     onClick={() => {
-                      setSelectedDocumentType('other')
-                      setShowDocumentUpload(true)
+                      setSelectedDocumentType('other');
+                      setShowDocumentUpload(true);
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm"
                   >
@@ -456,7 +429,6 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
-              {/* Required Documents Section */}
               <div className="mb-8">
                 <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
@@ -464,11 +436,11 @@ const Profile: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {requiredDocumentTypes.map((docType) => {
-                    const userDoc = documents.find(doc => 
-                      doc.path.includes(`${docType.key}-`) || 
+                    const userDoc = documents.find(doc =>
+                      doc.path.includes(`${docType.key}-`) ||
                       doc.name.toLowerCase().includes(docType.key) ||
                       doc.path.toLowerCase().includes(docType.key)
-                    )
+                    );
                     return (
                       <div key={docType.key} className={`p-4 border-2 border-dashed rounded-lg ${userDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
                         <div className="flex items-center justify-between">
@@ -486,8 +458,8 @@ const Profile: React.FC = () => {
                           ) : (
                             <button
                               onClick={() => {
-                                setSelectedDocumentType(docType.key)
-                                setShowDocumentUpload(true)
+                                setSelectedDocumentType(docType.key);
+                                setShowDocumentUpload(true);
                               }}
                               className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                             >
@@ -496,12 +468,11 @@ const Profile: React.FC = () => {
                           )}
                         </div>
                       </div>
-                    )
+                    );
                   })}
                 </div>
               </div>
 
-              {/* Other Documents Section */}
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h4 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -515,7 +486,7 @@ const Profile: React.FC = () => {
                     {showOtherDocuments ? 'Yashirish' : 'Ko\'rish'}
                   </button>
                 </div>
-                
+
                 {showOtherDocuments && (
                   <div className="space-y-4">
                     {documents.filter(doc => !requiredDocumentTypes.some(type => doc.name.toLowerCase().includes(type.key))).length > 0 ? (
@@ -569,8 +540,7 @@ const Profile: React.FC = () => {
               </div>
             </motion.div>
 
-            {/* Recent Activity */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
@@ -609,99 +579,97 @@ const Profile: React.FC = () => {
             </motion.div>
           </div>
         </div>
-      </div>
 
-      {/* Profile Editor Modal */}
-      <AnimatePresence>
-        {showProfileEditor && (
-          <ProfileEditor
-            onClose={() => setShowProfileEditor(false)}
-            onSave={handleProfileSave}
-          />
-        )}
-      </AnimatePresence>
+        <AnimatePresence>
+          {showProfileEditor && (
+            <ProfileEditor
+              profile={profile || {}}
+              onSave={handleProfileSave}
+              onClose={() => setShowProfileEditor(false)}
+            />
+          )}
+        </AnimatePresence>
 
-      {/* Document Upload Modal */}
-      <AnimatePresence>
-        {showDocumentUpload && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-            onClick={() => setShowDocumentUpload(false)}
-          >
+        <AnimatePresence>
+          {showDocumentUpload && (
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-md w-full"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={() => setShowDocumentUpload(false)}
             >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-900">
-                  {selectedDocumentType === 'required' ? 'Kerakli hujjat yuklash' : 
-                   selectedDocumentType === 'other' ? 'Boshqa hujjat yuklash' : 
-                   'Hujjat yuklash'}
-                </h3>
-                <button
-                  onClick={() => setShowDocumentUpload(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-
-              {selectedDocumentType === 'required' && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hujjat turi
-                  </label>
-                  <select
-                    value={selectedDocumentType}
-                    onChange={(e) => setSelectedDocumentType(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-white rounded-2xl p-8 max-w-md w-full"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    {selectedDocumentType === 'required' ? 'Kerakli hujjat yuklash' :
+                      selectedDocumentType === 'other' ? 'Boshqa hujjat yuklash' :
+                        'Hujjat yuklash'}
+                  </h3>
+                  <button
+                    onClick={() => setShowDocumentUpload(false)}
+                    className="text-gray-400 hover:text-gray-600"
                   >
-                    <option value="">Tanlang</option>
-                    {requiredDocumentTypes.map((type) => (
-                      <option key={type.key} value={type.key}>
-                        {type.label} {type.required ? '(Majburiy)' : '(Ixtiyoriy)'}
-                      </option>
-                    ))}
-                  </select>
+                    <X className="h-6 w-6" />
+                  </button>
                 </div>
-              )}
 
-              {selectedDocumentType && selectedDocumentType !== 'required' && (
-                <FileUpload
-                  label={selectedDocumentType === 'other' ? 'Har qanday hujjat tanlang' : 
-                    requiredDocumentTypes.find(t => t.key === selectedDocumentType)?.label || 'Hujjat tanlang'}
-                  onFileUploaded={(filePath, fileName) => {
-                    // Add document type prefix to filename for better identification
-                    const prefixedPath = selectedDocumentType !== 'other' ? 
-                      filePath.replace(fileName, `${selectedDocumentType}-${fileName}`) : filePath
-                    handleDocumentUpload(prefixedPath, fileName)
-                  }}
-                  bucket={STORAGE_BUCKETS.DOCUMENTS}
-                  acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
-                  maxSize={10}
-                />
-              )}
+                {selectedDocumentType === 'required' && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Hujjat turi
+                    </label>
+                    <select
+                      value={selectedDocumentType}
+                      onChange={(e) => setSelectedDocumentType(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Tanlang</option>
+                      {requiredDocumentTypes.map((type) => (
+                        <option key={type.key} value={type.key}>
+                          {type.label} {type.required ? '(Majburiy)' : '(Ixtiyoriy)'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
-              <div className="mt-6 flex space-x-3">
-                <button
-                  onClick={() => setShowDocumentUpload(false)}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Bekor qilish
-                </button>
-              </div>
+                {selectedDocumentType && selectedDocumentType !== 'required' && (
+                  <FileUpload
+                    label={selectedDocumentType === 'other' ? 'Har qanday hujjat tanlang' :
+                      requiredDocumentTypes.find(t => t.key === selectedDocumentType)?.label || 'Hujjat tanlang'}
+                    onFileUploaded={(filePath, fileName) => {
+                      const prefixedPath = selectedDocumentType !== 'other' ?
+                        filePath.replace(fileName, `${selectedDocumentType}-${fileName}`) : filePath;
+                      handleDocumentUpload(prefixedPath, fileName);
+                    }}
+                    bucket={STORAGE_BUCKETS.DOCUMENTS}
+                    acceptedTypes={['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx']}
+                    maxSize={10}
+                  />
+                )}
+
+                <div className="mt-6 flex space-x-3">
+                  <button
+                    onClick={() => setShowDocumentUpload(false)}
+                    className="flex-1 border-2 border-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Bekor qilish
+                  </button>
+                </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default Profile
+export default Profile;

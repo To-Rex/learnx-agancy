@@ -190,10 +190,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const apiData = await apiResponse.json();
         console.log('API dan access token:', apiData);
+          console.log('client_id', apiData?.client?.id);
+        
 
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
           localStorage.setItem('api_access_token', apiData?.token);
+        }
+        if (apiData.client.id) {
+          console.log('client_id', apiData?.client?.id);
+          localStorage.setItem('client_id', apiData?.client?.id);
         }
 
       } catch (apiError) {

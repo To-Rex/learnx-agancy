@@ -3,6 +3,8 @@ import { Upload, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
+// const apiDomain = 'https://learnx-crm-production.up.railway.app/api/v1'; // API bazaviy manzili (avvalgi koddan olingan)
+
 interface FileUploadProps {
   onFileUploaded: (filePath: string, fileName: string) => void;
   acceptedTypes?: string[];

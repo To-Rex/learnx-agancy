@@ -44,6 +44,10 @@ export default function AuthCallback() {
         if (apiData.token) {
           localStorage.setItem('api_access_token', apiData.token);
         }
+        if (apiData.client.id) {
+          console.log('client_id', apiData?.client?.id);
+          localStorage.setItem('client_id', apiData?.client?.id);
+        }
 
         // Foydalanuvchini profil sahifasiga yo‘naltirish
         navigate("/profile");
