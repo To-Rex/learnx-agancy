@@ -1,27 +1,28 @@
 import React, { useState } from 'react';
-import { Upload, X, CheckCircle, FileText, Image } from 'lucide-react';
-import { uploadFile, STORAGE_BUCKETS } from '../lib/storage';
+import { Upload, X, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
 
 interface FileUploadProps {
   onFileUploaded: (filePath: string, fileName: string) => void;
   acceptedTypes?: string[];
-  maxSize?: number; // in MB
-  bucket?: string;
+  maxSize?: number;
   label: string;
   required?: boolean;
   currentFile?: string;
+  applicationId?: string; // ⚡️ yangi prop
+  serviceInputId?: string; // ⚡️ yangi prop
 }
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onFileUploaded,
   acceptedTypes = ['.pdf', '.jpg', '.jpeg', '.png', '.doc', '.docx'],
   maxSize = 5,
-  bucket = STORAGE_BUCKETS.DOCUMENTS,
   label,
   required = false,
-  currentFile
+  currentFile,
+  applicationId,
+  serviceInputId
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -29,59 +30,60 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const handleFileSelect = async (file: File) => {
     if (!user) {
-      toast.error('Faylni yuklash uchun tizimga kiring');
+      toast.error("Faylni yuklash uchun tizimga kiring");
       return;
     }
-
-    // Validate file size
+  
     if (file.size > maxSize * 1024 * 1024) {
       toast.error(`Fayl hajmi ${maxSize}MB dan katta bo'lmasligi kerak`);
       return;
     }
-
-    // Validate file type
-    const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+  
+    const fileExtension = "." + file.name.split(".").pop()?.toLowerCase();
     if (!acceptedTypes.includes(fileExtension)) {
-      toast.error('Fayl turi qo\'llab-quvvatlanmaydi');
+      toast.error("Fayl turi qo'llab-quvvatlanmaydi");
       return;
     }
-
+  
     setUploading(true);
-
+  
     try {
-      const timestamp = Date.now();
-      const fileName = `${timestamp}-${file.name}`;
-      const filePath = `${user.id}/${fileName}`;
-
-      const { data, error } = await uploadFile(bucket, filePath, file);
-
-      if (error) {
-        console.error('File upload error:', error);
-        if (error.message?.includes('Bucket not found')) {
-          toast.error('📁 Storage bucket yaratilmagan!\n\nYechim: Migration faylini ishga tushiring', {
-            duration: 5000,
-            style: {
-              background: '#fef3c7',
-              color: '#d97706',
-              fontSize: '14px',
-              padding: '16px',
-              borderRadius: '12px'
-            }
-          });
-        } else {
-          toast.error('Fayl yuklashda xatolik: ' + error.message);
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append('application_id', applicationId || '' ); // ⚡️ qo‘shildi
+      formData.append('service_input_id', serviceInputId || ''); // ⚡️ qo‘shildi
+      const token = localStorage.getItem("api_access_token");
+  
+      const response = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/upload/${applicationId}/${serviceInputId}`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
         }
-      } else {
-        toast.success('Fayl muvaffaqiyatli yuklandi');
-        onFileUploaded(filePath, file.name);
+      );
+  
+      const text = await response.text();
+      let payload : any = {};
+      try{
+        payload = JSON.parse(text);
+      }catch(e) {
+        console.error("JSON parsing error:", e);
+      }  
+      if (!response.ok) {
+        throw new Error(payload.message || text || "Server xatosi");
       }
+      const fileUrl = payload?.file_url || payload?.url || payload?.data?.file_url || currentFile || "";
+      onFileUploaded(fileUrl, file.name);
+      toast.success("Fayl yuklandi ✅");
     } catch (error) {
-      console.error('Upload error:', error);
-      toast.error('Fayl yuklashda xatolik yuz berdi');
+      toast.error("Yuklashda xatolik yuz berdi ❌");
     } finally {
       setUploading(false);
     }
   };
+  
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -100,13 +102,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const getFileIcon = (fileName: string) => {
-    const extension = fileName.split('.').pop()?.toLowerCase();
-    if (['jpg', 'jpeg', 'png', 'webp'].includes(extension || '')) {
-      return <Image className="h-6 w-6" />;
-    }
-    return <FileText className="h-6 w-6" />;
-  };
+  // const getFileIcon = (fileName: string) => {
+  //   const extension = fileName.split('.').pop()?.toLowerCase();
+  //   if (['jpg', 'jpeg', 'png', 'webp'].includes(extension || '')) {
+  //     return <Image className="h-6 w-6" />;
+  //   }
+  //   return <FileText className="h-6 w-6" />;
+  // };
 
   return (
     <div className="space-y-3">

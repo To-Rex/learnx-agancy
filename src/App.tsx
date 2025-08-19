@@ -19,6 +19,7 @@ import Profile from './pages/Profile'
 import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
 import AuthCallback from './pages/AuthCalback'
+import UserSendFilePage from './pages/Index'
 
 const AppContent = () => {
   const navigate = useNavigate()
@@ -104,6 +105,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path='/userfiles/:id' element={<UserSendFilePage />} />
           <Route path="/auth/callback" element={<AuthCallback/>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />

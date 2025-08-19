@@ -13,7 +13,6 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
-import { supabase } from '../lib/supabase'
 
 interface Service {
   id: string

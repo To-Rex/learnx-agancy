@@ -375,6 +375,9 @@ const translations = {
     // Apply
     'apply.title': 'Ariza topshirish',
     'apply.description': "Chet davlatlarga ta'lim olish yoki ishlash uchun ariza topshiring",
+    'apply.program': ' Dastur turi *',
+    'apply.region': 'Davlat',
+    'apply.program.placeholder': 'Dastur turini tanlang',
     'apply.step1': "Shaxsiy ma'lumotlar",
     'apply.step2': "Ta'lim va tajriba",
     'apply.step3': 'Dastur tanlash',
@@ -383,6 +386,7 @@ const translations = {
     'apply.back': 'Orqaga',
     'apply.submit': 'Ariza topshirish',
     'apply.submitting': 'Yuborilmoqda...',
+    'apply.docs.title': 'Hujjatlar haqida',
 
     // Profile
     'profile.title': 'Shaxsiy kabinet',
@@ -745,6 +749,9 @@ const translations = {
     // Apply
     'apply.title': 'Apply Now',
     'apply.description': 'Submit your application to study or work abroad',
+    'apply.program': 'Program Type *',
+    'apply.region' :' Region *',
+    'apply.program.placeholder': 'Select program type',
     'apply.step1': 'Personal Information',
     'apply.step2': 'Education & Experience',
     'apply.step3': 'Program Selection',
@@ -753,6 +760,7 @@ const translations = {
     'apply.back': 'Back',
     'apply.submit': 'Submit Application',
     'apply.submitting': 'Submitting...',
+    'apply.docs.title': 'About Documents',
 
     // Profile
     'profile.title': 'Personal Dashboard',
@@ -1116,6 +1124,9 @@ const translations = {
     // Apply
     'apply.title': 'Подать заявку',
     'apply.description': 'Подайте заявку на обучение или работу за рубежом',
+    'apply.program': 'Тип программы *',
+    'apply.region' : "Регион *",
+    'apply.program.placeholder': 'Выберите тип программы',
     'apply.step1': 'Личная информация',
     'apply.step2': 'Образование и опыт',
     'apply.step3': 'Выбор программы',
@@ -1124,6 +1135,7 @@ const translations = {
     'apply.back': 'Назад',
     'apply.submit': 'Подать заявку',
     'apply.submitting': 'Отправка...',
+    'apply.docs.title': 'О документах',
 
     // Profile
     'profile.title': 'Личный кабинет',
