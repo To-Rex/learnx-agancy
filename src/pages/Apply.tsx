@@ -26,7 +26,7 @@ const schema = yup.object({
   // motivation: yup.string().required('Motivatsiya xati majburiy').min(100, 'Kamida 100 ta belgi')
 })
 
-const Apply: React.FC = (application_id) => {
+const Apply: React.FC = () => {
   const { user } = useAuth()
   const { t, language } = useLanguage()
   const navigate = useNavigate()
