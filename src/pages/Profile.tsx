@@ -8,7 +8,6 @@ import ProfileEditor from '../components/ProfileEditor';
 import FileUpload from '../components/FileUpload';
 import toast from 'react-hot-toast';
 
-<X className="h-6 w-6" />
 interface Application {
   id: string;
   status: string;
@@ -34,7 +33,14 @@ const Profile: React.FC = () => {
     isOpen: false,
     appId: null,
   });
-  const displayedApps = (applications || []).slice(0, visibleCount);
+
+  const handleShowMore = () => {
+    setVisibleCount((prev) => prev + 3);
+  };
+
+  const handleHide = () => {
+    setVisibleCount(1);
+  };
 
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
@@ -45,11 +51,6 @@ const Profile: React.FC = () => {
     { key: 'motivation', label: 'Motivatsiya xati', required: false },
   ];
 
-  useEffect(() => {
-    if (user) {
-      setAuthLoading(false);
-    } 
-  }, [user]);
   const apiToken = localStorage.getItem('api_access_token');
   const clientId = localStorage.getItem('client_id');
 
@@ -164,6 +165,7 @@ const Profile: React.FC = () => {
     if (user) {
       getProfile();
       getApplications();
+      setAuthLoading(false);
     }
   }, [user]);
 
@@ -197,15 +199,6 @@ const Profile: React.FC = () => {
     getProfile(); // Yangi ma'lumotlarni qayta yuklash
   };
 
-
-  useEffect(() => {
-    if (user) {
-      getProfile();
-    }
-  }, [user]);
-
-
-
   function getStatusColor(status: string) {
     switch (status) {
       case "approved":
@@ -232,18 +225,18 @@ const Profile: React.FC = () => {
     }
   }
 
-  if (loading || authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {authLoading ? 'Tizimga kirilmoqda...' : 'Ma\'lumotlar yuklanmoqda...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+  // if (loading || authLoading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+  //         <p className="text-gray-600">
+  //           {authLoading ? 'Tizimga kirilmoqda...' : 'Ma\'lumotlar yuklanmoqda...'}
+  //         </p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   if (!user) {
     return (
@@ -389,7 +382,7 @@ const Profile: React.FC = () => {
                 <p>Yuklanmoqda...</p>
               ) : applications.length > 0 ? (
                 <div className="space-y-4">
-                  {applications.map((app) => (
+                  {applications.slice(0, visibleCount).map((app) => (
                     <div key={app.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
                       <div className="flex items-center justify-between">
                         <div className='flex flex-col gap-2'>
@@ -398,7 +391,7 @@ const Profile: React.FC = () => {
                           </h4>
                           <p className="text-gray-600 mb-2 flex items-center">
                             <MapPin className="h-4 w-4 mr-1" />
-                            {app.country_preference || '---'}
+                            {app.country_preference || '_-_'}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
                             <Calendar className="h-4 w-4 inline mr-1" />
@@ -426,7 +419,7 @@ const Profile: React.FC = () => {
                             </button>
                           )}
                           <span onClick={() => setDeleteModal({ isOpen: true, appId: app.id })}
-                            className='flex gap-2 text-sm items-center justify-center rounded-md px-4 py-1 text-red-500 font-semibold hover:bg-red-50'>
+                            className='flex gap-2 text-sm items-center justify-center rounded-md px-4 py-1 text-red-500 font-semibold hover:bg-red-50 cursor-pointer'>
                             <Trash className='w-4 font-bold'/>O'chirish
                           </span>
                           {deleteModal.isOpen && deleteModal.appId === app.id && (                            
@@ -445,22 +438,23 @@ const Profile: React.FC = () => {
                       </div>
                     </div>
                   ))}
+
                   <div className="text-center pt-4">
-                  {visibleCount < applications.length ? (
+                    {visibleCount < applications.length ? (
                     <button
-                      onClick={() => setVisibleCount((prev) => prev + 3)}
-                      className="flex justify-center items-center mx-auto gap-1 text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+                      onClick={handleShowMore}
+                      className="text-blue-500 hover:underline flex mx-auto justify-center font-bold"
                     >
-                      Yana ko‘rsatish (+3) <ArrowDown />
+                      Yana yuklash (+3) <ArrowDown className='font-[900]'/>
                     </button>
-                  ) : applications.length > 1 ? (
+                  ) : (
                     <button
-                      onClick={() => setVisibleCount(1)}
-                      className="flex justify-center items-center mx-auto gap-1 text-red-600 font-semibold hover:text-red-700 hover:underline"
+                      onClick={handleHide}
+                      className="text-red-500 hover:underline flex mx-auto justify-center font-bold"
                     >
-                      Yashirish <ArrowUp />
+                      Yashirish <ArrowUp className='font-[900]'/>
                     </button>
-                  ) : null}
+                  )}
                 </div>
                 </div>
               ) : (
