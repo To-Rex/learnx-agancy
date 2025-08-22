@@ -152,9 +152,7 @@ const Apply: React.FC = () => {
       
       // Redirect to profile after successful submission
       console.log('🔄 Redirecting to profile...')
-      setTimeout(() => {
         navigate('/profile')
-      }, 1500)
       
     } catch (error) {
       console.error('❌ Submit error:', error)

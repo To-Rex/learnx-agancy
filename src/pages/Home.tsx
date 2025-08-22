@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import Marquee from "react-fast-marquee";
 import {
   ArrowRight, FileText, Users, Globe, Star,
   TrendingUp,
@@ -14,6 +15,7 @@ import {
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
 import { supabase } from '../lib/supabase'
+import { div } from 'framer-motion/client';
 
 interface Service {
   id: string
@@ -138,11 +140,13 @@ const Home: React.FC = () => {
       })
       if (!partnersRes.ok) throw new Error('Hamkorlarni olishda xato')
       const partnersData = await partnersRes.json()
-      const formattedPartners = Array.isArray(partnersData) ? partnersData.map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        logo: p.image_url
-      })) : []
+      const formattedPartners = Array.isArray(partnersData)
+        ? partnersData.map((p: any) => ({
+          id: p.id,
+          name: p.name,  // Bu obyekt ko‘rinishida bo‘lsin (uz, ru, en)
+          logo: p.image_url
+        }))
+        : []
       setPartners(formattedPartners)
     } catch (e: any) {
       setError(e.message || 'Nomaʼlum xatolik yuz berdi')
@@ -336,7 +340,6 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
-
       {/* Partners Section */}
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -344,25 +347,30 @@ const Home: React.FC = () => {
             <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('home.partners.title')}</h2>
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-            {partners.length > 0 ? partners.map((partner, i) => (
-              <motion.div
-                key={partner.id}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ delay: i * 0.1, duration: 0.6 }}
-                whileHover={{ scale: 1.05 }}
-                className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all group"
-              >
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="w-full h-16 object-contain grayscale group-hover:grayscale-0 transition-all"
-                />
-              </motion.div>
-            )) : <p className="text-center text-gray-500">Hamkorlar ma'lumotlari topilmadi.</p>}
-          </div>
         </div>
+        <Marquee>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+            {partners.length > 0 ? (
+              partners.map((partner, i) => (
+                <div key={i} className="flex items-center gap-3 p-2">
+                  <img
+                    src={partner.logo}
+                    alt={partner.name[language] || partner.name.uz}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  <h2 className="text-sm font-medium text-gray-800 truncate">
+                    {partner.name[language] || partner.name.uz}
+                  </h2>
+                </div>
+              ))
+            ) : (
+              <p className="text-center text-gray-500 col-span-full">
+                Hamkorlar ma'lumotlari topilmadi.
+              </p>
+            )}
+          </div>
+        </Marquee>
+
       </section>
 
       {/* CTA Section */}

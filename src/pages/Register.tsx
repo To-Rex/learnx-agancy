@@ -44,7 +44,7 @@ const Register: React.FC = () => {
         toast.error(t('register.invalidCredentials'));
       } else {
         toast.success(t('register.success'));
-        setTimeout(() => navigate('/profile'), 500);
+        navigate('/profile');
       }
     } catch (err) {
       console.error(err);
