@@ -3,7 +3,6 @@ import { VscDebugDisconnect } from "react-icons/vsc";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
-
 interface ServiceInputEditorProps {
     service: any;
     onClose: () => void;
@@ -19,7 +18,6 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
 
     const service_input = localStorage.getItem("service_input");
 
-    // --- Load service inputs ---
     const loadInputs = async () => {
         setLoading(true);
         try {
