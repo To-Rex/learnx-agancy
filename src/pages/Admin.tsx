@@ -18,12 +18,14 @@ import {
   Shield,
   Activity,
   Star,
-  Image
+  Image,
+  FilePenLine
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
+import ServiceInputEditor from '../components/service'
 
 // Define Services interface for type safety
 type Service = {
@@ -34,7 +36,11 @@ type Service = {
   price: string;
   features: { uz: string, en: string, ru: string }[];
 };
-
+type ServiceInput = {
+  id: string;
+  title: { en: string };
+  description: { en: string };
+};
 interface Partner {
   id: string;
   image: string;
@@ -101,6 +107,7 @@ const Admin: React.FC = () => {
   const [applications, setApplications] = useState([])
   const [users, setUsers] = useState([])
   const [services, setServices] = useState([])
+  const [servicesInput, setServicesInput] = useState([])
   const [stories, setStories] = useState([])
   const [partners, setPartners] = useState([])
   const [contacts, setContacts] = useState([])
@@ -108,14 +115,20 @@ const Admin: React.FC = () => {
   // Modal states
   const [editingItem, setEditingItem] = useState(null)
   const [editingService, setEditingService] = useState(null)
+  const [editingServiceInput, setEditingServiceInput] = useState(null)
   const [file, setFile] = useState<File | null>(null);
   const [showStoryModal, setShowStoryModal] = useState(false);
   const [showPartnerModal, setShowPartnerModal] = useState<boolean>(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showServiceInputModal, setShowServiceInputModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteInputModalOpen, setInputDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [serviceInputToDelete, setServiceInputToDelete] = useState<string | null>(null);
+  const [selectedService, setSelectedService] = useState<any>(null);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
+  const [active, setActive] = useState("connection");
 
 
 
@@ -386,9 +399,14 @@ const Admin: React.FC = () => {
       );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Xizmatlarni olishda xatolik");
-
+      if (Array.isArray(data) && data.length > 0) {
+        const firstId = data[0].id;
+        localStorage.setItem('service_input', firstId);
+        console.log(firstId);
+      }
+      if (!res.ok) throw new Error(data.message || "Xizmatlarni olishda xatolik")
       const servicesArray = Array.isArray(data) ? data : data.services || [];
+
 
       const normalizedData = servicesArray.map((item: any) => ({
         id: item.id || "",
@@ -404,6 +422,7 @@ const Admin: React.FC = () => {
           : [],
       }));
 
+
       setServices(normalizedData);
     } catch (err: any) {
       toast.error(err.message);
@@ -415,6 +434,156 @@ const Admin: React.FC = () => {
   useEffect(() => {
     loadServices();
   }, []);
+
+
+
+  // serviceInputs 
+  // --- STATES ---
+  const [serviceInputForm, setServiceInputForm] = useState({
+    name: { uz: "", en: "", ru: "" },
+    description: { uz: "", en: "", ru: "" }
+  });
+
+  // --- ADD SERVICEINPUT ---
+  const handleAddServiceInput = () => {
+    setEditingItem(null);
+    setServiceInputForm({
+      name: { uz: "", en: "", ru: "" },
+      description: { uz: "", en: "", ru: "" }
+    });
+    setShowServiceInputModal(true);
+  };
+
+  // --- EDIT SERVICE ---
+  const handleEditServiceInput = (service_input: any) => {
+    setServiceInputForm({
+      name: service_input.name || { uz: "", en: "", ru: "" },
+      description: service_input.description || { uz: "", en: "", ru: "" }
+    });
+    setEditingItem(service_input);
+    setShowServiceInputModal(true);
+  };
+
+  // --- SAVE SERVICE ---
+  const handleSaveServiceInput = async () => {
+    const payload = {
+      name: serviceInputForm.name,
+      description: serviceInputForm.description,
+    };
+
+    try {
+      let res;
+      if (editingItem && editingItem.id) {
+        // update
+        res = await fetch(
+          `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/create`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+      } else {
+        // create
+        res = await fetch(
+          "https://learnx-crm-production.up.railway.app/api/v1/service-inputs/create",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+            },
+            body: JSON.stringify(payload),
+          }
+        );
+      }
+
+      if (res.ok) {
+        setShowServiceInputModal(false);
+        loadServicesInput();
+      } else {
+        const errorData = await res.json();
+        alert("Xizmatni saqlashda xatolik: " + (errorData.message || res.statusText));
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Kutilmagan xatolik yuz berdi");
+    }
+  };
+
+  const handleDeleteServiceInputClick = (id: string) => {
+    setServiceInputToDelete(id);
+    setInputDeleteModalOpen(true);
+  };
+
+  const handleConfirmServiceInputDelete = async () => {
+    if (!serviceInputToDelete) return;
+    console.log(serviceInputToDelete);
+
+
+    try {
+      const token = localStorage.getItem('admin_access_token') || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/service-inputs/delete/${serviceInputToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        loadServicesInput(); // Ma'lumotlarni yangilash
+        toast(`Ma'lumot o'chirildi`)
+        setInputDeleteModalOpen(false);
+        setServiceInputToDelete(null);
+      } else {
+        const errorData = await res.json();
+        toast(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Xizmatni o'chirishda xatolik:", error);
+    }
+  };
+  const loadServicesInput = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(
+        "https://learnx-crm-production.up.railway.app/api/v1/service-inputs/get-list",
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+          },
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Xizmatlarni olishda xatolik");
+
+      const servicesInputArray = Array.isArray(data) ? data : data.serviceInput || [];
+
+      const normalizedData = servicesInputArray.map((item: any) => ({
+        id: item.id || "",
+        name: item.name || { uz: "", en: "", ru: "" },
+        description: item.description || { uz: "", en: "", ru: "" },
+      }));
+
+      setServicesInput(normalizedData);
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadServicesInput();
+  }, []);
+
+
 
 
   //  load story
@@ -517,6 +686,7 @@ const Admin: React.FC = () => {
   useEffect(() => {
     fetchPartners()
   }, [])
+  
   const handleSaveStory = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
@@ -809,7 +979,8 @@ const Admin: React.FC = () => {
     { id: 'services', name: 'Xizmatlar', icon: Settings, color: 'from-orange-500 to-red-600' },
     { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, color: 'from-purple-500 to-pink-600' },
     { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
-    { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' }
+    { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' },
+    { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' }
   ]
 
   const getStatusColor = (status: string) => {
@@ -1230,10 +1401,10 @@ const Admin: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Modal oynasi */}
+
                   {showServiceModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-lg border border-white/20 
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-xl border border-white/20 
                     max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-white">
@@ -1795,7 +1966,7 @@ const Admin: React.FC = () => {
                         <table className="w-full">
                           <thead className="bg-white/5">
                             <tr>
-                              {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
+                              {['№', 'Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
                                 <th
                                   key={header}
                                   className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
@@ -1805,7 +1976,7 @@ const Admin: React.FC = () => {
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-white/10">
+                          <tbody className="divide-y divide-white/10 text-center">
                             {contacts.length === 0 ? (
                               <tr>
                                 <td colSpan={6} className="text-center text-purple-200 py-8">
@@ -1821,6 +1992,7 @@ const Admin: React.FC = () => {
                                   transition={{ delay: index * 0.05 }}
                                   className="hover:bg-white/5 transition-all duration-300"
                                 >
+                                  <td className=' text-white font-bold'>{index+1}</td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center">
                                       <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
@@ -1833,8 +2005,8 @@ const Admin: React.FC = () => {
                                   </td>
                                   <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
                                   <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
-                                  <td className="px-6 py-4">
-                                    <div className="max-w-xs truncate text-purple-200">{contact?.message || '-'}</div>
+                                  <td className="px-6 py-4  ">
+                                    <div className="w-[250px] trun text-purple-200">{contact?.message || '-'}</div>
                                   </td>
                                   <td className="px-6 py-4 text-purple-200 text-sm">
                                     {contact?.created_at
@@ -1885,6 +2057,291 @@ const Admin: React.FC = () => {
 
                 )
               }
+              {activeTab === "service_inputs" && (
+                <div className="border border-white/10 rounded-2xl p-6">
+                  {/* Header */}
+                  <div className="p-5 border-b flex justify-between items-center">
+                    <h2 className="text-2xl font-bold text-white flex items-center">
+                      <FilePenLine className="h-6 w-6 mr-3 text-teal-400" />
+                      Xizmat inputlari boshqaruvi
+                    </h2>
+                    <button
+                      onClick={handleAddServiceInput}
+                      className="flex items-center space-x-2 px-6 py-3 bg-teal-400 text-white rounded-xl hover:text-emerald-200 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Yangi xizmat input</span>
+                    </button>
+                  </div>
+
+                  {/* Tab Buttons */}
+                  <div className='flex items-center p-6 space-x-4'>
+                    <button
+                      onClick={() => setActive("connection")}
+                      className={`relative px-6 py-3 rounded-lg font-medium transition-all duration-300 
+          ${active === "connection"
+                          ? "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-lg scale-105"
+                          : "bg-white/10 text-white hover:bg-white/20"
+                        }`}
+                    >
+                      connection
+                    </button>
+
+                    <button
+                      onClick={() => setActive("all-inputs")}
+                      className={`relative px-6 py-3 rounded-lg font-medium transition-all duration-300 
+          ${active === "all-inputs"
+                          ? "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-lg scale-105"
+                          : "bg-white/10 text-white hover:bg-white/20"
+                        }`}
+                    >
+                      all inputs
+                    </button>
+                  </div>
+
+                  {/* Connection tab */}
+                  {active === "connection" && (
+                    <div className="flex w-full gap-4">
+                      {/* Left table */}
+                      <div className={`flex-1 ${selectedService ? 'w-[25%]' : 'w-full'}`}>
+                        <table className="w-full">
+                          <thead className="bg-white/5">
+                            <tr>
+                              <th className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
+                                Hammasi
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/10">
+                            {services.length === 0 ? (
+                              <tr>
+                                <td colSpan={6} className="text-center text-purple-200 py-8">
+                                  Ma'lumot topilmadi
+                                </td>
+                              </tr>
+                            ) : (
+                              services.map((service) => (
+                                <motion.tr
+                                  key={service.id}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.05 }}
+                                  className="hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                                >
+                                  <td className="px-6 py-4">
+                                    <div
+                                      className="font-semibold text-white cursor-pointer"
+                                      onClick={() => {
+                                        setSelectedService(service);
+                                        localStorage.setItem('service_input', service.id);
+                                      }}
+                                    >
+                                      {service?.title.uz || "-"}
+                                    </div>
+                                  </td>
+                                </motion.tr>
+                              ))
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Editor pane */}
+                      {selectedService && (
+                        <div className="w-[65%] bg-white/5 rounded-xl p-6 shadow-lg">
+                          <ServiceInputEditor
+                            service={selectedService}
+                            onClose={() => setSelectedService(null)}
+                            onSave={() => setSelectedService(null)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* All Inputs tab */}
+                  {active === "all-inputs" && (
+                    <div className="w-full max-h-[35vh] overflow-y-auto">
+                      <table className="w-full table-fixed">
+                        <thead className="bg-white/5">
+                          <tr>
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
+                              All inputs
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10">
+                          {servicesInput.length === 0 ? (
+                            <tr>
+                              <td colSpan={6} className="text-center text-purple-200 py-8">
+                                Ma'lumot topilmadi
+                              </td>
+                            </tr>
+                          ) : (
+                            servicesInput.map((service_input) => (
+                              <motion.tr
+                                key={service_input.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.05 }}
+                                className="hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                                // onClick={() => {
+                                //   handleEditServiceInput(service_input); // Bosilganda modal ochiladi
+                                // }}
+                              >
+                                <td className="px-6 py-4 flex justify-between items-center font-semibold text-white">
+                                  <h1>{service_input?.name.uz || "-"}</h1>
+                                  <div className="flex items-center gap-2">
+                                    <button className="text-green-400 hover:bg-green-500/20 p-2 rounded transition-all duration-300">
+                                      {/* icon yoki text */}
+                                    </button>
+                                    <button
+                                      onClick={() => handleEditServiceInput(service_input)}
+                                      className="text-blue-400 hover:bg-blue-500/20 p-2 rounded transition-all duration-300"
+                                    >
+                                      <Edit className="h-5 w-5" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteServiceInputClick(service_input.id)}
+                                      className="text-red-400 hover:bg-red-500/20 p-2 rounded transition-all duration-300"
+                                    >
+                                      <Trash2 className="h-5 w-5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </motion.tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* Modal for Add/Edit */}
+                  {showServiceInputModal && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20">
+                        <div className="flex justify-between items-center mb-6">
+                          <h2 className="text-2xl font-bold text-white">
+                            {editingItem ? "Xizmat inputini tahrirlash" : "Yangi xizmat inputi"}
+                          </h2>
+                          <button
+                            onClick={() => setShowServiceInputModal(false)}
+                            className="text-white hover:text-red-400 transition-colors p-2 rounded-full hover:bg-red-500/20"
+                            aria-label="Modalni yopish"
+                          >
+                            <X className="h-6 w-6" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-4">
+                          {/* Name fields */}
+                          <div>
+                            <label className="block text-white mb-1">Nomi (UZ)</label>
+                            <input
+                              type="text"
+                              value={serviceInputForm.name.uz}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  name: { ...serviceInputForm.name, uz: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Nomi (EN)</label>
+                            <input
+                              type="text"
+                              value={serviceInputForm.name.en}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  name: { ...serviceInputForm.name, en: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Nomi (RU)</label>
+                            <input
+                              type="text"
+                              value={serviceInputForm.name.ru}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  name: { ...serviceInputForm.name, ru: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+
+                          {/* Description fields */}
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (UZ)</label>
+                            <textarea
+                              value={serviceInputForm.description.uz}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  description: { ...serviceInputForm.description, uz: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (EN)</label>
+                            <textarea
+                              value={serviceInputForm.description.en}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  description: { ...serviceInputForm.description, en: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-white mb-1">Tavsif (RU)</label>
+                            <textarea
+                              value={serviceInputForm.description.ru}
+                              onChange={(e) =>
+                                setServiceInputForm({
+                                  ...serviceInputForm,
+                                  description: { ...serviceInputForm.description, ru: e.target.value },
+                                })
+                              }
+                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                            />
+                          </div>
+
+                          {/* Action buttons */}
+                          <div className="flex justify-end space-x-2">
+                            <button
+                              onClick={() => setShowServiceInputModal(false)}
+                              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                            >
+                              Bekor qilish
+                            </button>
+                            <button
+                              onClick={handleSaveServiceInput}
+                              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                            >
+                              Saqlash
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </AnimatePresence >
           </div >
         </div >

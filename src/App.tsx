@@ -20,6 +20,8 @@ import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
 import AuthCallback from './pages/AuthCalback'
 import UserSendFilePage from './pages/Index'
+import { Toaster } from 'react-hot-toast'
+import ScrollToTop from './components/ScrollTop'
 
 const AppContent = () => {
   const navigate = useNavigate()
@@ -144,7 +146,10 @@ function App() {
     <LanguageProvider>
       <AuthProvider>
         <Router>
+          <ScrollToTop />
           <AppContent />
+          <Toaster 
+            position="top-right" reverseOrder={false} toastOptions={{}}/>
         </Router>
       </AuthProvider>
     </LanguageProvider>

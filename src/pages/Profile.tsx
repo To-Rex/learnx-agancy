@@ -1,26 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, CreditCard, CreditCardIcon, IdCard } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, IdCard, X, Trash, ArrowDown, ArrowUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { getFileUrl, deleteFile, STORAGE_BUCKETS } from '../lib/storage';
+import { STORAGE_BUCKETS } from '../lib/storage';
 import ProfileEditor from '../components/ProfileEditor';
 import FileUpload from '../components/FileUpload';
 import toast from 'react-hot-toast';
 
-const apiDomain = 'http://localhost:8080'; // API manzili
-
+<X className="h-6 w-6" />
+interface Application {
+  id: string;
+  status: string;
+  created_at: string;
+  program_type?: string;
+  country_preference?: string;
+}
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
-  const [applications, setApplications] = useState([]);
-  const [documents, setDocuments] = useState([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<string>("");
   const [showDocumentUpload, setShowDocumentUpload] = useState(false);
-  const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [showOtherDocuments, setShowOtherDocuments] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; appId: string | null }>({
+    isOpen: false,
+    appId: null,
+  });
+  const displayedApps = (applications || []).slice(0, visibleCount);
 
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
@@ -34,24 +48,14 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (user) {
       setAuthLoading(false);
-    } else {
-      const timer = setTimeout(() => {
-        setAuthLoading(false);
-      }, 2000);
-      return () => clearTimeout(timer);
-    }
+    } 
   }, [user]);
+  const apiToken = localStorage.getItem('api_access_token');
+  const clientId = localStorage.getItem('client_id');
 
   const getProfile = async () => {
     setLoading(true);
     try {
-      const apiToken = localStorage.getItem('api_access_token');
-      const clientId = localStorage.getItem('client_id');
-
-      if (!apiToken || !clientId) {
-        throw new Error('API token yoki Client ID topilmadi. Iltimos, tizimga qayta kiring.');
-      }
-
       console.log('So‘rov yuborilmoqda:', {
         url: `https://learnx-crm-production.up.railway.app/api/v1/clients/get/${clientId}`,
         token: apiToken,
@@ -68,7 +72,7 @@ const Profile: React.FC = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('API xato javobi:', errorData);
+        console.log('API xato javobi:', errorData);
         throw new Error(`Profil API xatosi: ${response.status} - ${JSON.stringify(errorData)}`);
       }
 
@@ -95,33 +99,97 @@ const Profile: React.FC = () => {
     }
   };
 
+  const getApplications = async () => {
+    setLoading(true);
+    try {
+      const apiToken = localStorage.getItem('api_access_token');
+
+      if (!apiToken) {
+        throw new Error('API token topilmadi. Iltimos, tizimga qayta kiring.');
+      }
+
+      console.log('Ariza so‘rovi yuborilmoqda:', {
+        url: `https://learnx-crm-production.up.railway.app/api/v1/applications/get-list`,
+        token: apiToken,
+      });
+
+      const response = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-list`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API xato javobi (arizalar):', errorData);
+        throw new Error(`Ariza API xatosi: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      const apiApplications = await response.json();
+      console.log('API Arizalar Javobi:', apiApplications);
+      // Assuming apiApplications is an array of application objects
+      setApplications(Array.isArray(apiApplications) ? apiApplications : []);
+
+      // toast.success('Arizalar muvaffaqiyatli yuklandi');
+    } catch (error: any) {
+      console.error('Arizalar yuklashda xatolik:', error.message);
+      toast.error(`Arizalarni yuklashda xatolik: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteDocument = async (id :string) => {
+    try{
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('api_access_token')}`,
+        },
+      })
+      if(!res.ok){
+        throw new Error(`O'chirish amalga oshmadi: ${res.status} ${res.statusText}`); 
+      }      
+      setApplications(applications.filter((app: any) => app.id !== id));
+      toast.success('Ariza muvaffaqiyatli o‘chirildi');
+    }catch(error){
+      console.error('Hujjatni o‘chirishda xatolik:', error);
+      toast.error('Hujjatni o‘chirishda xatolik yuz berdi');
+    }
+  }
+
   useEffect(() => {
     if (user) {
       getProfile();
+      getApplications();
     }
   }, [user]);
 
    // Chala arizani localStorage'dan yuklash
-   useEffect(() => {
-    const savedFormData = localStorage.getItem('applyFormData')
-    if (savedFormData && user) {
-      const formData = JSON.parse(savedFormData)
-      const isIncomplete = !formData.email || !formData.phone || !formData.program || !formData.country
-      const draftApplication = {
-        id: `draft-${Date.now()}`, // Unikal ID uchun vaqt belgilaymiz
-        user_id: user.id,
-        program_type: formData.program || 'Chala ariza',
-        country_preference: formData.country || 'Noma\'lum',
-        status: isIncomplete ? 'draft' : 'pending',
-        created_at: new Date().toISOString(),
-        form_data: formData
-      }
-      // Agar allaqachon mavjud bo'lmasa qo‘shish
-      if (!applications.some(app => app.status === 'draft')) {
-        setApplications(prev => [draftApplication, ...prev.filter(app => app.status !== 'draft')])
-      }
-    }
-  }, [user])
+  //  useEffect(() => {
+  //   const savedFormData = localStorage.getItem('applyFormData')
+  //   if (savedFormData && user) {
+  //     const formData = JSON.parse(savedFormData)
+  //     const isIncomplete = !formData.email || !formData.phone || !formData.program || !formData.country
+  //     const draftApplication = {
+  //       id: `draft-${Date.now()}`, // Unikal ID uchun vaqt belgilaymiz
+  //       user_id: user.id,
+  //       program_type: formData.program || 'Chala ariza',
+  //       country_preference: formData.country || 'Noma\'lum',
+  //       status: isIncomplete ? 'draft' : 'pending',
+  //       created_at: new Date().toISOString(),
+  //       form_data: formData
+  //     }
+  //     console.log();
+      
+  //     // Agar allaqachon mavjud bo'lmasa qo‘shish
+  //     if (!applications.some(app => app.status === 'draft')) {
+  //       setApplications(prev => [draftApplication, ...prev.filter(app => app.status !== 'draft')])
+  //     }
+  //   }
+  // }, [user]);
 
   const handleProfileSave = (profileData: any) => {
     setProfile(profileData);
@@ -129,64 +197,40 @@ const Profile: React.FC = () => {
     getProfile(); // Yangi ma'lumotlarni qayta yuklash
   };
 
-  const handleDocumentUpload = (filePath: string, fileName: string) => {
-    if (filePath) {
-      const newDocument = {
-        name: fileName,
-        path: filePath,
-        uploaded: true,
-        date: new Date().toISOString(),
-        url: getFileUrl(STORAGE_BUCKETS.DOCUMENTS, filePath),
-      };
-      setDocuments((prev) => [...prev, newDocument]);
-      setShowDocumentUpload(false);
-      setSelectedDocumentType('');
-      toast.success('Hujjat muvaffaqiyatli yuklandi');
+
+  useEffect(() => {
+    if (user) {
+      getProfile();
     }
-  };
+  }, [user]);
 
-  const handleDeleteDocument = async (document: any) => {
-    if (!confirm("Hujjatni o'chirmoqchimisiz?")) return;
 
-    try {
-      const { error } = await deleteFile(STORAGE_BUCKETS.DOCUMENTS, document.path);
-      if (error) {
-        toast.error("Hujjatni o'chirishda xatolik");
-      } else {
-        setDocuments((prev) => prev.filter((doc) => doc.path !== document.path));
-        toast.success("Hujjat o'chirildi");
-      }
-    } catch (error) {
-      console.error('Error deleting document:', error);
-      toast.error('Hujjatni o\'chirishda xatolik yuz berdi');
-    }
-  };
 
-  const getStatusColor = (status: string) => {
+  function getStatusColor(status: string) {
     switch (status) {
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-100';
-      case 'approved':
-        return 'text-green-600 bg-green-100';
-      case 'rejected':
-        return 'text-red-600 bg-red-100';
+      case "approved":
+        return "bg-green-100 text-green-700";
+      case "pending":
+        return "bg-blue-100 text-blue-700";
+      case "rejected":
+        return "bg-red-100 text-red-700";
       default:
-        return 'text-gray-600 bg-gray-100';
+        return "bg-gray-100 text-gray-700";
     }
-  };
+  }
 
-  const getStatusText = (status: string) => {
+  function getStatusText(status: string) {
     switch (status) {
-      case 'pending':
-        return 'Kutilmoqda';
-      case 'approved':
-        return 'Tasdiqlangan';
-      case 'rejected':
-        return 'Rad etilgan';
+      case "approved":
+        return "Tasdiqlangan";
+      case "pending":
+        return "Jarayonda";
+      case "rejected":
+        return "Rad etilgan";
       default:
-        return 'Noma\'lum';
+        return "Qoralama";
     }
-  };
+  }
 
   if (loading || authLoading) {
     return (
@@ -299,24 +343,24 @@ const Profile: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Jami arizalar</span>
-                  <span className="font-semibold text-gray-900">{applications.length}</span>
+                  <span className="font-semibold text-gray-900">{applications ? applications.length : 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tasdiqlangan</span>
                   <span className="font-semibold text-green-600">
-                    {applications.filter((app: any) => app.status === 'approved').length}
+                    {applications.filter((app) => app.status === "approved").length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Jarayonda</span>
                   <span className="font-semibold text-blue-600">
-                    {applications.filter((app: any) => app.status === 'pending').length}
+                    {applications.filter((app) => app.status === "pending").length}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Rad etilgan</span>
                   <span className="font-semibold text-red-600">
-                    {applications.filter((app: any) => app.status === 'rejected').length}
+                    {applications.filter((app) => app.status === "rejected").length}
                   </span>
                 </div>
               </div>
@@ -328,7 +372,7 @@ const Profile: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-6 rounded-xl shadow-lg"
+              className="bg-white p-6 rounded-xl shadow-lg "
             >
               <div className="flex items-center justify-between mb-6 ">
                 <h3 className="text-xl font-bold text-gray-900">Mening arizalarim</h3>
@@ -341,34 +385,37 @@ const Profile: React.FC = () => {
                 </Link>
               </div>
 
-              {applications.length > 0 ? (
+              {loading ? (
+                <p>Yuklanmoqda...</p>
+              ) : applications.length > 0 ? (
                 <div className="space-y-4">
-                  {applications.map((app: any) => (
+                  {applications.map((app) => (
                     <div key={app.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className='flex flex-col gap-2'>
                           <h4 className="font-semibold text-gray-900 text-lg mb-1">
                             {app.program_type?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ariza'}
                           </h4>
                           <p className="text-gray-600 mb-2 flex items-center">
                             <MapPin className="h-4 w-4 mr-1" />
-                            {app.country_preference}
+                            {app.country_preference || '---'}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
                             <Calendar className="h-4 w-4 inline mr-1" />
                             {new Date(app.created_at).toLocaleDateString('uz-UZ')}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(app.status)}`}>
+
+                        <div className="text-right flex flex-col justify-center items-center gap-1">
+                          <span className={`px-3 py-1 rounded-full text-gray-700 font-medium ${getStatusColor(app.status)}`}>
                             {getStatusText(app.status)}
                           </span>
                           {app.status === 'draft' && (
                             <Link
                               to="/apply"
-                              className="block mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                              className="mt-4 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 font-semibold rounded transition-colors"
                             >
-                              <Edit className="h-3 w-3" />
+                              <Edit className="w-4" />
                               <span>Davom etish</span>
                             </Link>
                           )}
@@ -378,10 +425,43 @@ const Profile: React.FC = () => {
                               <span>Batafsil</span>
                             </button>
                           )}
+                          <span onClick={() => setDeleteModal({ isOpen: true, appId: app.id })}
+                            className='flex gap-2 text-sm items-center justify-center rounded-md px-4 py-1 text-red-500 font-semibold hover:bg-red-50'>
+                            <Trash className='w-4 font-bold'/>O'chirish
+                          </span>
+                          {deleteModal.isOpen && deleteModal.appId === app.id && (                            
+                            <div onClick={() => setDeleteModal({isOpen: false, appId:null})} className='fixed inset-0 bg-black/40 flex items-center justify-center z-50'>
+                              <div onClick={(e) => e.stopPropagation()} className='bg-white/50 backdrop-blur-md rounded-xl p-6 max-w-md w-full border border-white/20 text-white '>
+                                <h1 className='text-xl text-gray-900 font-semibold text-center py-1'>Haqiqatdan ham o'chirmoqchimisiz</h1>
+                                <span className='ml-24 gap-4 flex justify-center pt-4'>
+                                  <button onClick={() => setDeleteModal({isOpen:false, appId:null})} className='bg-green-500 border-none text-white py-2 px-10 rounded-md hover:bg-green-400 active:scale-95 duration-500'>Yo'q</button>
+                                  <button onClick={() => {deleteDocument(app.id); setDeleteModal({isOpen:false, appId:null})}} 
+                                    className='bg-red-500 border-none text-white py-2 px-6 rounded-md hover:bg-red-400 active:scale-95 duration-500'>O'chirish</button>
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   ))}
+                  <div className="text-center pt-4">
+                  {visibleCount < applications.length ? (
+                    <button
+                      onClick={() => setVisibleCount((prev) => prev + 3)}
+                      className="flex justify-center items-center mx-auto gap-1 text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+                    >
+                      Yana ko‘rsatish (+3) <ArrowDown />
+                    </button>
+                  ) : applications.length > 1 ? (
+                    <button
+                      onClick={() => setVisibleCount(1)}
+                      className="flex justify-center items-center mx-auto gap-1 text-red-600 font-semibold hover:text-red-700 hover:underline"
+                    >
+                      Yashirish <ArrowUp />
+                    </button>
+                  ) : null}
+                </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
@@ -408,7 +488,7 @@ const Profile: React.FC = () => {
                 <div className="flex space-x-2">
                   <button
                     onClick={() => {
-                      setSelectedDocumentType('required');
+                      setSelectedDocumentType("required");
                       setShowDocumentUpload(true);
                     }}
                     className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 text-sm"
@@ -418,7 +498,7 @@ const Profile: React.FC = () => {
                   </button>
                   <button
                     onClick={() => {
-                      setSelectedDocumentType('other');
+                      setSelectedDocumentType("other");
                       setShowDocumentUpload(true);
                     }}
                     className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 text-sm"
@@ -429,6 +509,18 @@ const Profile: React.FC = () => {
                 </div>
               </div>
 
+              {showDocumentUpload && (
+                <div className="mb-6">
+                  <input
+                    type="file"
+                    onChange={(e) => e.target.files && handleFileUpload(e.target.files[0])}
+                    disabled={uploading}
+                    className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer"
+                  />
+                  {uploading && <p className="text-blue-600 text-sm mt-2">Yuklanmoqda...</p>}
+                </div>
+              )}
+
               <div className="mb-8">
                 <h4 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                   <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
@@ -436,18 +528,20 @@ const Profile: React.FC = () => {
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {requiredDocumentTypes.map((docType) => {
-                    const userDoc = documents.find(doc =>
-                      doc.path.includes(`${docType.key}-`) ||
-                      doc.name.toLowerCase().includes(docType.key) ||
-                      doc.path.toLowerCase().includes(docType.key)
+                    const userDoc = documents.find((doc) =>
+                      doc.document_type === docType.key
                     );
                     return (
-                      <div key={docType.key} className={`p-4 border-2 border-dashed rounded-lg ${userDoc ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
+                      <div
+                        key={docType.key}
+                        className={`p-4 border-2 border-dashed rounded-lg ${userDoc ? "border-green-300 bg-green-50" : "border-gray-300 bg-gray-50"
+                          }`}
+                      >
                         <div className="flex items-center justify-between">
                           <div>
                             <h5 className="font-medium text-gray-900">{docType.label}</h5>
                             <p className="text-sm text-gray-500">
-                              {docType.required ? 'Majburiy' : 'Ixtiyoriy'}
+                              {docType.required ? "Majburiy" : "Ixtiyoriy"}
                             </p>
                           </div>
                           {userDoc ? (
@@ -483,52 +577,57 @@ const Profile: React.FC = () => {
                     onClick={() => setShowOtherDocuments(!showOtherDocuments)}
                     className="text-blue-600 hover:text-blue-700 text-sm font-medium"
                   >
-                    {showOtherDocuments ? 'Yashirish' : 'Ko\'rish'}
+                    {showOtherDocuments ? "Yashirish" : "Ko'rish"}
                   </button>
                 </div>
 
                 {showOtherDocuments && (
                   <div className="space-y-4">
-                    {documents.filter(doc => !requiredDocumentTypes.some(type => doc.name.toLowerCase().includes(type.key))).length > 0 ? (
-                      documents.filter(doc => !requiredDocumentTypes.some(type => doc.name.toLowerCase().includes(type.key))).map((doc: any, index) => (
-                        <div key={index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="h-6 w-6 text-gray-400" />
-                            <div>
-                              <h4 className="font-medium text-gray-900">{doc.name}</h4>
-                              <p className="text-sm text-gray-500">
-                                Yuklandi: {new Date(doc.date).toLocaleDateString('uz-UZ')}
-                              </p>
+                    {documents.filter((doc) => doc.document_type === "other").length > 0 ? (
+                      documents
+                        .filter((doc) => doc.document_type === "other")
+                        .map((doc, index) => (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <FileText className="h-6 w-6 text-gray-400" />
+                              <div>
+                                <h4 className="font-medium text-gray-900">{doc.file_url.split("/").pop()}</h4>
+                                <p className="text-sm text-gray-500">
+                                  Yuklandi: {new Date(doc.uploaded_at).toLocaleDateString("uz-UZ")}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <a
+                                href={doc.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
+                                title="Ko'rish"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </a>
+                              <a
+                                href={doc.file_url}
+                                download
+                                className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 transition-colors"
+                                title="Yuklab olish"
+                              >
+                                <Download className="h-4 w-4" />
+                              </a>
+                              <button
+                                onClick={() => handleDeleteDocument(doc)}
+                                className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
+                                title="O'chirish"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-700 p-2 rounded-lg hover:bg-blue-50 transition-colors"
-                              title="Ko'rish"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </a>
-                            <a
-                              href={doc.url}
-                              download
-                              className="text-green-600 hover:text-green-700 p-2 rounded-lg hover:bg-green-50 transition-colors"
-                              title="Yuklab olish"
-                            >
-                              <Download className="h-4 w-4" />
-                            </a>
-                            <button
-                              onClick={() => handleDeleteDocument(doc)}
-                              className="text-red-600 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors"
-                              title="O'chirish"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      ))
+                        ))
                     ) : (
                       <div className="text-center py-8">
                         <FileText className="h-16 w-16 text-gray-300 mx-auto mb-4" />
@@ -548,7 +647,7 @@ const Profile: React.FC = () => {
             >
               <h3 className="text-xl font-bold text-gray-900 mb-6">So'nggi faoliyat</h3>
               <div className="space-y-4">
-                {applications.slice(0, 3).map((app: any, index) => (
+                {applications.map((app: any, index) => (
                   <div key={index} className="flex items-start space-x-3">
                     <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                     <div>

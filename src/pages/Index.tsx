@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { CheckCircle, CircleDashed } from "lucide-react";
@@ -33,6 +33,7 @@ export default function UserFilesPage() {
   const { id } = useParams(); // application_id
   const { t } = useLanguage();
   const { handleSubmit } = useForm();
+  const navigate = useNavigate()
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +116,7 @@ export default function UserFilesPage() {
         throw new Error(`Yuborishda xatolik: ${response.status}`);
       }
       toast.success("Hujjatlar muvaffaqiyatli yuborildi");
+      navigate('/profile')
     } catch (error) {
       console.error(error);
       toast.error("Hujjatlarni yuborishda xatolik");
@@ -158,7 +160,7 @@ export default function UserFilesPage() {
           const currentFile = item.uploaded_doc?.file_url || "";
 
         return (
-        <div key={item.service_input_id} className="border border-gray-200 bg-red-50 rounded-lg p-4">
+        <div key={item.service_input_id} className="border border-gray-200 rounded-lg p-4">
             <FileUpload 
                 label={`${label}${item.required ? " *" : ""}`}
                 applicationId={id ?? ""}

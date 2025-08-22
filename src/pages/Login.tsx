@@ -27,7 +27,7 @@ const Login: React.FC = () => {
         toast.error(t('login.invalidCredentials'))
       } else {
         toast.success(t('login.success'))
-        setTimeout(() => navigate('/profile'), 500)
+         navigate('/profile')
       }
     } catch (err) {
       console.log(err)
