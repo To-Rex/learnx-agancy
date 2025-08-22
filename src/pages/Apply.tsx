@@ -26,7 +26,7 @@ const schema = yup.object({
   // motivation: yup.string().required('Motivatsiya xati majburiy').min(100, 'Kamida 100 ta belgi')
 })
 
-const Apply: React.FC = () => {
+const Apply: React.FC = (application_id) => {
   const { user } = useAuth()
   const { t, language } = useLanguage()
   const navigate = useNavigate()
@@ -402,6 +402,7 @@ const Apply: React.FC = () => {
         return null
     }
   }
+  
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
@@ -464,13 +465,17 @@ const Apply: React.FC = () => {
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-
-              
+                <button 
+                onClick={() => navigate('/profile')}
+                  // onClick={() => navigate(`/profil${application_id}`)}
+                  className='border text-white bg-red-500 py-2 px-5 rounded-lg hover:bg-red-400'>
+                    orqaga
+                </button>
                 <button
                   type="button"
                   onClick={userFiles}
                   // onClick={nextStep}
-                  className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400"
                 >
                   {t('apply.next')}
                 </button>

@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { motion, AnimatePresence } from 'framer-motion'
 
+
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [showLanguageMenu, setShowLanguageMenu] = useState(false)
@@ -97,7 +98,7 @@ const Navbar: React.FC = () => {
             <div className="relative" ref={languageMenuRef}>
               <button
                 onClick={() => setShowLanguageMenu((prev) => !prev)}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-200 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
+                className="flex items-center space-x-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-100 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
               >
                 <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                   <Globe className="h-3 w-3 text-white" />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, CreditCard, CreditCardIcon, IdCard } from 'lucide-react';
+import { Mail, Phone, MapPin, Calendar, FileText, CheckCircle, Edit, Upload, Download, Eye, Trash2, Plus, IdCard, Trash, X, ArrowUp, ArrowDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { getFileUrl, deleteFile, STORAGE_BUCKETS } from '../lib/storage';
@@ -8,12 +8,17 @@ import ProfileEditor from '../components/ProfileEditor';
 import FileUpload from '../components/FileUpload';
 import toast from 'react-hot-toast';
 
-const apiDomain = 'http://localhost:8080'; // API manzili
+// const apiDomain = 'http://localhost:8080'; // API manzili
+
+interface Application {
+  id: number;
+  name: string;
+}
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
-  const [applications, setApplications] = useState([]);
+  const [applications, setApplications] = useState<Application[]>([]);
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showProfileEditor, setShowProfileEditor] = useState(false);
@@ -21,6 +26,13 @@ const Profile: React.FC = () => {
   const [selectedDocumentType, setSelectedDocumentType] = useState('');
   const [showOtherDocuments, setShowOtherDocuments] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(1);
+
+  const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean; appId: string | null }>({
+    isOpen: false,
+    appId: null,
+  });
+  const displayedApps = (applications || []).slice(0, visibleCount);
 
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
@@ -95,33 +107,97 @@ const Profile: React.FC = () => {
     }
   };
 
+  const getApplications = async () => {
+    setLoading(true);
+    try {
+      const apiToken = localStorage.getItem('api_access_token');
+
+      if (!apiToken) {
+        throw new Error('API token topilmadi. Iltimos, tizimga qayta kiring.');
+      }
+
+      console.log('Ariza so‘rovi yuborilmoqda:', {
+        url: `https://learnx-crm-production.up.railway.app/api/v1/applications/get-list`,
+        token: apiToken,
+      });
+
+      const response = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-list`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${apiToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('API xato javobi (arizalar):', errorData);
+        throw new Error(`Ariza API xatosi: ${response.status} - ${JSON.stringify(errorData)}`);
+      }
+
+      const apiApplications = await response.json();
+      console.log('API Arizalar Javobi:', apiApplications);
+      // Assuming apiApplications is an array of application objects
+      setApplications(Array.isArray(apiApplications) ? apiApplications : []);
+
+      // toast.success('Arizalar muvaffaqiyatli yuklandi');
+    } catch (error: any) {
+      console.error('Arizalar yuklashda xatolik:', error.message);
+      toast.error(`Arizalarni yuklashda xatolik: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteDocument = async (id :string) => {
+    try{
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/delete/${id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('api_access_token')}`,
+        },
+      })
+      if(!res.ok){
+        throw new Error(`O'chirish amalga oshmadi: ${res.status} ${res.statusText}`); 
+      }      
+      setApplications(applications.filter((app: any) => app.id !== id));
+      toast.success('Ariza muvaffaqiyatli o‘chirildi');
+    }catch(error){
+      console.error('Hujjatni o‘chirishda xatolik:', error);
+      toast.error('Hujjatni o‘chirishda xatolik yuz berdi');
+    }
+  }
+
   useEffect(() => {
     if (user) {
       getProfile();
+      getApplications();
     }
   }, [user]);
 
    // Chala arizani localStorage'dan yuklash
-   useEffect(() => {
-    const savedFormData = localStorage.getItem('applyFormData')
-    if (savedFormData && user) {
-      const formData = JSON.parse(savedFormData)
-      const isIncomplete = !formData.email || !formData.phone || !formData.program || !formData.country
-      const draftApplication = {
-        id: `draft-${Date.now()}`, // Unikal ID uchun vaqt belgilaymiz
-        user_id: user.id,
-        program_type: formData.program || 'Chala ariza',
-        country_preference: formData.country || 'Noma\'lum',
-        status: isIncomplete ? 'draft' : 'pending',
-        created_at: new Date().toISOString(),
-        form_data: formData
-      }
-      // Agar allaqachon mavjud bo'lmasa qo‘shish
-      if (!applications.some(app => app.status === 'draft')) {
-        setApplications(prev => [draftApplication, ...prev.filter(app => app.status !== 'draft')])
-      }
-    }
-  }, [user])
+  //  useEffect(() => {
+  //   const savedFormData = localStorage.getItem('applyFormData')
+  //   if (savedFormData && user) {
+  //     const formData = JSON.parse(savedFormData)
+  //     const isIncomplete = !formData.email || !formData.phone || !formData.program || !formData.country
+  //     const draftApplication = {
+  //       id: `draft-${Date.now()}`, // Unikal ID uchun vaqt belgilaymiz
+  //       user_id: user.id,
+  //       program_type: formData.program || 'Chala ariza',
+  //       country_preference: formData.country || 'Noma\'lum',
+  //       status: isIncomplete ? 'draft' : 'pending',
+  //       created_at: new Date().toISOString(),
+  //       form_data: formData
+  //     }
+  //     console.log();
+      
+  //     // Agar allaqachon mavjud bo'lmasa qo‘shish
+  //     if (!applications.some(app => app.status === 'draft')) {
+  //       setApplications(prev => [draftApplication, ...prev.filter(app => app.status !== 'draft')])
+  //     }
+  //   }
+  // }, [user]);
 
   const handleProfileSave = (profileData: any) => {
     setProfile(profileData);
@@ -183,6 +259,8 @@ const Profile: React.FC = () => {
         return 'Tasdiqlangan';
       case 'rejected':
         return 'Rad etilgan';
+      case 'draft':
+        return 'Chala ariza';
       default:
         return 'Noma\'lum';
     }
@@ -299,7 +377,7 @@ const Profile: React.FC = () => {
               <div className="space-y-4">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Jami arizalar</span>
-                  <span className="font-semibold text-gray-900">{applications.length}</span>
+                  <span className="font-semibold text-gray-900">{applications ? applications.length : 0}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tasdiqlangan</span>
@@ -328,7 +406,7 @@ const Profile: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-6 rounded-xl shadow-lg"
+              className="bg-white p-6 rounded-xl shadow-lg "
             >
               <div className="flex items-center justify-between mb-6 ">
                 <h3 className="text-xl font-bold text-gray-900">Mening arizalarim</h3>
@@ -343,10 +421,10 @@ const Profile: React.FC = () => {
 
               {applications.length > 0 ? (
                 <div className="space-y-4">
-                  {applications.map((app: any) => (
-                    <div key={app.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow bg-gradient-to-r from-white to-gray-50">
+                  {displayedApps.map((app: any) => (
+                    <div key={app.id} className="cursor-pointer border-2 border-dashed border-gray-200 hover:border-gray-300 hover:shadow-sm rounded-lg p-6 transition-shadow bg-white ">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className='flex flex-col gap-2'>
                           <h4 className="font-semibold text-gray-900 text-lg mb-1">
                             {app.program_type?.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()) || 'Ariza'}
                           </h4>
@@ -359,16 +437,17 @@ const Profile: React.FC = () => {
                             {new Date(app.created_at).toLocaleDateString('uz-UZ')}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(app.status)}`}>
+
+                        <div className="text-right flex flex-col justify-center items-center gap-1">
+                          <span className={`px-3 py-1 rounded-full text-gray-700 font-medium ${getStatusColor(app.status)}`}>
                             {getStatusText(app.status)}
                           </span>
                           {app.status === 'draft' && (
                             <Link
                               to="/apply"
-                              className="block mt-3 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 rounded transition-colors"
+                              className="mt-4 text-blue-600 hover:text-blue-700 text-sm flex items-center space-x-1 hover:bg-blue-50 px-2 py-1 font-semibold rounded transition-colors"
                             >
-                              <Edit className="h-3 w-3" />
+                              <Edit className="w-4" />
                               <span>Davom etish</span>
                             </Link>
                           )}
@@ -378,10 +457,43 @@ const Profile: React.FC = () => {
                               <span>Batafsil</span>
                             </button>
                           )}
+                          <span onClick={() => setDeleteModal({ isOpen: true, appId: app.id })}
+                            className='flex gap-2 text-sm items-center justify-center rounded-md px-4 py-1 text-red-500 font-semibold hover:bg-red-50'>
+                            <Trash className='w-4 font-bold'/>O'chirish
+                          </span>
+                          {deleteModal.isOpen && deleteModal.appId === app.id && (                            
+                            <div onClick={() => setDeleteModal({isOpen: false, appId:null})} className='fixed inset-0 bg-black/40 flex items-center justify-center z-50'>
+                              <div onClick={(e) => e.stopPropagation()} className='bg-white/50 backdrop-blur-md rounded-xl p-6 max-w-md w-full border border-white/20 text-white '>
+                                <h1 className='text-xl text-gray-900 font-semibold text-center py-1'>Haqiqatdan ham o'chirmoqchimisiz</h1>
+                                <span className='ml-24 gap-4 flex justify-center pt-4'>
+                                  <button onClick={() => setDeleteModal({isOpen:false, appId:null})} className='bg-green-500 border-none text-white py-2 px-10 rounded-md hover:bg-green-400 active:scale-95 duration-500'>Yo'q</button>
+                                  <button onClick={() => {deleteDocument(app.id); setDeleteModal({isOpen:false, appId:null})}} 
+                                    className='bg-red-500 border-none text-white py-2 px-6 rounded-md hover:bg-red-400 active:scale-95 duration-500'>O'chirish</button>
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
                   ))}
+                  <div className="text-center pt-4">
+                  {visibleCount < applications.length ? (
+                    <button
+                      onClick={() => setVisibleCount((prev) => prev + 3)}
+                      className="flex justify-center items-center mx-auto gap-1 text-blue-600 font-semibold hover:text-blue-700 hover:underline"
+                    >
+                      Yana ko‘rsatish (+3) <ArrowDown />
+                    </button>
+                  ) : applications.length > 1 ? (
+                    <button
+                      onClick={() => setVisibleCount(1)}
+                      className="flex justify-center items-center mx-auto gap-1 text-red-600 font-semibold hover:text-red-700 hover:underline"
+                    >
+                      Yashirish <ArrowUp />
+                    </button>
+                  ) : null}
+                </div>
                 </div>
               ) : (
                 <div className="text-center py-8">
