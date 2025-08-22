@@ -19,6 +19,7 @@ import Profile from './pages/Profile'
 import AdminLogin from './pages/AdminLogin'
 import Admin from './pages/Admin'
 import AuthCallback from './pages/AuthCalback'
+import UserSendFilePage from './pages/Index'
 
 const AppContent = () => {
   const navigate = useNavigate()
@@ -51,8 +52,7 @@ const AppContent = () => {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
-          })
-
+          })          
           if (error) {
             console.error('Error setting session:', error)
           } else {
@@ -68,7 +68,8 @@ const AppContent = () => {
         navigate('/')
         return
       }
-
+      // const token = accessToken || searchParams.get('access_token')
+      
       // Also check current session
       const { data } = await supabase.auth.getSession()
       if (data.session && window.location.pathname === '/login') {
@@ -80,9 +81,11 @@ const AppContent = () => {
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session)
+      // console.log('Auth state changed:', event, session)
       if (event === 'SIGNED_IN' && session) {
-      }
+        // console.log('User signed in:', session.user)
+        initializeStorage()
+      }      
     })
 
     return () => subscription.unsubscribe()
@@ -102,6 +105,7 @@ const AppContent = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path='/userfiles/:id' element={<UserSendFilePage />} />
           <Route path="/auth/callback" element={<AuthCallback/>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
