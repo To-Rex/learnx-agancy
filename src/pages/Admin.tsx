@@ -130,8 +130,6 @@ const Admin: React.FC = () => {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [active, setActive] = useState("connection");
 
-
-
   // Contact get 
   const fetchContacts = async () => {
     setLoading(true)
@@ -242,7 +240,6 @@ const Admin: React.FC = () => {
 
 
   // service 
-  // --- STATES ---
   const [serviceForm, setServiceForm] = useState({
     title: { uz: "", en: "", ru: "" },
     description: { uz: "", en: "", ru: "" },
@@ -438,11 +435,11 @@ const Admin: React.FC = () => {
 
 
   // serviceInputs 
-  // --- STATES ---
-  const [serviceInputForm, setServiceInputForm] = useState({
-    name: { uz: "", en: "", ru: "" },
-    description: { uz: "", en: "", ru: "" }
-  });
+const [serviceInputForm, setServiceInputForm] = useState({
+  name: { uz: "", en: "", ru: "" },
+  description: { uz: "", en: "", ru: "" },
+});
+
 
   // --- ADD SERVICEINPUT ---
   const handleAddServiceInput = () => {
@@ -455,62 +452,95 @@ const Admin: React.FC = () => {
   };
 
   // --- EDIT SERVICE ---
-  const handleEditServiceInput = (service_input: any) => {
+  const handleEditServiceInput = (item: any) => {
+    setEditingItem(item);
+
     setServiceInputForm({
-      name: service_input.name || { uz: "", en: "", ru: "" },
-      description: service_input.description || { uz: "", en: "", ru: "" }
+      name: {
+        uz: item.name?.uz || "",
+        en: item.name?.en || "",
+        ru: item.name?.ru || "",
+      },
+      description: {
+        uz: item.description?.uz || "",
+        en: item.description?.en || "",
+        ru: item.description?.ru || "",
+      },
     });
-    setEditingItem(service_input);
+
     setShowServiceInputModal(true);
   };
 
+
   // --- SAVE SERVICE ---
-  const handleSaveServiceInput = async () => {
+  const handleSaveServiceInput = async (id?: string) => {
+    // name qiymatini stringga olish
+    const nameValue =
+      serviceInputForm.name && typeof serviceInputForm.name === "string"
+        ? serviceInputForm.name
+        : serviceInputForm.name?.uz || "";
+
+    if (!nameValue.trim()) {
+      alert("Nom bo'sh bo'lishi mumkin emas");
+      return;
+    }
+
     const payload = {
-      name: serviceInputForm.name,
-      description: serviceInputForm.description,
+      name: serviceInputForm.name, // object yoki string, backend kutyapti
+      description: serviceInputForm.description || "",
     };
 
     try {
       let res;
-      if (editingItem && editingItem.id) {
-        // update
+
+      // PUT (update) yoki POST (create) tanlash
+      if (editingItem?.id) {
+        // id object bo‘lishi mumkin, shuning uchun .id yoki stringga o‘tkazamiz
+        const inputId = typeof editingItem.id === "string" ? editingItem.id : editingItem.id?.toString();
         res = await fetch(
-          `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/create`,
+          `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/update/${inputId}`,
           {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+              Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
             },
             body: JSON.stringify(payload),
           }
         );
       } else {
-        // create
+        // CREATE
         res = await fetch(
           "https://learnx-crm-production.up.railway.app/api/v1/service-inputs/create",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+              Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
             },
             body: JSON.stringify(payload),
           }
         );
       }
 
+      // Javobni xavfsiz tekshirish
       if (res.ok) {
         setShowServiceInputModal(false);
+        toast('Xizmat saqlandi')
         loadServicesInput();
       } else {
-        const errorData = await res.json();
-        alert("Xizmatni saqlashda xatolik: " + (errorData.message || res.statusText));
+        const text = await res.text();
+        let errorData = null;
+        try {
+          errorData = text ? JSON.parse(text) : null;
+        } catch {
+          errorData = null;
+        }
+        toast("Xizmatni saqlashda xatolik: " + (errorData?.message || res.statusText));
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Kutilmagan xatolik yuz berdi");
+      toast("Kutilmagan xatolik yuz berdi: " + err.message);
     }
   };
 
@@ -2185,9 +2215,9 @@ const Admin: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.05 }}
                                 className="hover:bg-white/5 transition-all duration-300 cursor-pointer"
-                                // onClick={() => {
-                                //   handleEditServiceInput(service_input); // Bosilganda modal ochiladi
-                                // }}
+                              // onClick={() => {
+                              //   handleEditServiceInput(service_input); // Bosilganda modal ochiladi
+                              // }}
                               >
                                 <td className="px-6 py-4 flex justify-between items-center font-semibold text-white">
                                   <h1>{service_input?.name.uz || "-"}</h1>
@@ -2214,6 +2244,27 @@ const Admin: React.FC = () => {
                           )}
                         </tbody>
                       </table>
+                    </div>
+                  )}
+                  {deleteInputModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                        <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-4">
+                          <button
+                            onClick={() => setInputDeleteModalOpen(false)}
+                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                          >
+                            Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmServiceInputDelete}
+                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                          >
+                            O'chirish
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   )}
 
