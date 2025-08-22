@@ -720,6 +720,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
   useEffect(() => {
     fetchPartners()
   }, [])
+  
   const handleSaveStory = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
@@ -1999,7 +2000,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
                         <table className="w-full">
                           <thead className="bg-white/5">
                             <tr>
-                              {['Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
+                              {['№', 'Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
                                 <th
                                   key={header}
                                   className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
@@ -2009,7 +2010,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
                               ))}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-white/10">
+                          <tbody className="divide-y divide-white/10 text-center">
                             {contacts.length === 0 ? (
                               <tr>
                                 <td colSpan={6} className="text-center text-purple-200 py-8">
@@ -2025,6 +2026,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
                                   transition={{ delay: index * 0.05 }}
                                   className="hover:bg-white/5 transition-all duration-300"
                                 >
+                                  <td className=' text-white font-bold'>{index+1}</td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center">
                                       <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
@@ -2037,8 +2039,8 @@ const [serviceInputForm, setServiceInputForm] = useState({
                                   </td>
                                   <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
                                   <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
-                                  <td className="px-6 py-4">
-                                    <div className="max-w-xs truncate text-purple-200">{contact?.message || '-'}</div>
+                                  <td className="px-6 py-4  ">
+                                    <div className="w-[250px] trun text-purple-200">{contact?.message || '-'}</div>
                                   </td>
                                   <td className="px-6 py-4 text-purple-200 text-sm">
                                     {contact?.created_at
