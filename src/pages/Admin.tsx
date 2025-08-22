@@ -130,8 +130,6 @@ const Admin: React.FC = () => {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [active, setActive] = useState("connection");
 
-
-
   // Contact get 
   const fetchContacts = async () => {
     setLoading(true)
@@ -242,7 +240,6 @@ const Admin: React.FC = () => {
 
 
   // service 
-  // --- STATES ---
   const [serviceForm, setServiceForm] = useState({
     title: { uz: "", en: "", ru: "" },
     description: { uz: "", en: "", ru: "" },
@@ -438,7 +435,6 @@ const Admin: React.FC = () => {
 
 
   // serviceInputs 
-  // --- STATES ---
 const [serviceInputForm, setServiceInputForm] = useState({
   name: { uz: "", en: "", ru: "" },
   description: { uz: "", en: "", ru: "" },
