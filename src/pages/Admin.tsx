@@ -1844,42 +1844,36 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className='m-3 p-3 rounded-lg'>
-                    <table className="w-full border border-gray-700 rounded-lg overflow-hidden shadow-md">
+                  <div className='m-5 overflow-hidden border-gray-400 rounded-lg border'>
+                    <table className="w-full  ">
                       <thead className="bg-gradient-to-r from-slate-600 via-purple-600 to-slate-600 text-white text-sm uppercase tracking-wide">
                         <tr>
-                          <th className="p-4 text-left font-semibold">#</th>
-                          <th className="p-4 text-left font-semibold">Mijoz</th>
-                          <th className="p-4 text-left font-semibold">Email</th>
-                          <th className="p-4 text-left font-semibold">Telefon</th>
-                          <th className="p-4 text-left font-semibold">Sana</th>
-                          <th className="p-4 text-left font-semibold">Status</th>
+                          <th className="p-5 text-left font-semibold text-lg">#</th>
+                          <th className="p-5 text-left font-semibold">Mijoz</th>
+                          <th className="p-5 text-left font-semibold">Email</th>
+                          <th className="p-5 text-left font-semibold">Telefon</th>
+                          <th className="p-5 text-left font-semibold">Sana</th>
+                          <th className="p-5 text-left font-semibold">Status</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-700">
+                      <tbody className="divide-y divide-gray-500 text-sm">
                         {application.map((app: any, index: number) => (
-                          <tr
-                            key={app.id || index}
-                            className="hover:bg-slate-400/50 transition-colors duration-200 text-white"
-                          >
+                          <tr key={app.id || index}
+                            className="hover:bg-gray-500/20 transition-colors duration-200 text-white">
                             <td className="px-3 py-4">
-                              <input
-                                type="checkbox"
-                                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
-                              />
+                              <input type="checkbox"
+                                className="w-6 h-6 rounded-lg appearance-none border checked:bg-purple-900 checked:border-gray-100 transition-all duration-200 
+                                relative before:content-['✔'] before:absolute before:-top-[3px] before:text-lg before:left-[4px] before:text-white before:opacity-0 checked:before:opacity-100 border-gray-400 cursor-pointer"/>
                             </td>
                             <td className="px-3 py-4 flex items-center gap-2">
-                              <img
-                                src={app.client?.avatar_url}
-                                alt={app.client?.full_name}
-                                className="rounded-full w-7 h-7 object-cover border border-gray-500"
-                              />
-                              <span className="font-medium">{app.client?.full_name || "—"}</span>
+                              <img src={app.client?.avatar_url} alt={app.client?.full_name}
+                                className="rounded-full w-12 h-12 object-cover border border-gray-500"/>
+                              <span className="font-medium">{app.client?.full_name || "Name keladi"}</span>
                             </td>
                             <td className="px-3 py-4 text-sm truncate max-w-[200px]">
                               {app.client?.email || "—"}
                             </td>
-                            <td className="px-3 py-4">{app.client?.phone || "—"}</td>
+                            <td className="px-3 py-4">{app.client?.phone || "Phone"}</td>
                             <td className="px-3 py-4">
                               {new Date(app.created_at).toLocaleDateString()}
                             </td>
