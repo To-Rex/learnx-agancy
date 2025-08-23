@@ -19,7 +19,8 @@ import {
   Activity,
   Star,
   Image,
-  FilePenLine
+  FilePenLine,
+  Trash
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -198,47 +199,47 @@ const Admin: React.FC = () => {
     image_file: null
   });
 
-  const loadData = async () => {
-    try {
-      // Load applications, users, stories, partners, contacts from Supabase
-      const { data: appData, error: appError } = await supabase.from('applications').select('*');
-      if (appError) throw appError;
-      setApplications(appData);
+  // const loadData = async () => {
+  //   try {
+  //     // Load applications, users, stories, partners, contacts from Supabase
+  //     const { data: appData, error: appError } = await supabase.from('applications').select('*');
+  //     if (appError) throw appError;
+  //     setApplications(appData);
 
-      const { data: userData, error: userError } = await supabase.from('users').select('*');
-      if (userError) throw userError;
-      setUsers(userData);
+  //     const { data: userData, error: userError } = await supabase.from('users').select('*');
+  //     if (userError) throw userError;
+  //     setUsers(userData);
 
-      const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
-      if (storyError) throw storyError;
-      setStories(storyData);
+  //     const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
+  //     if (storyError) throw storyError;
+  //     setStories(storyData);
 
-      const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
-      if (partnerError) throw partnerError;
-      setPartners(partnerData);
+  //     const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
+  //     if (partnerError) throw partnerError;
+  //     setPartners(partnerData);
 
-      const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
-      if (contactError) throw contactError;
-      setContacts(contactData);
+  //     const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
+  //     if (contactError) throw contactError;
+  //     setContacts(contactData);
 
-      // Update stats
-      setStats({
-        totalApplications: appData.length,
-        pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
-        approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
-        rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
-        totalUsers: userData.length,
-        totalServices: services.length,
-        totalStories: storyData.length,
-        totalPartners: partnerData.length,
-        totalContacts: contactData.length,
-        monthlyGrowth: 0, // Implement logic as needed
-        weeklyGrowth: 0, // Implement logic as needed
-      });
-    } catch (err) {
-      console.error('Maʼlumotlarni yuklashda xato:', err);
-    }
-  };
+  //     // Update stats
+  //     setStats({
+  //       totalApplications: appData.length,
+  //       pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
+  //       approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
+  //       rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
+  //       totalUsers: userData.length,
+  //       totalServices: services.length,
+  //       totalStories: storyData.length,
+  //       totalPartners: partnerData.length,
+  //       totalContacts: contactData.length,
+  //       monthlyGrowth: 0, // Implement logic as needed
+  //       weeklyGrowth: 0, // Implement logic as needed
+  //     });
+  //   } catch (err) {
+  //     console.error('Maʼlumotlarni yuklashda xato:', err);
+  //   }
+  // };
 
 
   // service 
@@ -906,27 +907,26 @@ const Admin: React.FC = () => {
     }
   };
 
-
   useEffect(() => {
     loadServices();
     loadStory()
   }, []);
 
-  const handleUpdateApplicationStatus = async (applicationId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('applications')
-        .update({ status: newStatus })
-        .eq('id', applicationId)
+  // const handleUpdateApplicationStatus = async (applicationId: string, newStatus: string) => {
+  //   try {
+  //     const { error } = await supabase
+  //       .from('applications')
+  //       .update({ status: newStatus })
+  //       .eq('id', applicationId)
 
-      if (error) throw error
+  //     if (error) throw error
 
-      toast.success('Ariza holati yangilandi')
-    } catch (error) {
-      console.error('Status update error:', error)
-      toast.error('Holatni yangilashda xatolik')
-    }
-  }
+  //     toast.success('Ariza holati yangilandi')
+  //   } catch (error) {
+  //     console.error('Status update error:', error)
+  //     toast.error('Holatni yangilashda xatolik')
+  //   }
+  // }
 
   // const handleSavePartner = async () => {
   //   try {
@@ -984,7 +984,9 @@ const Admin: React.FC = () => {
   ]
 
   const getStatusColor = (status: string) => {
+    
   }
+
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending':
@@ -998,22 +1000,124 @@ const Admin: React.FC = () => {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
-          <p className="text-purple-200">Iltimos kuting</p>
-        </div>
-      </div>
-    )
+  // APPLICATION
+  const [application, setApplication] = useState([]);
+  const [statusModal, setStatusModal] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+
+  const getStatusColorApp = (status: string) => {
+    switch(status) {
+      case 'pending':
+        return 'bg-yellow-500 text-white';
+      case 'approved':
+        return 'bg-green-500 text-white';
+      case 'rejected':
+        return 'bg-red-500 text-white';
+      default:
+        return 'bg-transparent text-white';
+    }
   }
+
+  const getStatusLabelApp = (status: string) => {
+    switch(status) {
+      case 'pending':
+        return 'Kutilmoqda';
+      case 'approved':
+        return 'Tasdiqlangan';
+      case 'rejected':
+        return 'Rad etilgan';
+      default:
+        return 'Noma\'lum';
+    }
+  }
+
+  const handleOpenStatusModal = (id: string, currentStatus: string) => {
+    setSelectedAppId(id);
+    setSelectedStatus(currentStatus || 'tanlang');
+    setStatusModal(true);
+  }
+
+  const handleStatusChange = async (newStatus: string) => {
+    if (!selectedAppId) return;
+  
+    try {
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/update-status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: selectedAppId,
+            status: newStatus,
+          }),
+        }
+      );
+  
+      if (!res.ok) {
+        throw new Error("Statusni yangilashda xatolik");
+      }
+  
+      toast.success("Status muvaffaqiyatli yangilandi!");
+  
+      // Jadvalni yangilash
+      setApplication((prev) => prev.map((app) => app.id === selectedAppId ? { ...app, status: newStatus } : app));
+  
+      setSelectedStatus(newStatus);
+      setStatusModal(false);
+    } catch (error) {
+      console.error(error);
+      toast.error("Statusni yangilashda xatolik yuz berdi");
+    }
+  };
+  
+  const fetchApplications = async () => {
+    try{
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list", {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem("admin_access_token")}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      if (!res.ok) {
+        throw new Error("Arizalarni olishda xatolik");
+      }
+      const data = await res.json();
+      setApplication(data);
+      console.log("Arizalar muvaffaqiyatli olindi:", data);      
+    }catch(error) {
+      console.error("Arizalarni olishda xatolik:", error);
+      toast.error("Arizalarni olishda xatolik yuz berdi");
+    }
+  }
+
+  useEffect(() => {
+    fetchApplications();
+  }, [])
+
+  const handleSearchApp = async (query: string) => {
+    
+  }
+
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="relative">
+  //           <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
+  //           <div className="absolute inset-0 flex items-center justify-center">
+  //             <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+  //           </div>
+  //         </div>
+  //         <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
+  //         <p className="text-purple-200">Iltimos kuting</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
@@ -1227,7 +1331,13 @@ const Admin: React.FC = () => {
                         <FileText className="h-6 w-6 mr-3 text-blue-400" />
                         Arizalar boshqaruvi
                       </h2>
-                      <div className="flex items-center space-x-3">
+                      <div>
+                        <button 
+                          className='bg-blue-700 text-white py-2 px-4 shadow-lg rounded-lg'>
+                          + Ariza qo'shish
+                        </button>
+                      </div>
+                      {/* <div className="flex items-center space-x-3">
                         <button className="flex items-center space-x-2 px-4 py-2 bg-white/10 text-white rounded-xl hover:bg-white/20 transition-all duration-300">
                           <Search className="h-4 w-4" />
                           <span>Qidirish</span>
@@ -1240,11 +1350,11 @@ const Admin: React.FC = () => {
                           <Download className="h-4 w-4" />
                           <span>Eksport</span>
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 
-                  <div className="overflow-x-auto">
+                  {/* <div className="overflow-x-auto ">
                     <table className="w-full">
                       <thead className="bg-white/5">
                         <tr>
@@ -1315,6 +1425,117 @@ const Admin: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
+                  </div> */}
+
+                  <div className='flex justify-around items-center gap-10 my-3 p-3'>
+                    <div 
+                      className='w-[420px] flex items-center gap-2 text-white border border-gray-200 p-3 rounded-lg shadow-lg'>
+                      <Search />
+                      <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring'/>
+                    </div>
+                    <div 
+                      className='w-[200px] flex items-center gap-2 border border-gray-200 p-3 rounded-lg shadow-lg'>
+                      <select 
+                        className='outline-none bg-transparent text-gray-900'>
+                        <option value="">Barcha statuslar</option>
+                        <option value="">Kutilmoqda</option>
+                        <option value="">Qabul qilindi</option>
+                        <option value="">Rad etildi</option>
+                      </select>
+                    </div>
+                    <div className='text-4xl'>
+                      <button>
+                        <Trash2 className='text-red-500 text-4xl'/>
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className='m-3 p-3 rounded-lg'>
+                    <table className="w-full border border-gray-700 rounded-lg overflow-hidden shadow-md">
+                      <thead className="bg-gradient-to-r from-slate-600 via-purple-600 to-slate-600 text-white text-sm uppercase tracking-wide">
+                        <tr>
+                          <th className="p-4 text-left font-semibold">#</th>
+                          <th className="p-4 text-left font-semibold">Mijoz</th>
+                          <th className="p-4 text-left font-semibold">Email</th>
+                          <th className="p-4 text-left font-semibold">Telefon</th>
+                          <th className="p-4 text-left font-semibold">Sana</th>
+                          <th className="p-4 text-left font-semibold">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-700">
+                        {application.map((app: any, index: number) => (
+                          <tr
+                            key={app.id || index}
+                            className="hover:bg-slate-400/50 transition-colors duration-200 text-white"
+                          >
+                            <td className="px-3 py-4">
+                              <input
+                                type="checkbox"
+                                className="w-5 h-5 rounded border-gray-400 cursor-pointer"
+                              />
+                            </td>
+                            <td className="px-3 py-4 flex items-center gap-2">
+                              <img
+                                src={app.client?.avatar_url}
+                                alt={app.client?.full_name}
+                                className="rounded-full w-7 h-7 object-cover border border-gray-500"
+                              />
+                              <span className="font-medium">{app.client?.full_name || "—"}</span>
+                            </td>
+                            <td className="px-3 py-4 text-sm truncate max-w-[200px]">
+                              {app.client?.email || "—"}
+                            </td>
+                            <td className="px-3 py-4">{app.client?.phone || "—"}</td>
+                            <td className="px-3 py-4">
+                              {new Date(app.created_at).toLocaleDateString()}
+                            </td>
+                            <td
+                              className="px-3 py-4"
+                              onClick={() => handleOpenStatusModal(app.id, app.status)}
+                            >
+                              <button
+                                className={`rounded-2xl px-3 py-1 text-sm font-medium ${getStatusColorApp(
+                                  app.status
+                                )} shadow`}
+                              >
+                                {getStatusLabelApp(app.status)}
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+
+                    {statusModal && (
+                      <div onClick={() => setStatusModal(false)}
+                        className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50">
+                        <div onClick={(e) => e.stopPropagation()}
+                          className="bg-gradient-to-br from-slate-700 via-purple-700 to-slate-700 p-5 rounded-xl shadow-lg w-64 space-y-2">
+                          <h3 className="text-white text-lg font-semibold mb-2">
+                            Statusni tanlang
+                          </h3>
+                          {[
+                            { label: "Kutilmoqda", value: "pending", color: "bg-yellow-300 text-yellow-700" },
+                            { label: "Qabul qilindi", value: "approved", color: "bg-green-300 text-green-700" },
+                            { label: "Rad etildi", value: "rejected", color: "bg-red-300 text-red-700" },
+                          ].map((item, i) => (
+                            <label
+                              key={i}
+                              className={`flex items-center gap-2 rounded-md cursor-pointer font-medium p-2 ${item.color} hover:opacity-80`}>
+                              <input
+                                type="radio"
+                                name="status"
+                                value={item.value}
+                                className="cursor-pointer"
+                                checked={selectedStatus === item.value}
+                                onChange={() => handleStatusChange(item.value)}
+                              />
+                              {item.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
