@@ -1,44 +1,35 @@
-import { Edit, Trash2, X, Check } from "lucide-react";
+import { Edit, Trash2 } from "lucide-react";
+import { VscDebugDisconnect } from "react-icons/vsc";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
 
 interface ServiceInputEditorProps {
     service: any;
     onClose: () => void;
-    onSave: (updatedService: any) => void;
 }
 
-const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClose, onSave }) => {
-    const [loading, setLoading] = useState(true);
+const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClose }) => {
     const [inputs, setInputs] = useState<{ id: string; title: string }[]>([]);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editValue, setEditValue] = useState<string>("");
-    const [newInput, setNewInput] = useState<string>(""); // <-- yangi input nomi uchun state
+    const [loading, setLoading] = useState(true);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [availableInputs, setAvailableInputs] = useState<any[]>([]);
+    const [selectedInputs, setSelectedInputs] = useState<string[]>([]);
+    const [inputToDelete, setInputToDelete] = useState<string | null>(null);
+
     const service_input = localStorage.getItem("service_input");
 
-    const loadServiceInputs = async () => {
+    // --- Load service inputs ---
+    const loadInputs = async () => {
         setLoading(true);
         try {
             const res = await fetch(
                 `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/get-list-by-service/${service_input}`,
-                {
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
-                    },
-                }
+                { headers: { Authorization: `Bearer ${localStorage.getItem("admin_access_token")}` } }
             );
-
             const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Xizmat inputlarini olishda xatolik");
-
-            const serviceInputs = Array.isArray(data) ? data : data.serviceInput || [];
-            setInputs(
-                serviceInputs.map((item: any) => ({
-                    id: item.id,
-                    title: item.name?.uz || item.title?.uz || "No title",
-                }))
-            );
+            const list = Array.isArray(data) ? data : data.serviceInput || [];
+            setInputs(list.map((i: any) => ({ id: i.id, title: i.name?.uz || "No title" })));
         } catch (err: any) {
             toast.error(err.message || "Xatolik yuz berdi");
         } finally {
@@ -46,154 +37,149 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
         }
     };
 
-    const handleEdit = async (id: string) => {
-        if (!editValue.trim()) {
-            toast.error("Nom bo'sh bo'lishi mumkin emas");
-            return;
+    // --- Toggle input ---
+    const toggleInput = (id: string) => {
+        const isSelected = selectedInputs.includes(id);
+
+        if (isSelected) {
+            setSelectedInputs(prev => prev.filter(i => i !== id));
+            setInputs(prev => prev.filter(i => i.id !== id));
+        } else {
+            const input = availableInputs.find(i => i.id === id);
+            if (input) {
+                setSelectedInputs(prev => [...prev, id]);
+                setInputs(prev => [...prev, { id: input.id, title: input.name?.uz || "No title" }]);
+            }
         }
 
-        try {
-            const res = await fetch(
-                `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/${id}`,
-                {
-                    method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
-                    },
-                    body: JSON.stringify({
-                        title: { uz: editValue },
-                    }),
-                }
-            );
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Tahrirlashda xatolik");
-
-            toast.success("Input tahrirlandi");
-            setEditingId(null);
-            setInputs((prev) =>
-                prev.map((item) => (item.id === id ? { ...item, title: editValue } : item))
-            );
-        } catch (err: any) {
-            toast.error(err.message || "Xatolik yuz berdi");
-        }
-    };
-    const service_id = localStorage.getItem('service_input')
-    const handleDelete = async (id: string) => {
-        if (!toast("Xizmat inputi o'chirildi?")) return;
-        try {
-            const res = await fetch(
-                `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/delete/${id}`,
-                {
-                    method: "DELETE",
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
-                    },
-                }
-            );
-
-            if (!res.ok) throw new Error("O'chirishda xatolik");
-            toast.success("Input o'chirildi");
-            setInputs((prev) => prev.filter((item) => item.id !== id));
-        } catch (err: any) {
-            toast.error(err.message || "Xatolik yuz berdi");
-        }
+        // Serverga so‘rovni async tarzda yuboramiz
+        (async () => {
+            try {
+                await fetch(isSelected
+                    ? "https://learnx-crm-production.up.railway.app/api/v1/service-inputs/disconnect"
+                    : "https://learnx-crm-production.up.railway.app/api/v1/service-inputs/connect",
+                    {
+                        method: isSelected ? "DELETE" : "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${localStorage.getItem("admin_access_token")}`,
+                        },
+                        body: JSON.stringify({ service_id: service_input, input_id: id }),
+                    }
+                );
+            } catch (err: any) {
+                toast.error(err.message || "Xatolik yuz berdi");
+                // Xatolik bo‘lsa state ni tiklash mumkin
+                loadInputs();
+            }
+        })();
     };
 
-    // Yangi input qo'shish
-    const handleAdd = async () => {
-        if (!newInput.trim()) {
-            toast.error("Nom bo'sh bo'lishi mumkin emas");
-            return;
+
+
+    // --- Open add modal ---
+    const openAddModal = async () => {
+        setShowAddModal(true);
+        if (availableInputs.length === 0) {  // faqat birinchi ochishda fetch qilamiz
+            try {
+                const resAll = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/service-inputs/get-list`, {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("admin_access_token")}` },
+                });
+                const dataAll = await resAll.json();
+                setAvailableInputs(Array.isArray(dataAll) ? dataAll : dataAll.serviceInput || []);
+            } catch (err: any) {
+                toast.error(err.message || "Xatolik yuz berdi");
+            }
         }
+        setSelectedInputs(inputs.map(i => i.id)); // serverdan emas, state dan
+    };
 
+
+    // --- Delete input ---
+    const deleteInput = async (id: string) => {
         try {
-            const res = await fetch(
-                `https://learnx-crm-production.up.railway.app/api/v1/service-inputs/create/${service_input}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
-                    },
-                    body: JSON.stringify({
-                        service: service_input,
-                        name: { uz: newInput },
-                    }),
-                }
-            );
-
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || "Qo'shishda xatolik");
-
-            toast.success("Yangi input qo'shildi");
-            setInputs((prev) => [...prev, { id: data.id, title: newInput }]);
-            setNewInput(""); // inputni tozalash
+            await fetch("https://learnx-crm-production.up.railway.app/api/v1/service-inputs/disconnect", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("admin_access_token")}` },
+                body: JSON.stringify({ service_id: service_input, input_id: id }),
+            });
+            setInputs(prev => prev.filter(i => i.id !== id));
+            setInputToDelete(null);
+            toast.success("Input o‘chirildi");
         } catch (err: any) {
             toast.error(err.message || "Xatolik yuz berdi");
         }
     };
 
     useEffect(() => {
-        loadServiceInputs();
+        loadInputs();
     }, [service]);
 
     if (loading) return <div className="p-4 text-white">Yuklanmoqda...</div>;
 
     return (
         <div className="text-white">
+            {/* Inputs list */}
             <div className="space-y-2">
                 {inputs.length === 0 ? (
                     <p className="text-white/70">Inputlar mavjud emas</p>
                 ) : (
-                    inputs.map((input) => (
-                        <div
-                            key={input.id}
-                            className="text-white p-4 border border-white/20 rounded-lg flex justify-between items-center hover:bg-white/5 transition-all duration-300"
-                        >
-                            {editingId === input.id ? (
-                                <input
-                                    // value={editValue}
-                                    // onChange={(e) => setEditValue(e.target.value)}
-                                    className="bg-transparent border-b border-white/40 flex-1 mr-4 outline-none text-white"
-                                    autoFocus
-                                />
-                            ) : (
-                                <h1>{input.title}</h1>
-                            )}
-                            <div className="flex justify-around items-center">
-                                <button
-                                    // onClick={() => {
-                                    //     setEditingId(input.id);
-                                    //     setEditValue(input.title);
-                                    // }}
-                                    className="text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
-                                >
-                                    <Edit className="h-5 w-5" />
-                                </button>
-
-                                <button
-                                    onClick={() => handleDelete(input.id)}
-                                    className="text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300 ml-5"
-                                >
-                                    <Trash2 className="h-5 w-5" />
-                                </button>
+                    inputs.map(input => (
+                        <div key={input.id} className="flex justify-between items-center p-4 border border-white/20 rounded-lg hover:bg-white/5 transition">
+                            <h1>{input.title}</h1>
+                            <div className="flex items-center space-x-2">
+                                <button className="text-blue-400"><Edit className="h-5 w-5" /></button>
+                                <button onClick={() => setInputToDelete(input.id)} className="text-red-400">
+                                    <VscDebugDisconnect  className="h-6 w-7"/>
+                                    </button>
                             </div>
                         </div>
                     ))
                 )}
             </div>
 
-            {/* Yangi input qo'shish formasi */}
-            <div className="flex items-center justify-center space-x-2 pt-4">
-                <button
-                    // onClick={handleAdd}
-                    className="px-4 py-2 w-1/3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-                >
-                    Qo'shish
-                </button>
+            {/* Add button */}
+            <div className="flex justify-center mt-4">
+                <button onClick={openAddModal} className="px-4 py-2 bg-green-500 rounded hover:bg-green-600">Qo'shish</button>
             </div>
+
+            {/* Delete modal */}
+            {inputToDelete && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-lg">
+                        <h3 className="text-white mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-2">
+                            <button onClick={() => setInputToDelete(null)} className="px-4 py-2 bg-gray-600 rounded">Bekor qilish</button>
+                            <button onClick={() => deleteInput(inputToDelete)} className="px-4 py-2 bg-red-600 rounded">O'chirish</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Add modal */}
+            {showAddModal && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-lg max-h-[80vh] overflow-y-auto w-full max-w-md">
+                        <h2 className="text-white mb-4">Inputlarni tanlang</h2>
+                        <div className="space-y-2">
+                            {availableInputs.map(input => (
+                                <label key={input.id} className="flex items-center space-x-2 text-white border p-2 rounded">
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedInputs.includes(input.id)}
+                                        onChange={() => toggleInput(input.id)}
+                                        className="accent-green-500"
+                                    />
+                                    <span>{input.name?.uz || "No title"}</span>
+                                </label>
+                            ))}
+                        </div>
+                        <div className="flex justify-end mt-4">
+                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-red-500 rounded">Done</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
