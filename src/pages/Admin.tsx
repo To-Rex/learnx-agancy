@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import {
@@ -20,13 +20,20 @@ import {
   Star,
   Image,
   FilePenLine,
-  Trash
+  Phone,
+  MapPin,
+  MoreHorizontal,
+  ArrowDown,
+  ArrowUp,
+  ChevronDown
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
 import ServiceInputEditor from '../components/service'
+import ClientDetailsPage from './ClientsPage'
+
 
 // Define Services interface for type safety
 type Service = {
@@ -59,6 +66,14 @@ interface PartnerForm {
     ru: string;
   };
   image: string;
+}
+interface Client {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  avatar_url?: string;
+  created_at: string;
 }
 
 const Admin: React.FC = () => {
@@ -112,6 +127,16 @@ const Admin: React.FC = () => {
   const [stories, setStories] = useState([])
   const [partners, setPartners] = useState([])
   const [contacts, setContacts] = useState([])
+  const [clients, setClients] = useState<any[]>([]); // default bo‘sh array
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false)
+
+
+
 
   // Modal states
   const [editingItem, setEditingItem] = useState(null)
@@ -123,13 +148,25 @@ const Admin: React.FC = () => {
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [showServiceInputModal, setShowServiceInputModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteClientsModalOpen, setClientsDeleteModalOpen] = useState(false);
+  const [deleteClientsInputModalOpen, setClientsInputDeleteModalOpen] = useState(false);
   const [deleteInputModalOpen, setInputDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
+  const [clientsToDelete, setClientsToDelete] = useState<string | null>(null);
   const [serviceInputToDelete, setServiceInputToDelete] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [active, setActive] = useState("connection");
+  const limit = 10
+  const [sortField, setSortField] = useState("full_name"); // default bo‘yicha ism bo‘yicha sortlash
+  const [sortDesc, setSortDesc] = useState(true); // default bo‘yicha DESC
+  const [searchField, setSearchField] = useState("email"); // qidiruv fieldi (agar kerak bo‘lsa)
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+
+
 
   // Contact get 
   const fetchContacts = async () => {
@@ -436,10 +473,10 @@ const Admin: React.FC = () => {
 
 
   // serviceInputs 
-const [serviceInputForm, setServiceInputForm] = useState({
-  name: { uz: "", en: "", ru: "" },
-  description: { uz: "", en: "", ru: "" },
-});
+  const [serviceInputForm, setServiceInputForm] = useState({
+    name: { uz: "", en: "", ru: "" },
+    description: { uz: "", en: "", ru: "" },
+  });
 
 
   // --- ADD SERVICEINPUT ---
@@ -717,7 +754,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
   useEffect(() => {
     fetchPartners()
   }, [])
-  
+
   const handleSaveStory = async () => {
     try {
       const token = localStorage.getItem("your_access_token_key_here") || "";
@@ -992,26 +1029,182 @@ const [serviceInputForm, setServiceInputForm] = useState({
   //   }
   // }
 
+  const handleSignOut = async () => {
+    await signOut()
+    navigate('/admin/login')
+
+  }
 
   const fetchPartners = async () => {
     const { data, error } = await supabase.from('partners').select('*');
     if (!error) setPartners(data);
   };
 
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/admin/login')
+
+  // Sort uchun select
+  const handleSortFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSortField(value);
+    fetchClients(searchQuery, searchField, value, sortDesc);
+  };
+  const handleSearchFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSearchField(value);
+    fetchClients(searchQuery, value, sortField, sortDesc);
+  };
+
+  // ASC/DESC toggle
+  const toggleSortOrder = () => {
+    const newOrder = !sortDesc;
+    setSortDesc(newOrder);
+    fetchClients(searchQuery, searchField, sortField, newOrder);
+  };
+
+
+  const fetchClients = async (
+    searchValue = "",
+    searchField = "email",
+    sortField = "full_name",
+    sortDesc = true,
+    page = 1
+  ) => {
+    try {
+      const token = localStorage.getItem("admin_access_token") || "";
+      const offset = (page - 1) * limit;
+
+      const params = new URLSearchParams({
+        sort_field: sortField,
+        sort_desc: String(sortDesc),
+        limit: String(limit),
+        offset: String(offset),
+      });
+
+      if (searchValue.trim()) {
+        params.append("search_field", searchField);
+        params.append("search_val", searchValue.trim());
+      }
+
+      const res = await fetch(
+        `https://learnx-crm-production.up.railway.app/api/v1/clients/get-rich-list?${params.toString()}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (!res.ok) throw new Error("Ma'lumot yuklanmadi");
+
+      const data = await res.json();
+      const clientsData = Array.isArray(data.results) ? data.results : data;
+
+      setClients(clientsData);
+      setCurrentPage(page);
+      setHasNextPage(clientsData.length === limit); 
+
+    } catch (err) {
+      console.error("Xatolik:", err);
+      setClients([]);
+      setCurrentPage(1);
+      setHasNextPage(false);
+    }
+  };
+
+
+
+
+
+
+
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
+
+  // useEffect — dastlabki yuklash
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  // search input o‘zgarganda API chaqirish
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    fetchClients(value, searchField, sortField, sortDesc);
+    navigate(`?search_val=${encodeURIComponent(value)}&search_field=${searchField}`, { replace: true });
+  };
+
+
+  const handleDeleteClientsClick = (id: string) => {
+    setClientsToDelete(id);
+    setClientsDeleteModalOpen(true);
+  };
+
+  const handleConfirmClientsDelete = async () => {
+    if (!clientsToDelete) return;
+
+    try {
+      const token = localStorage.getItem('admin_access_token') || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/clients/delete/${clientsToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        toast("Mijoz o'chirildi ")
+        fetchClients(); // Ma'lumotlarni yangilash
+        setClientsDeleteModalOpen(false);
+        setClientsToDelete(null);
+      } else {
+        const errorData = await res.json();
+        toast(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Xizmatni o'chirishda xatolik:", error);
+      toast("Xizmatni o'chirishda xatolik yuz berdi");
+    }
+  };
+
+
+
+  // vaqtni hisoblash helper
+  function getLastContact(createdAt: string): string {
+    const now = new Date();
+    const createdDate = new Date(createdAt);
+    const diffMs = now.getTime() - createdDate.getTime();
+
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffMinutes = Math.floor(diffMs / (1000 * 60));
+    const diffSeconds = Math.floor(diffMs / 1000);
+
+    if (diffDays > 0) return `${diffDays} kun oldin`;
+    if (diffHours > 0) return `${diffHours} soat oldin`;
+    if (diffMinutes > 0) return `${diffMinutes} minut oldin`;
+    return `${diffSeconds} sekund oldin`;
   }
+
+
 
   const tabs = [
     { id: 'dashboard', name: 'Boshqaruv paneli', icon: BarChart3, color: 'from-blue-500 to-purple-600' },
+    { id: 'clients', name: 'Mijozlar', icon: Users, color: "from-violet-700 to-violet-400 " },
     { id: 'applications', name: 'Arizalar', icon: FileText, color: 'from-green-500 to-teal-600' },
     { id: 'services', name: 'Xizmatlar', icon: Settings, color: 'from-orange-500 to-red-600' },
     { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, color: 'from-purple-500 to-pink-600' },
     { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
     { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' },
     { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' }
-  ]
+  ];
+
 
   const getStatusColor = (status: string) => {
     
@@ -1347,6 +1540,176 @@ const [serviceInputForm, setServiceInputForm] = useState({
                   </div>
                 </motion.div>
               )}
+
+              {/* CLIENT LIST */}
+              {activeTab === "clients" && (
+                <div className="bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6">
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-white">Client List</h2>
+
+                    <div className="flex items-center space-x-4">
+                      {/* --- Sort va Filter UI --- */}
+                      <div className="relative" ref={dropdownRef}>
+                        <button
+                          onClick={() => setOpen(!open)}
+                          className="flex items-center gap-2 bg-violet-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700"
+                        >
+                          Filtr <ChevronDown className="w-4 h-4" />
+                        </button>
+
+                        {open && (
+                          <div className="absolute right-0 mt-2 w-56 bg-white/10 border border-white/20 backdrop-blur-md rounded-xl shadow-xl p-4 z-50 text-white space-y-3">
+                            <div className="relative">
+                              <label className="text-sm text-white mb-1 block">Sort Field</label>
+                              <select
+                                value={sortField}
+                                onChange={handleSortFieldChange}
+                                className="mt-1 w-full px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 appearance-none"
+                              >
+                                <option value="full_name">Ism</option>
+                                <option value="email">Email</option>
+                                <option value="phone">Telefon</option>
+                              </select>
+                              <ChevronDown className="absolute right-3 top-9 w-4 h-4 text-white pointer-events-none" />
+                            </div>
+
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-gray-300">Sort Order</span>
+                              <button
+                                onClick={toggleSortOrder}
+                                className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 flex items-center gap-2"
+                              >
+                                {sortDesc ? <>DESC <ArrowDown className="w-4 h-4" /></> : <>ASC <ArrowUp className="w-4 h-4" /></>}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Search Field */}
+                      <div className="relative w-[120px] mr-2">
+                        <select
+                          value={searchField}
+                          onChange={handleSearchFieldChange}
+                          className="mt-1 w-full px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 appearance-none"
+                        >
+                          <option value="full_name">Ism</option>
+                          <option value="email">Email</option>
+                          <option value="phone">Telefon</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-4 w-4 h-4 text-white pointer-events-none" />
+                      </div>
+
+                      <div className="relative w-72">
+                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          placeholder="Qidirish..."
+                          className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          value={searchQuery}
+                          onChange={handleSearchChange}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 overflow-y-auto max-h-[70vh]">
+                    {clients.length > 0 ? (
+                      clients.map((client: any, index: number) => (
+                        <motion.div
+                          key={client.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="flex justify-between items-center rounded-xl p-4 border border-white/20 hover:bg-white/10 transition-all duration-300"
+                        >
+                          {/* Chap qism: avatar va info */}
+                          <div className="flex items-center space-x-4">
+                            {client.avatar_url ? (
+                              <img
+                                src={client.avatar_url}
+                                alt={client.full_name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                                {client.full_name?.charAt(0)?.toUpperCase()}
+                                {client.full_name?.split(" ")[1]?.charAt(0)?.toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="text-white font-semibold">{client.full_name}</h3>
+                              <div className="flex items-center space-x-3 text-gray-400 text-sm">
+                                <span className="flex items-center"><Mail className="w-4 h-4 mr-1" />{client.email || "—"}</span>
+                                <span className="flex items-center"><Phone className="w-4 h-4 mr-1" />{client.phone || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* O'ng qism: oxirgi kontakt va action tugmalar */}
+                          <div className="flex items-center space-x-6">
+                            <div className="text-right text-white text-sm">
+                              <p>{getLastContact(client.created_at)}</p>
+                              <p className="text-gray-400 text-xs">Ro'yxatdan o'tgan</p>
+                            </div>
+
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => { setSelectedClientId(client.id); setActiveTab("clientDetails"); }}
+                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </button>
+
+                              <button
+                                onClick={() => handleDeleteClientsClick(client.id)}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <p className="text-center text-gray-400">Hech narsa topilmadi</p>
+                    )}
+                  </div>
+
+                  {/* PAGINATION */}
+                  <div className="flex justify-center items-center mt-4 space-x-4">
+                    {/* Oldingi tugma */}
+                    <button
+                      onClick={() => currentPage > 1 && fetchClients(searchQuery, searchField, sortField, sortDesc, currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className={`px-4 py-2 rounded-lg ${currentPage === 1
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-violet-500 text-white hover:bg-purple-700"
+                        }`}
+                    >
+                      Oldingi
+                    </button>
+
+                    <span className="text-white">{currentPage}</span>
+
+                    {/* Keyingi tugma */}
+                    <button
+                      onClick={() => fetchClients(searchQuery, searchField, sortField, sortDesc, currentPage + 1)}
+                      disabled={!hasNextPage}
+                      className={`px-4 py-2 rounded-lg ${!hasNextPage
+                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                          : "bg-violet-500 text-white hover:bg-purple-700"
+                        }`}
+                    >
+                      Keyingi
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
+
+
 
               {activeTab === 'applications' && (
                 <motion.div
@@ -2195,7 +2558,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
+                    className="bg-white/10  rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
                   >
                     <div className="p-8 border-b border-white/20 flex-shrink-0">
                       <h2 className="text-2xl font-bold text-white flex items-center">
@@ -2238,7 +2601,7 @@ const [serviceInputForm, setServiceInputForm] = useState({
                                   transition={{ delay: index * 0.05 }}
                                   className="hover:bg-white/5 transition-all duration-300"
                                 >
-                                  <td className=' text-white font-bold'>{index+1}</td>
+                                  <td className=' text-white font-bold'>{index + 1}</td>
                                   <td className="px-6 py-4">
                                     <div className="flex items-center">
                                       <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
@@ -2607,6 +2970,9 @@ const [serviceInputForm, setServiceInputForm] = useState({
                     </div>
                   )}
                 </div>
+              )}
+              {activeTab === "clientDetails" && (
+                <ClientDetailsPage clientId={selectedClientId} />
               )}
 
             </AnimatePresence >
