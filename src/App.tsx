@@ -22,6 +22,7 @@ import AuthCallback from './pages/AuthCalback'
 import UserSendFilePage from './pages/Index'
 import { Toaster } from 'react-hot-toast'
 import ScrollToTop from './components/ScrollTop'
+import ClientDetailsPage from './pages/ClientsPage'
 
 const AppContent = () => {
   const navigate = useNavigate()
@@ -54,7 +55,7 @@ const AppContent = () => {
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken
-          })          
+          })
           if (error) {
             console.error('Error setting session:', error)
           } else {
@@ -71,7 +72,7 @@ const AppContent = () => {
         return
       }
       // const token = accessToken || searchParams.get('access_token')
-      
+
       // Also check current session
       const { data } = await supabase.auth.getSession()
       if (data.session && window.location.pathname === '/login') {
@@ -87,7 +88,7 @@ const AppContent = () => {
       if (event === 'SIGNED_IN' && session) {
         // console.log('User signed in:', session.user)
         initializeStorage()
-      }      
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -108,8 +109,9 @@ const AppContent = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/profile" element={<Profile />} />
           <Route path='/userfiles/:id' element={<UserSendFilePage />} />
-          <Route path="/auth/callback" element={<AuthCallback/>} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin/client/:id" element={<ClientDetailsPage/>} />
           <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
         </Routes>
@@ -148,8 +150,8 @@ function App() {
         <Router>
           <ScrollToTop />
           <AppContent />
-          <Toaster 
-            position="top-right" reverseOrder={false} toastOptions={{}}/>
+          <Toaster
+            position="top-right" reverseOrder={false} toastOptions={{}} />
         </Router>
       </AuthProvider>
     </LanguageProvider>
