@@ -280,8 +280,8 @@ const Admin: React.FC = () => {
   //   }
   // };
 
-
-  // service 
+  const [features, setFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
+  const [newFeatures, setNewFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
   const [serviceForm, setServiceForm] = useState({
     title: { uz: "", en: "", ru: "" },
     description: { uz: "", en: "", ru: "" },
@@ -289,11 +289,8 @@ const Admin: React.FC = () => {
     price: "",
     features: [],
   });
-
   // features uchun alohida tillar state
-  const [featuresUz, setFeaturesUz] = useState("");
-  const [featuresEn, setFeaturesEn] = useState("");
-  const [featuresRu, setFeaturesRu] = useState("");
+
 
   // --- ADD SERVICE ---
   const handleAddService = () => {
@@ -305,11 +302,47 @@ const Admin: React.FC = () => {
       price: "",
       features: [],
     });
-    setFeaturesUz("");
-    setFeaturesEn("");
-    setFeaturesRu("");
+    setFeatures([]); // <- bu yerda alohida uz/en/ru yo'q
+    setNewFeatures([]);
     setShowServiceModal(true);
   };
+
+  const handleDeleteFeature = async (idx: number, isNew = false) => {
+    // Yangilangan massivni oldindan hisoblab olish
+    let updatedFeatures = isNew
+      ? newFeatures.filter((_, i) => i !== idx)
+      : features.filter((_, i) => i !== idx);
+
+    // Frontend state-ni yangilash
+    if (isNew) {
+      setNewFeatures(updatedFeatures);
+    } else {
+      setFeatures(updatedFeatures);
+    }
+
+    // Serverga butun yangilangan obyektni yuborish
+    try {
+      await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/update/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: service.title,
+          description: service.description,
+          icon: service.icon,
+          price: service.price,
+          features: updatedFeatures   // yangilangan massiv
+        })
+      });
+    } catch (error) {
+      console.error("Serverdan o‘chirishda xatolik:", error);
+    }
+  };
+
+
+
+
+
+
 
   // --- EDIT SERVICE ---
   const handleEditService = (service: any) => {
@@ -322,34 +355,23 @@ const Admin: React.FC = () => {
     });
 
     // Inputlarni to‘ldirish
-    setFeaturesUz((service.features || []).map(f => f.uz).join(", "));
-    setFeaturesEn((service.features || []).map(f => f.en).join(", "));
-    setFeaturesRu((service.features || []).map(f => f.ru).join(", "));
-
+    setFeatures(service.features || []); // <- bu yerda alohida uz/en/ru yo'q
+    setNewFeatures([]); // yangi qo‘shilayotganlar bo‘sh
     setEditingItem(service);
     setShowServiceModal(true);
   };
 
-  // --- SAVE SERVICE ---
-  const handleSaveService = async () => {
-    // Inputlardan massivga yig‘ish
-    const uzArr = featuresUz.split(",").map(f => f.trim());
-    const enArr = featuresEn.split(",").map(f => f.trim());
-    const ruArr = featuresRu.split(",").map(f => f.trim());
 
-    const features = uzArr.map((_, i) => ({
-      uz: uzArr[i] || "",
-      en: enArr[i] || "",
-      ru: ruArr[i] || ""
-    }));
+
+  // Inputlardan massivga yig‘ish
+  const handleSaveService = async () => {
+    const allFeatures = [...features, ...newFeatures]; // hamma xususiyatlar bir arrayda
 
     const payload = {
-      title: serviceForm.title,
-      description: serviceForm.description,
-      icon: serviceForm.icon,
-      price: serviceForm.price,
-      features
+      ...serviceForm,
+      features: allFeatures
     };
+
 
     try {
       let res;
@@ -392,6 +414,10 @@ const Admin: React.FC = () => {
       console.error(err);
       alert("Kutilmagan xatolik yuz berdi");
     }
+
+    setNewFeaturesUz([]);
+    setNewFeaturesEn([]);
+    setNewFeaturesRu([]);
   };
 
   const handleDeleteServiceClick = (id: string) => {
@@ -1101,7 +1127,7 @@ const Admin: React.FC = () => {
 
       setClients(clientsData);
       setCurrentPage(page);
-      setHasNextPage(clientsData.length === limit); 
+      setHasNextPage(clientsData.length === limit);
 
     } catch (err) {
       console.error("Xatolik:", err);
@@ -1213,7 +1239,7 @@ const Admin: React.FC = () => {
 
 
   const getStatusColor = (status: string) => {
-    
+
   }
 
   const getStatusText = (status: string) => {
@@ -1229,7 +1255,6 @@ const Admin: React.FC = () => {
     }
   }
 
-  
 
   // APPLICATION
   const [application, setApplication] = useState([]);
@@ -1255,7 +1280,7 @@ const Admin: React.FC = () => {
   };
 
   const getStatusColorApp = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'pending':
         return 'bg-yellow-500 text-white';
       case 'approved':
@@ -1268,7 +1293,7 @@ const Admin: React.FC = () => {
   }
 
   const getStatusLabelApp = (status: string) => {
-    switch(status) {
+    switch (status) {
       case 'pending':
         return 'Kutilmoqda';
       case 'approved':
@@ -1288,7 +1313,7 @@ const Admin: React.FC = () => {
 
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedAppId) return;
-  
+
     try {
       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/update-status`,
         {
@@ -1303,13 +1328,16 @@ const Admin: React.FC = () => {
           }),
         }
       );
-  
+
       if (!res.ok) {
         throw new Error("Statusni yangilashda xatolik");
       }
+
       toast.success("Status muvaffaqiyatli yangilandi!");
+
       // Jadvalni yangilash
       setApplication((prev) => prev.map((app) => app.id === selectedAppId ? { ...app, status: newStatus } : app));
+
       setSelectedStatus(newStatus);
       setStatusModal(false);
     } catch (error) {
@@ -1317,18 +1345,10 @@ const Admin: React.FC = () => {
       toast.error("Statusni yangilashda xatolik yuz berdi");
     }
   };
-  
-  const fetchApplications = async (appPage = 1) => {
-    const appLimit = 7;
-    // sort_field = "status"
-    // sort_desc = true
-    // service_id = ""
-    // client_id = ""
-    // status = "draft"
-    // partner_id = ""
+
+  const fetchApplications = async () => {
     try {
-      const offset = (appPage - 1) * appLimit
-      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list?page=${appPage}`, {
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list", {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("admin_access_token")}`,
@@ -1341,9 +1361,7 @@ const Admin: React.FC = () => {
       }
   
       const data = await res.json();
-      setApplication(data.results || data); 
-      setAppCurrentPage(appPage);
-      setAppHasNextPage((data.results || data).length === appLimit); 
+      setApplication(data);
       console.log("Arizalar muvaffaqiyatli olindi:", data);
     } catch (error) {
       console.error("Arizalarni olishda xatolik:", error);
@@ -1351,76 +1369,12 @@ const Admin: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    fetchApplications(appCurrentPage);
+  // useEffect(() => {
+  //   fetchApplications(appCurrentPage);
 
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [appCurrentPage])
+  // const handleSearchApp = async (query: string) => {
 
-  const handleAppNextPage = () => {
-    if (appHasNextPage) {
-      setAppCurrentPage((prev) => prev + 1);
-      fetchApplications(appCurrentPage + 1);
-    }
-  };
-  
-  const handleAppPrevPage = () => {
-    if (appCurrentPage > 1) {
-      setAppCurrentPage((prev) => prev - 1);
-      fetchApplications(appCurrentPage - 1);
-    }
-  };
-  
-  const filterApp = application.filter(app => {
-    const name = app.client?.full_name?.toLowerCase() || '';
-    const phone = app.client?.phone?.toLowerCase() || '';
-    const searchTerm = search.toLowerCase();
-  
-    const matchesSearch = name.includes(searchTerm) || phone.includes(searchTerm);
-    const matchesStatus = selectedStatus ? app?.status === selectedStatus : true;
-  
-    return matchesSearch && matchesStatus;
-  });
-
-  const handleCheckboxChange = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
-    );
-  };
-
-  const handleDeleteApp = async () => {
-    if (selectedIds.length === 0) return;
-  
-    const confirmDelete = window.confirm(`${selectedIds.length} ta arizani o‘chirilsinmi?`);
-    if (!confirmDelete) return;
-  
-    try {
-      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/applications/delete", {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ids: selectedIds }),
-      })
-      fetchApplications();
-      setApplications(prev => prev.filter(app => !selectedIds.includes(app.id)));
-      setSelectedIds([]);
-      toast.success('Tanlangan arizalar o‘chirildi!');
-    } catch (err) {
-      console.error(err);
-      toast.error('O‘chirishda xatolik yuz berdi');
-    }
-  };
-  
+  // }
 
   // if (loading) {
   //   return (
@@ -1709,9 +1663,9 @@ const Admin: React.FC = () => {
                           onChange={handleSearchFieldChange}
                           className="mt-1 w-full px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 appearance-none"
                         >
-                          <option value="full_name">Ism</option>
-                          <option value="email">Email</option>
-                          <option value="phone">Telefon</option>
+                          <option className='bg-[#714895]' value="full_name">Ism</option>
+                          <option className='bg-[#714895]' value="email">Email</option>
+                          <option className='bg-[#714895]' value="phone">Telefon</option>
                         </select>
                         <ChevronDown className="absolute right-3 top-4 w-4 h-4 text-white pointer-events-none" />
                       </div>
@@ -1729,7 +1683,7 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4 overflow-y-auto max-h-[70vh]">
+                  <div className="space-y-4 overflow-y-auto max-h-[69vh]">
                     {clients.length > 0 ? (
                       clients.map((client: any, index: number) => (
                         <motion.div
@@ -1799,8 +1753,8 @@ const Admin: React.FC = () => {
                       onClick={() => currentPage > 1 && fetchClients(searchQuery, searchField, sortField, sortDesc, currentPage - 1)}
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded-lg ${currentPage === 1
-                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                          : "bg-violet-500 text-white hover:bg-purple-700"
+                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        : "bg-violet-500 text-white hover:bg-purple-700"
                         }`}
                     >
                       Oldingi
@@ -1813,17 +1767,37 @@ const Admin: React.FC = () => {
                       onClick={() => fetchClients(searchQuery, searchField, sortField, sortDesc, currentPage + 1)}
                       disabled={!hasNextPage}
                       className={`px-4 py-2 rounded-lg ${!hasNextPage
-                          ? "bg-gray-600 text-gray-400 cursor-not-allowed"
-                          : "bg-violet-500 text-white hover:bg-purple-700"
+                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        : "bg-violet-500 text-white hover:bg-purple-700"
                         }`}
                     >
                       Keyingi
                     </button>
                   </div>
+                  {deleteClientsModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                        <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-4">
+                          <button
+                            onClick={() => setClientsDeleteModalOpen(false)}
+                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                          >
+                            Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmClientsDelete}
+                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                          >
+                            O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
+
               )}
-
-
 
               {activeTab === 'applications' && (
                 <motion.div
@@ -1840,7 +1814,7 @@ const Admin: React.FC = () => {
                         Arizalar boshqaruvi
                       </h2>
                       <div>
-                        <button 
+                        <button
                           className='bg-blue-700 text-white py-2 px-4 shadow-lg rounded-lg'>
                           + Ariza qo'shish
                         </button>
@@ -1935,40 +1909,25 @@ const Admin: React.FC = () => {
                     </table>
                   </div> */}
 
-                  <div className='flex justify-around items-center gap-10 my-6 px-6'>
-                    <div 
-                      className='w-[420px] flex items-center gap-2 text-white border border-white/50 p-[10px] rounded-lg'>
+                  <div className='flex justify-around items-center gap-10 my-3 p-3'>
+                    <div
+                      className='w-[420px] flex items-center gap-2 text-white border border-gray-200 p-3 rounded-lg shadow-lg'>
                       <Search />
-                      <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring'
-                        onChange={(e) => setSearch(e.target.value)}/>
+                      <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring' />
                     </div>
-                    <div className='flex justify-center items-center gap-2 w-[170px] border border-white/50 p-3 text-center rounded-lg relative' ref={dropdownRef}>
-                      <div onClick={() => setIsOpen(!isOpen)}
-                        className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-100">
-                        <span>
-                          {statuses.find(s => s.value === selectedStatus)?.label || "Barcha statuslar"}
-                        </span>
-                        <div className="text-white text-sm">▼</div>
-                      </div>
-                      {isOpen && (
-                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-slate-600 via-purple-600 to-slate-600 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
-                          {statuses.map((status) => (
-                            <div
-                              key={status.value}
-                              onClick={() => handleSelect(status.value)}
-                              className="p-3 hover:bg-slate-300/20 cursor-pointer">
-                              {status.label}
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div
+                      className='w-[200px] flex items-center gap-2 border border-gray-200 p-3 rounded-lg shadow-lg'>
+                      <select
+                        className='outline-none bg-transparent text-gray-900'>
+                        <option value="">Barcha statuslar</option>
+                        <option value="">Kutilmoqda</option>
+                        <option value="">Tasdiqlangan</option>
+                        <option value="">Rad etildi</option>
+                      </select>
                     </div>
                     <div className='text-4xl'>
-                      <button 
-                        onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
-                        className={`${selectedIds.length > 0 ? 'bg-red-700 hover:bg-red-800' : 'bg-gray-400 cursor-not-allowed'} p-2 rounded-lg`}
-                        disabled={selectedIds.length === 0}>
-                        <Trash2 className='text-white text-4xl'/>
+                      <button>
+                        <Trash2 className='text-red-500 text-4xl' />
                       </button>
                     </div>
                   </div>
@@ -2074,7 +2033,6 @@ const Admin: React.FC = () => {
                   </div>
                 </motion.div>
               )}
-
               {activeTab === "services" && (
                 <>
                   {/* Header va Yangi Xizmat tugmasi */}
@@ -2084,7 +2042,7 @@ const Admin: React.FC = () => {
                       Xizmatlar boshqaruvi
                     </h2>
                     <button
-                      onClick={handleAddService} // Yangi xizmat qo‘shish funksiyasi
+                      onClick={handleAddService}
                       className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       <Plus className="h-4 w-4" />
@@ -2098,7 +2056,6 @@ const Admin: React.FC = () => {
                       <p className="text-white">Hech qanday xizmat topilmadi</p>
                     ) : (
                       services.map((service, index) => {
-                        // Icon componentni olish (iconMap dan yoki default)
                         const IconComponent = iconMap[service.icon.name] || FileText;
                         const iconColor = service.icon.color?.toLowerCase() || "blue";
 
@@ -2129,25 +2086,20 @@ const Admin: React.FC = () => {
                                 </button>
                               </div>
                             </div>
-                            <h3 className={`font-bold  text-white text-lg group-hover:text-purple-200 transition-colors flex items-center space-x-2`}>
+                            <h3 className="font-bold text-white text-lg group-hover:text-purple-200 transition-colors flex items-center space-x-2">
                               <span>{service.title.uz}</span>
                             </h3>
                             <p className="text-purple-200 mb-2 text-sm leading-relaxed">
                               {service.description.uz}
                             </p>
-
                             <p className="text-purple-300 mb-4 text-sm">
                               <strong>Features:</strong> {service.features.map(f => f.uz).join(", ")}
                             </p>
-
-
                             <div className="flex justify-between items-center">
                               <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
                                 {service.price}
                               </span>
-                              <span
-                                className={`px-3 py-1 rounded-full text-xs font-semibold bg-${iconColor}-500/20 text-${iconColor}-300 border border-${iconColor}-500/30`}
-                              >
+                              <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-${iconColor}-500/20 text-${iconColor}-300 border border-${iconColor}-500/30`}>
                                 {service.icon?.color}
                               </span>
                             </div>
@@ -2157,108 +2109,50 @@ const Admin: React.FC = () => {
                     )}
                   </div>
 
-
+                  {/* Service Modal */}
                   {showServiceModal && (
                     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-xl border border-white/20 
-                    max-h-[90vh] overflow-y-auto">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-xl border border-white/20 max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
                           <h2 className="text-2xl font-bold text-white">
                             {editingItem ? "Xizmatni tahrirlash" : "Yangi xizmat"}
                           </h2>
-                          <button
-                            onClick={() => setShowServiceModal(false)}
-                            className="text-white"
-                            aria-label="Modalni yopish"
-                          >
+                          <button onClick={() => setShowServiceModal(false)} className="text-white" aria-label="Modalni yopish">
                             <X className="h-6 w-6" />
                           </button>
                         </div>
+
                         <div className="space-y-4">
-                          <div>
-                            <label className="block text-white mb-1">Mavzu (UZ)</label>
-                            <input
-                              type="text"
-                              value={serviceForm.title.uz}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  title: { ...serviceForm.title, uz: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                          {/* Title */}
+                          {["uz", "en", "ru"].map((lang) => (
+                            <div key={lang}>
+                              <label className="block text-white mb-1">Mavzu ({lang.toUpperCase()})</label>
+                              <input
+                                type="text"
+                                value={serviceForm.title[lang]}
+                                onChange={(e) =>
+                                  setServiceForm({ ...serviceForm, title: { ...serviceForm.title, [lang]: e.target.value } })
+                                }
+                                className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                              />
+                            </div>
+                          ))}
 
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white mb-1">Mavzu (EN)</label>
-                            <input
-                              type="text"
-                              value={serviceForm.title.en}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  title: { ...serviceForm.title, en: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                          {/* Description */}
+                          {["uz", "en", "ru"].map((lang) => (
+                            <div key={lang}>
+                              <label className="block text-white mb-1">Tavsif ({lang.toUpperCase()})</label>
+                              <textarea
+                                value={serviceForm.description[lang]}
+                                onChange={(e) =>
+                                  setServiceForm({ ...serviceForm, description: { ...serviceForm.description, [lang]: e.target.value } })
+                                }
+                                className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                              />
+                            </div>
+                          ))}
 
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white mb-1">Mavzu (RU)</label>
-                            <input
-                              type="text"
-                              value={serviceForm.title.ru}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  title: { ...serviceForm.title, ru: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white mb-1">Tavsif (UZ)</label>
-                            <textarea
-                              value={serviceForm.description.uz}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  description: { ...serviceForm.description, uz: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white mb-1">Tavsif (EN)</label>
-                            <textarea
-                              value={serviceForm.description.en}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  description: { ...serviceForm.description, en: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-white mb-1">Tavsif (RU)</label>
-                            <textarea
-                              value={serviceForm.description.ru}
-                              onChange={(e) =>
-                                setServiceForm({
-                                  ...serviceForm,
-                                  description: { ...serviceForm.description, ru: e.target.value },
-                                })
-                              }
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
-                          </div>
+                          {/* Price */}
                           <div>
                             <label className="block text-white mb-1">Narx</label>
                             <input
@@ -2268,47 +2162,73 @@ const Admin: React.FC = () => {
                               className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
                             />
                           </div>
-                          <div>
-                            <label className="block text-white mb-1">Xususiyat (UZ, vergul bilan)</label>
-                            <input
-                              type="text"
-                              value={featuresUz}
-                              onChange={e => setFeaturesUz(e.target.value)}
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
+
+                          {/* Features */}
+                          <div className="border rounded p-5 mt-5">
+                            <h1 className="text-white text-center font-bold text-xl">Xususiyatlar</h1>
+                            <div className="mt-5">
+                              {features.concat(newFeatures).map((f, idx) => (
+                                <div key={idx} className="w-full gap-2 mb-2">
+                                  <div className='w-full flex items-center justify-between mt-5'>
+                                    <h1 className="text-gray-200  font-medium text-md">Xususiyat (UZ)</h1>
+                                    <button
+                                      className="p-1 text-red-400 hover:bg-red-500/20 rounded"
+                                      onClick={() => handleDeleteFeature(idx, idx >= features.length)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+
+
+
+                                  </div>
+                                  <input
+                                    value={f.uz}
+                                    onChange={(e) => {
+                                      const arr = [...features, ...newFeatures];
+                                      arr[idx].uz = e.target.value;
+                                      if (idx < features.length) setFeatures(arr.slice(0, features.length));
+                                      else setNewFeatures(arr.slice(features.length));
+                                    }}
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                  />
+                                  <input
+                                    value={f.en}
+                                    onChange={(e) => {
+                                      const arr = [...features, ...newFeatures];
+                                      arr[idx].en = e.target.value;
+                                      if (idx < features.length) setFeatures(arr.slice(0, features.length));
+                                      else setNewFeatures(arr.slice(features.length));
+                                    }}
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                  />
+                                  <input
+                                    value={f.ru}
+                                    onChange={(e) => {
+                                      const arr = [...features, ...newFeatures];
+                                      arr[idx].ru = e.target.value;
+                                      if (idx < features.length) setFeatures(arr.slice(0, features.length));
+                                      else setNewFeatures(arr.slice(features.length));
+                                    }}
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                  />
+                                </div>
+                              ))}
+
+                              <button
+                                onClick={() => setNewFeatures([...newFeatures, { uz: "", en: "", ru: "" }])}
+                                className="bg-blue-500 text-white px-3 py-1 rounded mt-2"
+                              >
+                                + Qo‘shish
+                              </button>
+                            </div>
                           </div>
 
-                          <div>
-                            <label className="block text-white mb-1">Xususiyat (EN, vergul bilan)</label>
-                            <input
-                              type="text"
-                              value={featuresEn}
-                              onChange={e => setFeaturesEn(e.target.value)}
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
-                          </div>
-
-                          <div>
-                            <label className="block text-white mb-1">Xususiyat (RU, vergul bilan)</label>
-                            <input
-                              type="text"
-                              value={featuresRu}
-                              onChange={e => setFeaturesRu(e.target.value)}
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
-                            />
-                          </div>
-
-                          <div className="flex justify-end space-x-2">
-                            <button
-                              onClick={() => setShowServiceModal(false)}
-                              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-                            >
+                          {/* Action buttons */}
+                          <div className="flex justify-end space-x-2 mt-4">
+                            <button onClick={() => setShowServiceModal(false)} className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
                               Bekor qilish
                             </button>
-                            <button
-                              onClick={handleSaveService}
-                              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-                            >
+                            <button onClick={handleSaveService} className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
                               Saqlash
                             </button>
                           </div>
@@ -2337,9 +2257,9 @@ const Admin: React.FC = () => {
                       </div>
                     </div>
                   )}
-
                 </>
               )}
+
 
               {activeTab === 'stories' && (
                 <>
