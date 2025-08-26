@@ -107,7 +107,7 @@ const Apply: React.FC = () => {
       if(resData?.id){
         navigate(`/userfiles/${resData.id}`)
       }else{
-        toast.error('Ariza yaratishda xatolik yuz berdi')
+        toast.error('Ariza yaratishda xatolik yuz berdi! Tizimga kiring')
       }
     }catch(error) {
       console.error('Xatolik:', error)

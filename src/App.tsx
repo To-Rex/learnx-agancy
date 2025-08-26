@@ -111,7 +111,7 @@ const AppContent = () => {
           <Route path='/userfiles/:id' element={<UserSendFilePage />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/admin/login" element={<AdminLogin />} />
-          <Route path="/admin/client/:id" element={<ClientDetailsPage/>} />
+          <Route path="/admin/client/:id" element={<ClientDetailsPage />} />
           <Route path="/admin" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
           <Route path="/admin/dashboard" element={<AdminProtectedRoute><Admin /></AdminProtectedRoute>} />
         </Routes>

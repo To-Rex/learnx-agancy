@@ -21,11 +21,10 @@ import {
   Image,
   FilePenLine,
   Phone,
-  MapPin,
-  MoreHorizontal,
   ArrowDown,
   ArrowUp,
-  ChevronDown
+  ChevronDown,
+  LogOut
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -33,7 +32,7 @@ import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
 import ServiceInputEditor from '../components/service'
 import ClientDetailsPage from './ClientsPage'
-
+import adminlogo from '../../public/76.jpg'
 
 // Define Services interface for type safety
 type Service = {
@@ -44,11 +43,13 @@ type Service = {
   price: string;
   features: { uz: string, en: string, ru: string }[];
 };
+
 type ServiceInput = {
   id: string;
   title: { en: string };
   description: { en: string };
 };
+
 interface Partner {
   id: string;
   image: string;
@@ -59,14 +60,15 @@ interface Partner {
   };
 }
 
-interface PartnerForm {
-  name: {
-    en: string;
-    uz: string;
-    ru: string;
-  };
-  image: string;
-}
+// interface PartnerForm {
+//   name: {
+//     en: string;
+//     uz: string;
+//     ru: string;
+//   };
+//   image: string;
+// }
+
 interface Client {
   id: string;
   full_name: string;
@@ -164,9 +166,10 @@ const Admin: React.FC = () => {
   const [searchField, setSearchField] = useState("email"); // qidiruv fieldi (agar kerak bo‘lsa)
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [openProfil, setOpenProfil] = useState(false)
 
-
-
+  // admin 
+  // const 
 
   // Contact get 
   const fetchContacts = async () => {
@@ -689,6 +692,7 @@ const Admin: React.FC = () => {
       setLoading(false)
     }
   }
+
   useEffect(() => {
     loadStory();
   }, []);
@@ -702,9 +706,8 @@ const Admin: React.FC = () => {
     if (!storyDelete) return;
 
     try {
-      const token = localStorage.getItem("your_access_token_key_here") || "";
-      const res = await fetch(
-        `https://learnx-crm-production.up.railway.app/api/v1/client-stories/delete/${storyDelete}`,
+      const token = localStorage.getItem("admin_access_token") || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/client-stories/delete/${storyDelete}`,
         {
           method: "DELETE",
           headers: {
@@ -751,13 +754,14 @@ const Admin: React.FC = () => {
     setEditingItem(story);
     setShowStoryModal(true);
   };
+
   useEffect(() => {
     fetchPartners()
   }, [])
 
   const handleSaveStory = async () => {
     try {
-      const token = localStorage.getItem("your_access_token_key_here") || "";
+      const token = localStorage.getItem("admin_access_token") || "";
 
       if (!token) {
         alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
@@ -849,6 +853,7 @@ const Admin: React.FC = () => {
       setLoading(false);
     }
   }
+
   useEffect(() => {
     loadPartners();
   }, []);
@@ -862,16 +867,13 @@ const Admin: React.FC = () => {
     if (!partnerToDelete) return;
 
     try {
-      const token = localStorage.getItem("your_access_token_key_here") || "";
-      const res = await fetch(
-        `https://learnx-crm-production.up.railway.app/api/v1/partners/delete/${partnerToDelete}`,
-        {
+      const token = localStorage.getItem("admin_access_token") || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/partners/delete/${partnerToDelete}`,{
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
-      );
+        });
 
       if (res.ok) {
         loadPartners();
@@ -889,13 +891,14 @@ const Admin: React.FC = () => {
 
   const handleAddPartners = () => {
     setEditingItem(null);
-    setPartnerForm({
+    setPartnerForm({ 
       name: {
         en: '',
         uz: '',
         ru: '',
       },
       image: '',
+      image_file: null
     });
     setShowPartnerModal(true);
   };
@@ -908,6 +911,7 @@ const Admin: React.FC = () => {
         ru: partner.name?.ru || '',
       },
       image: partner.image || '',
+      image_file: partner.image_url || null,
     });
     setEditingItem(partner);
     setShowPartnerModal(true);
@@ -915,7 +919,7 @@ const Admin: React.FC = () => {
 
   const handleSavePartners = async () => {
     try {
-      const token = localStorage.getItem("your_access_token_key_here") || "";
+      const token = localStorage.getItem("admin_access_token") || "";
 
       if (!token) {
         alert("Token topilmadi. Iltimos, tizimga qaytadan kiring.");
@@ -1202,7 +1206,8 @@ const Admin: React.FC = () => {
     { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, color: 'from-purple-500 to-pink-600' },
     { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
     { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' },
-    { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' }
+    { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' },
+    { id: 'adminProfil', name: 'Admin profil', icon: Shield, color: 'from-teal-300 to-cyan-600' }
   ];
 
 
@@ -1224,11 +1229,29 @@ const Admin: React.FC = () => {
   }
 
   
+
   // APPLICATION
   const [application, setApplication] = useState([]);
   const [statusModal, setStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [search, setSearch] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [appCurrentPage, setAppCurrentPage] = useState(1);
+  const [appHasNextPage, setAppHasNextPage] = useState(false);
+
+  const statuses = [
+    { label: "Barcha statuslar", value: "" },
+    { label: "Kutilmoqda", value: "pending" },
+    { label: "Tasdiqlangan", value: "approved" },
+    { label: "Rad etildi", value: "rejected" }
+  ];
+
+  const handleSelect = (value) => {
+    setSelectedStatus(value);
+    setIsOpen(false); // modalni yopish
+  };
 
   const getStatusColorApp = (status: string) => {
     switch(status) {
@@ -1283,12 +1306,9 @@ const Admin: React.FC = () => {
       if (!res.ok) {
         throw new Error("Statusni yangilashda xatolik");
       }
-  
       toast.success("Status muvaffaqiyatli yangilandi!");
-  
       // Jadvalni yangilash
       setApplication((prev) => prev.map((app) => app.id === selectedAppId ? { ...app, status: newStatus } : app));
-  
       setSelectedStatus(newStatus);
       setStatusModal(false);
     } catch (error) {
@@ -1297,34 +1317,109 @@ const Admin: React.FC = () => {
     }
   };
   
-  const fetchApplications = async () => {
-    try{
-      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list", {
+  const fetchApplications = async (appPage = 1) => {
+    const appLimit = 7;
+    // sort_field = "status"
+    // sort_desc = true
+    // service_id = ""
+    // client_id = ""
+    // status = "draft"
+    // partner_id = ""
+    try {
+      const offset = (appPage - 1) * appLimit
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list?page=${appPage}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem("admin_access_token")}`,
           'Content-Type': 'application/json'
         }
-      })
+      });
+  
       if (!res.ok) {
         throw new Error("Arizalarni olishda xatolik");
       }
+  
       const data = await res.json();
-      setApplication(data);
-      console.log("Arizalar muvaffaqiyatli olindi:", data);      
-    }catch(error) {
+      setApplication(data.results || data); 
+      setAppCurrentPage(appPage);
+      setAppHasNextPage((data.results || data).length === appLimit); 
+      console.log("Arizalar muvaffaqiyatli olindi:", data);
+    } catch (error) {
       console.error("Arizalarni olishda xatolik:", error);
       toast.error("Arizalarni olishda xatolik yuz berdi");
     }
-  }
+  };
 
   useEffect(() => {
-    fetchApplications();
-  }, [])
+    fetchApplications(appCurrentPage);
 
-  const handleSearchApp = async (query: string) => {
-    
-  }
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [appCurrentPage])
+
+  const handleAppNextPage = () => {
+    if (appHasNextPage) {
+      setAppCurrentPage((prev) => prev + 1);
+      fetchApplications(appCurrentPage + 1);
+    }
+  };
+  
+  const handleAppPrevPage = () => {
+    if (appCurrentPage > 1) {
+      setAppCurrentPage((prev) => prev - 1);
+      fetchApplications(appCurrentPage - 1);
+    }
+  };
+  
+  const filterApp = application.filter(app => {
+    const name = app.client?.full_name?.toLowerCase() || '';
+    const phone = app.client?.phone?.toLowerCase() || '';
+    const searchTerm = search.toLowerCase();
+  
+    const matchesSearch = name.includes(searchTerm) || phone.includes(searchTerm);
+    const matchesStatus = selectedStatus ? app?.status === selectedStatus : true;
+  
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleCheckboxChange = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleDeleteApp = async () => {
+    if (selectedIds.length === 0) return;
+  
+    const confirmDelete = window.confirm(`${selectedIds.length} ta arizani o‘chirilsinmi?`);
+    if (!confirmDelete) return;
+  
+    try {
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/applications/delete", {
+        method: "DELETE",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ ids: selectedIds }),
+      })
+      fetchApplications();
+      setApplications(prev => prev.filter(app => !selectedIds.includes(app.id)));
+      setSelectedIds([]);
+      toast.success('Tanlangan arizalar o‘chirildi!');
+    } catch (err) {
+      console.error(err);
+      toast.error('O‘chirishda xatolik yuz berdi');
+    }
+  };
+  
 
   // if (loading) {
   //   return (
@@ -1356,48 +1451,68 @@ const Admin: React.FC = () => {
 
       {/* Header */}
       <div className="relative bg-white/10 backdrop-blur-md border-b border-white/20   top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl">
-                  <Crown className="h-8 w-8 text-white" />
+                <div className="w-[54px] h-[54px] bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                  <Crown className="h-6 w-6 text-white" />
                 </div>
                 <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
                   <Sparkles className="h-3 w-3 text-white" />
                 </div>
               </div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
+                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
                   LearnX Admin
                 </h1>
-                <p className="text-purple-200 font-medium">Professional boshqaruv paneli</p>
+                <p className="text-purple-100 font-medium text-[13px]">Professional boshqaruv paneli</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2">
+              <div onClick={() => setActiveTab('adminProfil')}
+                className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-white/20">
                 <Shield className="h-5 w-5 text-green-400" />
                 <span className="text-white font-medium">Admin</span>
               </div>
-              <button
-                onClick={() => navigate('/')}
-                className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/20"
-              >
+              <button onClick={() => navigate('/')}
+                className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/20">
                 <Home className="h-4 w-4" />
                 <span>Saytga qaytish</span>
               </button>
-              <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-xl hover:from-red-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
-              >
-                <span>Chiqish</span>
-              </button>
+              <div>
+                <div onClick={() => setOpenProfil(!openProfil)} className='cursor-pointer active:scale-95 duration-500'>
+                  <img src={adminlogo} alt="admin logo image" 
+                    className='w-[48px] h-12 rounded-full object-cover'/>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+          {openProfil && (
+            <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
+              <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center backdrop-blur-xl bg-purple-500/20 w-[180px] text-white'>
+                <h2 className='py-3 bg-purple-900 font-semibold'>Admin Full name</h2>
+                <span onClick={() => setActiveTab('adminProfil')}
+                  className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-400/50 py-3'>
+                  <Settings className='h-5'/>
+                  <p>Profil sozlamari</p>
+                </span>
+                <button onClick={handleSignOut}
+                  // className="text-center px-4 w-full py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-300 shadow-sm"
+                  className='py-2 w-full hover:bg-red-500'
+                  >
+                  <span className='flex items-center gap-1'>
+                    <LogOut className='h-5 font-bold ml-5'/>
+                    Chiqish
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
           <div className="lg:w-80">
@@ -1709,8 +1824,6 @@ const Admin: React.FC = () => {
 
 
 
-
-
               {activeTab === 'applications' && (
                 <motion.div
                   key="applications"
@@ -1719,7 +1832,7 @@ const Admin: React.FC = () => {
                   exit={{ opacity: 0, y: -20 }}
                   className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
                 >
-                  <div className="p-8 border-b border-white/20">
+                  <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
                       <h2 className="text-2xl font-bold text-white flex items-center">
                         <FileText className="h-6 w-6 mr-3 text-blue-400" />
@@ -1821,54 +1934,84 @@ const Admin: React.FC = () => {
                     </table>
                   </div> */}
 
-                  <div className='flex justify-around items-center gap-10 my-3 p-3'>
+                  <div className='flex justify-around items-center gap-10 my-6 px-6'>
                     <div 
-                      className='w-[420px] flex items-center gap-2 text-white border border-gray-200 p-3 rounded-lg shadow-lg'>
+                      className='w-[420px] flex items-center gap-2 text-white border border-white/50 p-[10px] rounded-lg'>
                       <Search />
-                      <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring'/>
+                      <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring'
+                        onChange={(e) => setSearch(e.target.value)}/>
                     </div>
-                    <div 
-                      className='w-[200px] flex items-center gap-2 border border-gray-200 p-3 rounded-lg shadow-lg'>
-                      <select 
-                        className='outline-none bg-transparent text-gray-900'>
-                        <option value="">Barcha statuslar</option>
-                        <option value="">Kutilmoqda</option>
-                        <option value="">Tasdiqlangan</option>
-                        <option value="">Rad etildi</option>
-                      </select>
+                    <div className='flex justify-center items-center gap-2 w-[170px] border border-white/50 p-3 text-center rounded-lg relative' ref={dropdownRef}>
+                      <div onClick={() => setIsOpen(!isOpen)}
+                        className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-100">
+                        <span>
+                          {statuses.find(s => s.value === selectedStatus)?.label || "Barcha statuslar"}
+                        </span>
+                        <div className="text-white text-sm">▼</div>
+                      </div>
+                      {isOpen && (
+                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-slate-600 via-purple-600 to-slate-600 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+                          {statuses.map((status) => (
+                            <div
+                              key={status.value}
+                              onClick={() => handleSelect(status.value)}
+                              className="p-3 hover:bg-slate-300/20 cursor-pointer">
+                              {status.label}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className='text-4xl'>
-                      <button>
-                        <Trash2 className='text-red-500 text-4xl'/>
+                      <button 
+                        onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
+                        className={`${selectedIds.length > 0 ? 'bg-red-700 hover:bg-red-800' : 'bg-gray-400 cursor-not-allowed'} p-2 rounded-lg`}
+                        disabled={selectedIds.length === 0}>
+                        <Trash2 className='text-white text-4xl'/>
                       </button>
                     </div>
                   </div>
 
-                  <div className='m-5 overflow-hidden border-gray-400 rounded-lg border'>
-                    <table className="w-full  ">
-                      <thead className="bg-gradient-to-r from-slate-600 via-purple-600 to-slate-600 text-white text-sm uppercase tracking-wide">
+                  <div className='m-4 overflow-hidden border-gray-500 rounded-lg border'>
+                    <table className="w-full">
+                      <thead className="bg-gradient-to-r from-slate-600/5 via-purple-600/50 to-slate-600/70 text-white text-sm uppercase tracking-wide">
                         <tr>
-                          <th className="p-5 text-left font-semibold text-lg">#</th>
-                          <th className="p-5 text-left font-semibold">Mijoz</th>
-                          <th className="p-5 text-left font-semibold">Email</th>
-                          <th className="p-5 text-left font-semibold">Telefon</th>
-                          <th className="p-5 text-left font-semibold">Sana</th>
-                          <th className="p-5 text-left font-semibold">Status</th>
+                          <th className="p-4 text-left font-semibold text-lg">#</th>
+                          <th className="p-4 text-left font-semibold">Mijoz</th>
+                          <th className="p-4 text-left font-semibold">Email</th>
+                          <th className="p-4 text-left font-semibold">Telefon</th>
+                          <th className="p-4 text-left font-semibold">Sana</th>
+                          <th className="p-4 text-left font-semibold">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-500 text-sm">
-                        {application.map((app: any, index: number) => (
-                          <tr key={app.id || index}
-                            className="hover:bg-gray-500/20 transition-colors duration-200 text-white">
+                        {filterApp.map((app: any, index: number) => (
+                          <tr key={app.id || index} className="hover:bg-gray-500/20 transition-colors duration-200 text-white">
                             <td className="px-3 py-4">
-                              <input type="checkbox"
-                                className="w-6 h-6 rounded-lg appearance-none border checked:bg-purple-900 checked:border-gray-100 transition-all duration-200 
-                                relative before:content-['✔'] before:absolute before:-top-[3px] before:text-lg before:left-[4px] before:text-white before:opacity-0 checked:before:opacity-100 border-gray-400 cursor-pointer"/>
+                              <input
+                                type="checkbox"
+                                checked={selectedIds.includes(app.id)}
+                                onChange={() => handleCheckboxChange(app.id)}
+                                className="w-5 h-5 rounded-lg appearance-none border checked:bg-purple-900 checked:border-gray-100 transition-all duration-200 relative before:content-['✔'] before:absolute before:-top-[1px] before:text-sm before:left-[4px] before:text-white before:opacity-0 checked:before:opacity-100 border-gray-400 cursor-pointer"
+                              />
                             </td>
                             <td className="px-3 py-4 flex items-center gap-2">
-                              <img src={app.client?.avatar_url} alt={app.client?.full_name}
-                                className="rounded-full w-12 h-12 object-cover border border-gray-500"/>
-                              <span className="font-medium">{app.client?.full_name || "Name keladi"}</span>
+                              {app.client?.avatar_url ? (
+                                <img
+                                  src={app.client.avatar_url}
+                                  alt={app.client?.full_name || "Foydalanuvchi"}
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
+                                />
+                              ) : app.client?.full_name ? (
+                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
+                                  {app.client.full_name?.split(" ").map(word => word.charAt(0).toUpperCase()).join("")}
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center text-white text-lg font-bold">
+                                  _
+                                </div>
+                              )}
+                              <span className="font-medium">{app.client?.full_name || '_'}</span>
                             </td>
                             <td className="px-3 py-4 text-sm truncate max-w-[200px]">
                               {app.client?.email || "—"}
@@ -1877,15 +2020,8 @@ const Admin: React.FC = () => {
                             <td className="px-3 py-4">
                               {new Date(app.created_at).toLocaleDateString()}
                             </td>
-                            <td
-                              className="px-3 py-4"
-                              onClick={() => handleOpenStatusModal(app.id, app.status)}
-                            >
-                              <button
-                                className={`rounded-2xl px-3 py-1 text-sm font-medium ${getStatusColorApp(
-                                  app.status
-                                )} shadow`}
-                              >
+                            <td className="px-3 py-4" onClick={() => handleOpenStatusModal(app.id, app.status)}>
+                              <button className={`rounded-2xl px-3 py-1 text-sm font-medium ${getStatusColorApp(app.status)} shadow`}>
                                 {getStatusLabelApp(app.status)}
                               </button>
                             </td>
@@ -1893,15 +2029,10 @@ const Admin: React.FC = () => {
                         ))}
                       </tbody>
                     </table>
-
                     {statusModal && (
-                      <div onClick={() => setStatusModal(false)}
-                        className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50">
-                        <div onClick={(e) => e.stopPropagation()}
-                          className="bg-gradient-to-br from-slate-700 via-purple-700 to-slate-700 p-5 rounded-xl shadow-lg w-64 space-y-2">
-                          <h3 className="text-white text-lg font-semibold mb-2">
-                            Statusni tanlang
-                          </h3>
+                      <div onClick={() => setStatusModal(false)} className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50">
+                        <div onClick={(e) => e.stopPropagation()} className="bg-gradient-to-br from-slate-700 via-purple-700 to-slate-700 p-5 rounded-xl shadow-lg w-64 space-y-2">
+                          <h3 className="text-white text-lg font-semibold mb-2">Statusni tanlang</h3>
                           {[
                             { label: "Kutilmoqda", value: "pending", color: "bg-yellow-300 text-yellow-700" },
                             { label: "Tasdiqlangan", value: "approved", color: "bg-green-300 text-green-700" },
@@ -1909,7 +2040,8 @@ const Admin: React.FC = () => {
                           ].map((item, i) => (
                             <label
                               key={i}
-                              className={`flex items-center gap-2 rounded-md cursor-pointer font-medium p-2 ${item.color} hover:opacity-80`}>
+                              className={`flex items-center gap-2 rounded-md cursor-pointer font-medium p-2 ${item.color} hover:opacity-80`}
+                            >
                               <input
                                 type="radio"
                                 name="status"
@@ -1924,6 +2056,20 @@ const Admin: React.FC = () => {
                         </div>
                       </div>
                     )}
+                  </div>
+
+                  <div className="flex justify-center items-center my-4">
+                    <button onClick={handleAppPrevPage}
+                      disabled={appCurrentPage === 1}
+                      className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50">
+                      Oldingi
+                    </button>
+                    <span className="text-gray-700 mx-2">{appCurrentPage} - sahifa</span>
+                    <button onClick={handleAppNextPage}
+                      disabled={!appHasNextPage}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50">
+                      Keyingi
+                    </button>
                   </div>
                 </motion.div>
               )}
@@ -2551,8 +2697,7 @@ const Admin: React.FC = () => {
                 </>
               )}
 
-              {
-                activeTab === 'contacts' && (
+              {activeTab === 'contacts' && (
                   <motion.div
                     key="contacts"
                     initial={{ opacity: 0, y: 20 }}
@@ -2664,8 +2809,8 @@ const Admin: React.FC = () => {
                     </div>
                   </motion.div>
 
-                )
-              }
+              )}
+
               {activeTab === "service_inputs" && (
                 <div className="border border-white/10 rounded-2xl p-6">
                   {/* Header */}
@@ -2971,9 +3116,67 @@ const Admin: React.FC = () => {
                   )}
                 </div>
               )}
+
               {activeTab === "clientDetails" && (
                 <ClientDetailsPage clientId={selectedClientId} />
               )}
+
+              {activeTab === "adminProfil" && (
+                <div className="border border-white/40 rounded-2xl overflow-hidden">
+                  <div className="bg-white/5 min-h-[72vh] backdrop-blur-sm p-6 text-white">
+                    <div className="flex justify-between items-center px-8 py-4">
+                      <h2 className="text-3xl font-semibold">Admin profil</h2>
+                      <div className="relative">
+                        <select
+                          className="appearance-none outline-none p-2 pr-8 rounded-lg bg-transparent border border-white/30 text-center">
+                          <option>Admin</option>
+                          <option>SuperAdmin</option>
+                        </select>
+                        {/* Optional icon */}
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 text-white/70" size={16} />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-start gap-10 my-6">
+                      <img src={adminlogo} alt="Admin Logo" className="rounded-full h-40 w-40 object-cover" />
+                      <div className="w-[600px]">
+                        <form className="flex flex-col max-w-[750px] gap-2">
+                          <label htmlFor="fullname">Ismi, Familiyasi</label>
+                          <input id="fullname" type="text"
+                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2"/>
+                          <label htmlFor="email">Email</label>
+                          <input id="email" type="email"
+                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2"/>
+                          <button type="button"
+                            className="w-[130px] border p-2 rounded-lg border-white/30 bg-[#20C997] hover:bg-[#17B48A] active:scale-95 transition">
+                            O'zgartirish
+                          </button>
+                        </form>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col justify-around px-6">
+                      <h2 className="text-2xl py-5 font-semibold">Parolni boshqarish</h2>
+                      <div className="grid grid-cols-2 gap-4">
+                        <input type="password"
+                          placeholder="Hozirgi parolni kiriting"
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                        <input type="password"
+                          placeholder="Yangi parolni kiriting"
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                        <input type="password"
+                          placeholder="Yangi parolni tasdiqlang"
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                        <button type="button"
+                          className="border border-white/20 w-[380px] rounded-lg h-[44px] bg-[#20C997] hover:bg-[#17B48A] active:scale-95 transition">
+                          Parolni o'zgartirish
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
             </AnimatePresence >
           </div >
