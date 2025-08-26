@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
+
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
 import ServiceInputEditor from '../components/service'
