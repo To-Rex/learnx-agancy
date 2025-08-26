@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, GraduationCap, CheckCircle } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -27,6 +27,9 @@ const Register: React.FC = () => {
     { text: requirements.lowercase, met: /[a-z]/.test(password) },
     { text: requirements.number, met: /\d/.test(password) }
   ]
+  useEffect(() => {
+    localStorage.getItem("access_token") && navigate("/profile", { replace: true });
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

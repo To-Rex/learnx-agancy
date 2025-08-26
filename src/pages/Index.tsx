@@ -16,8 +16,8 @@ type UploadedDoc = {
 
 type ChecklistItem = {
   service_input_id: string;
-  name: { uz?: string; en?: string; ru?: string; [k: string]: string | undefined };
-  description?: { uz?: string; en?: string; ru?: string; [k: string]: string | undefined };
+  name: { uz?: string; en?: string; ru?: string;[k: string]: string | undefined };
+  description?: { uz?: string; en?: string; ru?: string;[k: string]: string | undefined };
   uploaded_doc?: UploadedDoc | null;
   required?: boolean; // agar backendda bo'lsa
 };
@@ -48,15 +48,15 @@ export default function UserFilesPage() {
       try {
         setLoading(true);
         const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-full/${id}`, {
-            method: "GET",
+          method: "GET",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("api_access_token")}`,
           },
         });
-        if (!res.ok) 
+        if (!res.ok)
           throw new Error(`GET FULL failed: ${res.status}`);
-          const data: FullApplication = await res.json();
-          setFullApp(data);
+        const data: FullApplication = await res.json();
+        setFullApp(data);
       } catch (error) {
         console.error(error);
         toast.error("Ma'lumotlarni yuklashda xatolik");
@@ -93,7 +93,7 @@ export default function UserFilesPage() {
     const notUploaded = fullApp.checklist.filter(
       (item) => item.required && !item.uploaded_doc?.file_url
     );
-  
+
     if (notUploaded.length > 0) {
       toast.error("Hamma hujjatlarni yuklash shart ❗");
       return;
@@ -127,9 +127,10 @@ export default function UserFilesPage() {
 
   if (loading) {
     return (
-      <div className="p-6">
-        <div className="flex items-center gap-2 text-gray-600">
-          <CircleDashed className="animate-spin h-5 w-5" />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4">
+          </div>
           <span>{t("apply.loading") ?? "Yuklanmoqda..."}</span>
         </div>
       </div>
@@ -159,9 +160,9 @@ export default function UserFilesPage() {
 
           const currentFile = item.uploaded_doc?.file_url || "";
 
-        return (
-        <div key={item.service_input_id} className="border border-gray-200 rounded-lg p-4">
-            <FileUpload 
+          return (
+            <div key={item.service_input_id} className="border border-gray-200 rounded-lg p-4">
+              <FileUpload
                 label={`${label}${item.required ? " *" : ""}`}
                 applicationId={id ?? ""}
                 serviceInputId={item.service_input_id}
@@ -170,33 +171,33 @@ export default function UserFilesPage() {
                 maxSize={10}
                 required={!!item.required}
                 onFileUploaded={(fileUrl) => {
-                setFullApp((prev) =>
-                !prev
-                    ? prev
-                    : {
+                  setFullApp((prev) =>
+                    !prev
+                      ? prev
+                      : {
                         ...prev,
                         checklist: prev.checklist.map((c) =>
-                        c.service_input_id === item.service_input_id
+                          c.service_input_id === item.service_input_id
                             ? {
-                                ...c,
-                                uploaded_doc: {
+                              ...c,
+                              uploaded_doc: {
                                 id: "local-temp",
                                 file_url: fileUrl,
                                 uploaded_at: new Date().toISOString(),
                                 application_id: fullApp.id,
                                 service_input_id: item.service_input_id,
                                 client_id: "",
-                                } as UploadedDoc,
+                              } as UploadedDoc,
                             }
                             : c
                         ),
-                    }
-                );
-                toast.success(`${label} yuklandi`);
-            }}
-            />
-        </div>
-        );
+                      }
+                  );
+                  toast.success(`${label} yuklandi`);
+                }}
+              />
+            </div>
+          );
         })}
       </div>
 

@@ -6,32 +6,32 @@ export const STORAGE_BUCKETS = {
 }
 
 // Initialize storage buckets
-export const initializeStorage = async () => {
-  try {
-    // Check if buckets exist, if not they should be created via migration
-    const { data: buckets, error } = await supabase.storage.listBuckets()
+// export const initializeStorage = async () => {
+//   try {
+//     // Check if buckets exist, if not they should be created via migration
+//     const { data: buckets, error } = await supabase.storage.listBuckets()
     
-    if (error) {
-      console.log('Storage buckets not accessible:', error.message)
-      return false
-    }
+//     if (error) {
+//       console.log('Storage buckets not accessible:', error.message)
+//       return false
+//     }
     
-    const bucketNames = buckets?.map(b => b.name) || []
-    const hasAvatars = bucketNames.includes('avatars')
-    const hasDocuments = bucketNames.includes('documents')
+//     const bucketNames = buckets?.map(b => b.name) || []
+//     const hasAvatars = bucketNames.includes('avatars')
+//     const hasDocuments = bucketNames.includes('documents')
     
-    if (hasAvatars && hasDocuments) {
-      console.log('✅ Storage buckets initialized successfully')
-      return true
-    } else {
-      console.log('⚠️ Some storage buckets missing. Run migration to create them.')
-      return false
-    }
-  } catch (error) {
-    console.log('Storage initialization error:', error)
-    return false
-  }
-}
+//     if (hasAvatars && hasDocuments) {
+//       console.log('✅ Storage buckets initialized successfully')
+//       return true
+//     } else {
+//       console.log('⚠️ Some storage buckets missing. Run migration to create them.')
+//       return false
+//     }
+//   } catch (error) {
+//     console.log('Storage initialization error:', error)
+//     return false
+//   }
+// }
 
 // Upload file to storage
 export const uploadFile = async (

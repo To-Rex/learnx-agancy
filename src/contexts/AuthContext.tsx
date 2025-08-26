@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import { useNavigate } from 'react-router-dom'
 
 interface AuthContextType {
   user: User | null
@@ -31,6 +32,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState(false)
   const [initializing, setInitializing] = useState(true)
 
+  // useEffect(() => {
+  //   const token = localStorage.getItem("api_access_token");
+  //   if (token) {
+  //     navigate("/profile", { replace: true });
+  //   }
+  // }, [navigate]);
+
   useEffect(() => {
     let mounted = true
     const storedAdminUser = localStorage.getItem('admin_user')
@@ -42,55 +50,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       return
     }
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+    // const initializeAuth = async () => {
+    //   try {
+    //     const { data: { session }, error } = await supabase.auth.getSession()
 
-        if (error) {
-          console.error('Session error:', error)
-        }
+    //     if (error) {
+    //       console.error('Session error:', error)
+    //     }
 
-        // console.log('Initial session:', session)
+    //     // console.log('Initial session:', session)
 
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          await checkAdminStatus(session?.user)
-          setLoading(false)
-          setInitializing(false)
-        }
-      } catch (error) {
-        console.error('Auth initialization error:', error)
-        if (mounted) {
-          setLoading(false)
-          setInitializing(false)
-        }
-      }
-    }
-    initializeAuth()
-    let timeoutId: NodeJS.Timeout
+    //     if (mounted) {
+    //       setSession(session)
+    //       setUser(session?.user ?? null)
+    //       await checkAdminStatus(session?.user)
+    //       setLoading(false)
+    //       setInitializing(false)
+    //     }
+    //   } catch (error) {
+    //     console.error('Auth initialization error:', error)
+    //     if (mounted) {
+    //       setLoading(false)
+    //       setInitializing(false)
+    //     }
+    //   }
+    // }
+    // initializeAuth()
+    // let timeoutId: NodeJS.Timeout
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // console.log('Auth state change:', event, session)
+    // const {
+    //   data: { subscription },
+    // } = supabase.auth.onAuthStateChange(async (event, session) => {
+    //   // console.log('Auth state change:', event, session)
 
-      // Clear previous timeout
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
+    //   // Clear previous timeout
+    //   if (timeoutId) {
+    //     clearTimeout(timeoutId)
+    //   }
 
-      // Debounce auth state changes
-      timeoutId = setTimeout(async () => {
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          await checkAdminStatus(session?.user)
-          setLoading(false)
-          setInitializing(false)
-        }
-      }, 100)
-    })
+    //   // Debounce auth state changes
+    //   timeoutId = setTimeout(async () => {
+    //     if (mounted) {
+    //       setSession(session)
+    //       setUser(session?.user ?? null)
+    //       await checkAdminStatus(session?.user)
+    //       setLoading(false)
+    //       setInitializing(false)
+    //     }
+    //   }, 100)
+    // })
 
     return () => {
       mounted = false
@@ -190,8 +198,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const apiData = await apiResponse.json();
         console.log('API dan access token:', apiData);
-          console.log('client_id', apiData?.client?.id);
-        
+        console.log('client_id', apiData?.client?.id);
+
 
         // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
         if (apiData.token) {
@@ -274,35 +282,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 
 
- const signOut = async () => {
-  setLoading(true);
+  const signOut = async () => {
+    setLoading(true);
 
-  try {
-    // Supabase sessiyasini tozalash
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error("Supabase signOut xato:", error);
+    try {
+      // Supabase sessiyasini tozalash
+      const { error } = await supabase.auth.signOut();
+      if (error) console.error("Supabase signOut xato:", error);
 
-    // React state-larni tozalash
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
+      // React state-larni tozalash
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
 
-    // localStorage va sessionStorage ni tozalash
-    localStorage.removeItem('admin_user');
-    localStorage.removeItem('supabase_token');
-    localStorage.removeItem('api_access_token');
-    localStorage.clear(); // Agar butun localStorage ni tozalash kerak bo‘lsa
-    sessionStorage.clear();
+      // localStorage va sessionStorage ni tozalash
+      localStorage.removeItem('admin_user');
+      localStorage.removeItem('supabase_token');
+      localStorage.removeItem('api_access_token');
+      localStorage.clear(); // Agar butun localStorage ni tozalash kerak bo‘lsa
+      sessionStorage.clear();
 
-    // Foydalanuvchini login sahifasiga yo'naltirish
-    window.location.href = "/login";
+      // Foydalanuvchini login sahifasiga yo'naltirish
+      window.location.href = "/login";
 
-  } catch (err) {
-    console.error("Logout xato:", err);
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      console.error("Logout xato:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   const value = {
