@@ -2041,20 +2041,34 @@ const Admin: React.FC = () => {
                       <Search />
                       <input type="text" className='w-full focus:outline-none bg-transparent' placeholder='Ismi va raqami boyicha qidiring' />
                     </div>
-                    <div
-                      className='w-[200px] flex items-center gap-2 border border-gray-200 p-3 rounded-lg shadow-lg'>
-                      <select
-                        className='outline-none bg-transparent text-gray-900'>
-                        <option value="">Barcha statuslar</option>
-                        <option value="">Kutilmoqda</option>
-                        <option value="">Tasdiqlangan</option>
-                        <option value="">Rad etildi</option>
-                      </select>
+                    <div className='flex justify-center items-center gap-2 w-[170px] border border-white/50 p-3 text-center rounded-lg relative' ref={dropdownRef}>
+                      <div onClick={() => setIsOpen(!isOpen)}
+                        className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-100">
+                        <span>
+                          {statuses.find(s => s.value === selectedStatus)?.label || "Barcha statuslar"}
+                        </span>
+                        <div className="text-white text-sm">▼</div>
+                      </div>
+                      {isOpen && (
+                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-slate-600 via-purple-600 to-slate-600 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+                          {statuses.map((status) => (
+                            <div
+                              key={status.value}
+                              onClick={() => handleSelect(status.value)}
+                              className="p-3 hover:bg-slate-300/20 cursor-pointer">
+                              {status.label}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className='text-4xl'>
-                      <button>
-                        <Trash2 className='text-red-500 text-4xl' />
-                      </button>
+                    <button 
+                        onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
+                        className={`${selectedIds.length > 0 ? 'bg-red-700 hover:bg-red-800' : 'bg-gray-400 cursor-not-allowed'} p-2 rounded-lg`}
+                        disabled={selectedIds.length === 0}>
+                        <Trash2 className='text-white text-4xl'/>
+                    </button>
                     </div>
                   </div>
 
