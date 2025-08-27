@@ -45,7 +45,7 @@ const Profile: React.FC = () => {
   const requiredDocumentTypes = [
     { key: 'passport', label: 'Pasport nusxasi', required: true },
     { key: 'photo', label: 'Foto 3x4', required: true },
-    { key: 'diploma', label: 'Diplom/Attestat', required: true },
+    { key: 'diplom', label: 'Diplom/Attestat', required: true },
     { key: 'transcript', label: 'Akademik ma\'lumotnoma', required: false },
     { key: 'cv', label: 'CV/Resume', required: false },
     { key: 'motivation', label: 'Motivatsiya xati', required: false },
@@ -225,20 +225,20 @@ const Profile: React.FC = () => {
     }
   }
 
-  // if (loading || authLoading) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-  //       <div className="text-center">
-  //         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-  //         <p className="text-gray-600">
-  //           {authLoading ? 'Tizimga kirilmoqda...' : 'Ma\'lumotlar yuklanmoqda...'}
-  //         </p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (loading || authLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">
+            {authLoading ? 'Tizimga kirilmoqda...' : 'Ma\'lumotlar yuklanmoqda...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
-  if (!user) {
+  if (!apiToken) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

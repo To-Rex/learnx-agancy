@@ -3,8 +3,6 @@ import { useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { LanguageProvider } from './contexts/LanguageContext'
-import { supabase } from './lib/supabase'
-import { initializeStorage } from './lib/storage'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -28,71 +26,99 @@ const AppContent = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
-  const { user } = useAuth()
+  // console.log("TOKEN:", localStorage.getItem("api_access_token"));
 
-  useEffect(() => {
-    if (user) {
-      initializeStorage()
-    }
+  // useEffect(() => {
+  //   console.log("TOKEN:", localStorage.getItem("api_access_token"));
+  //   if (token) {
+  //     navigate("/profile"); // agar token bo'lsa, login sahifasini o'tkazib yuboradi
+  //   }
+  // }, [navigate]);
 
-    // Handle OAuth callback - check for tokens in URL hash
-    const handleAuthCallback = async () => {
-      // Check both hash and search params
-      const hash = window.location.hash.substring(1)
-      const search = window.location.search.substring(1)
+  // useEffect(() => {
+  //   if (token) {
+  //     initializeStorage()
+  //   }
 
-      const hashParams = new URLSearchParams(hash)
-      const searchParams = new URLSearchParams(search)
+  //   // Handle OAuth callback - check for tokens in URL hash
+  //   const handleAuthCallback = async () => {
+  //     // Check both hash and search params
+  //     const hash = window.location.hash.substring(1)
+  //     const search = window.location.search.substring(1)
 
-      const accessToken = hashParams.get('access_token')
-      const refreshToken = hashParams.get('refresh_token')
+  //     const hashParams = new URLSearchParams(hash)
+  //     const searchParams = new URLSearchParams(search)
 
-      if (accessToken && refreshToken) {
-        console.log('OAuth tokens found, processing...')
+  //     const accessToken = hashParams.get('access_token')
+  //     const refreshToken = hashParams.get('refresh_token')
 
-        try {
-          // Set the session using the tokens
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          })
-          if (error) {
-            console.error('Error setting session:', error)
-          } else {
-            console.log('Session set successfully:', data)
-          }
-        } catch (err) {
-          console.error('Error processing OAuth callback:', err)
-        }
+  //     if (accessToken && refreshToken) {
+  //       console.log('OAuth tokens found, processing...')
 
-        // Clear the hash from URL
-        window.history.replaceState(null, '', '/')
-        // Navigate to 
-        navigate('/')
-        return
-      }
-      // const token = accessToken || searchParams.get('access_token')
+  //       try {
+  //         // Set the session using the tokens
+  //         const { data, error } = await supabase.auth.setSession({
+  //           access_token: accessToken,
+  //           refresh_token: refreshToken
+  //         })
+  //         if (error) {
+  //           console.error('Error setting session:', error)
+  //         } else {
+  //           console.log('Session set successfully:', data)
+  //         }
+  //       } catch (err) {
+  //         console.error('Error processing OAuth callback:', err)
+  //       }
 
-      // Also check current session
-      const { data } = await supabase.auth.getSession()
-      if (data.session && window.location.pathname === '/login') {
-        navigate('/profile')
-      }
-    }
+  //       // Clear the hash from URL
+  //       window.history.replaceState(null, '', '/')
+  //       // Navigate to 
+  //       navigate('/')
+  //       return
+  //     }
+  //     // const token = accessToken || searchParams.get('access_token')
 
-    handleAuthCallback()
+  //     // Also check current session
+  //     if (token && location.pathname === '/login') {
+  //       navigate('/profile')
+  //     }
+  //   }
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      // console.log('Auth state changed:', event, session)
-      if (event === 'SIGNED_IN' && session) {
-        // console.log('User signed in:', session.user)
-        initializeStorage()
-      }
-    })
+  //   handleAuthCallback()
 
-    return () => subscription.unsubscribe()
-  }, [navigate, location, user])
+  // }, [navigate, location, token])
+  // useEffect(() => {
+  //   const checkToken = async () => {
+  //     if (!token) return;
+
+  //     try {
+  //       const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
+  //         method: 'POST',
+  //         headers: {
+  //           'Content-Type': 'application/json',
+  //           'Authorization': `Bearer ${token}`, // supabaseToken o‘rniga token
+  //         },
+  //         body: JSON.stringify({ access_token: token }),
+  //       });
+
+  //       if (res.ok) {
+  //         // faqat token haqiqiy bo'lsa yo'naltirish
+  //         if (location.pathname === '/login' || location.pathname === '/register') {
+  //           navigate('/profile', { replace: true });
+  //         }
+  //       } else {
+  //         console.error('Token tekshirishda xatolik:');
+  //       }
+  //     } catch (err) {
+  //       console.error('Token tekshirishda xatolik:', err);
+  //     }
+  //   };
+
+  //   checkToken();
+  // }, [token, location.pathname, navigate]);
+
+
+
 
   return (
     <div className="min-h-screen flex flex-col">
