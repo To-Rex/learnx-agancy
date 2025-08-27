@@ -248,7 +248,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         body: JSON.stringify({ identifor: username, password })
       });
       const data = await response.json();
-      console.log('LearnX CRM javobi:', data);
+      console.log('UnoGroup CRM javobi:', data);
 
       if (!response.ok || !data?.token) {
         return { data: null, error: { message: "Noto‘g‘ri login yoki parol" } };

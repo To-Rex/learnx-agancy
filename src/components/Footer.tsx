@@ -18,7 +18,7 @@ const Footer: React.FC = () => {
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
               <span className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                LearnX
+                UnoGroup
               </span>
             </div>
             <p className="text-gray-300 text-sm leading-relaxed">
@@ -129,7 +129,7 @@ const Footer: React.FC = () => {
         <div className="border-t border-gray-700 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <p className="text-gray-300 text-sm">
-              © 2024 LearnX. {t('footer.rights')}
+              © 2024 UnoGroup. {t('footer.rights')}
             </p>
             <div className="flex space-x-6 text-sm">
               <a href="#" className="text-gray-300 hover:text-white transition-colors">{t('footer.privacy')}</a>

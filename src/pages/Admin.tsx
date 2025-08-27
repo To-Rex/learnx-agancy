@@ -24,11 +24,16 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
-  LogOut
+  LogOut,
+  Edit2,
+  Edit2Icon,
+  Edit3,
+  SearchCheckIcon,
+  Save,
+  SaveAll
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
-
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
 import ServiceInputEditor from '../components/service'
@@ -130,7 +135,7 @@ const Admin: React.FC = () => {
   const [stories, setStories] = useState([])
   const [partners, setPartners] = useState([])
   const [contacts, setContacts] = useState([])
-  const [clients, setClients] = useState<any[]>([]); // default bo‘sh array
+  const [clients, setClients] = useState<any[]>([]); 
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
@@ -162,15 +167,12 @@ const Admin: React.FC = () => {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [active, setActive] = useState("connection");
   const limit = 10
-  const [sortField, setSortField] = useState("full_name"); // default bo‘yicha ism bo‘yicha sortlash
-  const [sortDesc, setSortDesc] = useState(true); // default bo‘yicha DESC
-  const [searchField, setSearchField] = useState("email"); // qidiruv fieldi (agar kerak bo‘lsa)
+  const [sortField, setSortField] = useState("full_name"); 
+  const [sortDesc, setSortDesc] = useState(true); 
+  const [searchField, setSearchField] = useState("email"); 
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [openProfil, setOpenProfil] = useState(false)
-
-  // admin 
-  // const 
+  const [openProfil, setOpenProfil] = useState(false);
 
   // Contact get 
   const fetchContacts = async () => {
@@ -1112,12 +1114,6 @@ const Admin: React.FC = () => {
   };
 
 
-
-
-
-
-
-
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -1241,6 +1237,8 @@ const Admin: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false)
   const [appCurrentPage, setAppCurrentPage] = useState(1);
   const [appHasNextPage, setAppHasNextPage] = useState(false);
+  const [editAppModal, setEditAppModal] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const statuses = [
     { label: "Barcha statuslar", value: "" },
@@ -1317,33 +1315,51 @@ const Admin: React.FC = () => {
       toast.error("Statusni yangilashda xatolik yuz berdi");
     }
   };
-  
-  const fetchApplications = async (appPage = 1) => {
-    const appLimit = 7;
-    // sort_field = "status"
-    // sort_desc = true
-    // service_id = ""
-    // client_id = ""
-    // status = "draft"
-    // partner_id = ""
+
+  const fetchApplications = async (
+    appPage = 1,
+    appLimit = 6,
+    sort_field = "",
+    sort_desc = true,
+    service_id = "",
+    client_id = "",
+    status = "",
+    partner_id = ""
+  ) => {
     try {
-      const offset = (appPage - 1) * appLimit
-      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list?page=${appPage}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem("admin_access_token")}`,
-          'Content-Type': 'application/json'
-        }
+      const offsetValue = (appPage - 1) * appLimit;
+      const params = new URLSearchParams({
+        sort_field: sort_field,
+        sort_desc: String(sort_desc),
+        service_id: service_id,
+        client_id: client_id,
+        status: status,
+        partner_id: partner_id,
+        limit: String(appLimit),
+        offset: String(offsetValue),
       });
+  
+      const res = await fetch(
+        `https://learnx-crm-production.up.railway.app/api/v1/applications/get-rich-list?${params.toString()}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem("admin_access_token")}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
   
       if (!res.ok) {
         throw new Error("Arizalarni olishda xatolik");
       }
   
       const data = await res.json();
-      setApplication(data.results || data); 
+  
+      setApplication(data.results || data);
       setAppCurrentPage(appPage);
-      setAppHasNextPage((data.results || data).length === appLimit); 
+      setAppHasNextPage((data.results || data).length === appLimit);
+  
       console.log("Arizalar muvaffaqiyatli olindi:", data);
     } catch (error) {
       console.error("Arizalarni olishda xatolik:", error);
@@ -1363,21 +1379,8 @@ const Admin: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [appCurrentPage])
+  }, [appCurrentPage]);
 
-  const handleAppNextPage = () => {
-    if (appHasNextPage) {
-      setAppCurrentPage((prev) => prev + 1);
-      fetchApplications(appCurrentPage + 1);
-    }
-  };
-  
-  const handleAppPrevPage = () => {
-    if (appCurrentPage > 1) {
-      setAppCurrentPage((prev) => prev - 1);
-      fetchApplications(appCurrentPage - 1);
-    }
-  };
   
   const filterApp = application.filter(app => {
     const name = app.client?.full_name?.toLowerCase() || '';
@@ -1411,6 +1414,7 @@ const Admin: React.FC = () => {
         },
         body: JSON.stringify({ ids: selectedIds }),
       })
+      console.log(res);
       fetchApplications();
       setApplications(prev => prev.filter(app => !selectedIds.includes(app.id)));
       setSelectedIds([]);
@@ -1420,6 +1424,43 @@ const Admin: React.FC = () => {
       toast.error('O‘chirishda xatolik yuz berdi');
     }
   };
+
+  const handleAppPrevPage = () => {
+  if (appCurrentPage > 1) {
+    fetchApplications(appCurrentPage - 1);
+  }
+  };
+
+  const handleAppNextPage = () => {
+  if (appHasNextPage) {
+    fetchApplications(appCurrentPage + 1);
+  }
+  };
+
+  const editApplication = async() => {
+    try{
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/update/${selectedAppId}`, {
+        method: "PUT",
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          status: selectedStatus,
+        }),
+      })
+      console.log(res);
+      
+    }catch(error){
+      console.error(error);
+      toast.error("Arizani yangilashda xatolik yuz berdi");
+    }
+  }
+
+  const handleSaveApp = async () => {
+    setEditAppModal(false)
+  }
+
   
 
   // if (loading) {
@@ -1465,7 +1506,7 @@ const Admin: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                  LearnX Admin
+                  UnoGroup Admin
                 </h1>
                 <p className="text-purple-100 font-medium text-[13px]">Professional boshqaruv paneli</p>
               </div>
@@ -1831,7 +1872,7 @@ const Admin: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
+                  className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden"
                 >
                   <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
@@ -1983,6 +2024,7 @@ const Admin: React.FC = () => {
                           <th className="p-4 text-left font-semibold">Telefon</th>
                           <th className="p-4 text-left font-semibold">Sana</th>
                           <th className="p-4 text-left font-semibold">Status</th>
+                          <th className="p-4 text-left font-semibold">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-500 text-sm">
@@ -2026,10 +2068,40 @@ const Admin: React.FC = () => {
                                 {getStatusLabelApp(app.status)}
                               </button>
                             </td>
+                            <td className=' text-yellow-500 w-4' onClick={() => setEditAppModal(!editAppModal)}>
+                              <Edit className='text-center mx-auto cursor-pointer'/>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
                     </table>
+
+                    {editAppModal && (
+                      <div onClick={() => setEditAppModal(false)} className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50 -top-40">
+                        <div onClick={(e) => e.stopPropagation()}
+                          className="w-full max-w-[500px] p-6 backdrop-blur-md rounded-2xl bg-gradient-to-br from-slate-800 via-purple-900 to-slate-800 shadow-2xl">
+                            <div className="flex justify-between items-center rounded-xl border">
+                              <span className="flex justify-start items-center gap-4 w-[350px]  border-white/20 px-5 py-2 rounded-lg bg-gray-400/20">
+                                <img src={adminlogo} alt="avatar client"
+                                  className="rounded-full h-16 w-16"/>
+                                <h2 className="text-white text-xl font-bold my-4 border-b">Ism Familya</h2>
+                              </span>
+                              <Edit2Icon
+                                className="text-yellow-400 hover:bg-white/40 p-1 cursor-pointer rounded-lg w-10 h-10"/>
+                            </div>
+                            <div className="flex justify-between items-center p-3 backdrop-blur-sm rounded-xl">
+                              <div className="flex justify-start items-center gap-3 border px-4 w-[460px] rounded-lg bg-gray-400/40">
+                                <Search className="text-white h-8 w-8" />
+                                <input type="search" placeholder="Qidiring" value={searchValue}
+                                  onChange={(e) => setSearchValue(e.target.value)}
+                                  className="outline-none bg-transparent py-4 text-white w-full text-xl"/>
+                              </div>
+                              <SaveAll onClick={handleSaveApp} className="text-blue-400 hover:bg-white/40 p-1 cursor-pointer rounded-lg w-10 h-10"/>
+                            </div>
+                        </div>
+                      </div>
+                    )}
+
                     {statusModal && (
                       <div onClick={() => setStatusModal(false)} className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50">
                         <div onClick={(e) => e.stopPropagation()} className="bg-gradient-to-br from-slate-700 via-purple-700 to-slate-700 p-5 rounded-xl shadow-lg w-64 space-y-2">
@@ -2062,16 +2134,19 @@ const Admin: React.FC = () => {
                   <div className="flex justify-center items-center my-4">
                     <button onClick={handleAppPrevPage}
                       disabled={appCurrentPage === 1}
-                      className="px-4 py-2 bg-gray-200 rounded-lg disabled:opacity-50">
+                      className={`px-6 py-2 font-semibold text-gray-800 rounded-lg ${appCurrentPage === 1 ? 'bg-white/40 cursor-not-allowed' : 'bg-white/85 hover:bg-white cursor-pointer' }`}>
                       Oldingi
                     </button>
-                    <span className="text-gray-700 mx-2">{appCurrentPage} - sahifa</span>
+                    <span className="text-gray-100 mx-4">
+                      {appCurrentPage} 
+                    </span>
                     <button onClick={handleAppNextPage}
                       disabled={!appHasNextPage}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:opacity-50">
+                      className={`px-6 py-2 font-semibold text-white rounded-lg ${appHasNextPage ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-700 cursor-not-allowed'}`}>
                       Keyingi
                     </button>
                   </div>
+
                 </motion.div>
               )}
 
