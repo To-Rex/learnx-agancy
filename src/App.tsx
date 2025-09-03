@@ -23,9 +23,16 @@ import ScrollToTop from './components/ScrollTop'
 import ClientDetailsPage from './pages/ClientsPage'
 
 const AppContent = () => {
-  const navigate = useNavigate()
   const location = useLocation()
   const isAdminRoute = location.pathname.startsWith('/admin')
+  // const navigate =useNavigate()
+
+  // useEffect(() => {
+  //   const token = localStorage.getItem("api_access_token");
+  //   if (token) {
+  //     navigate("/profile");
+  //   }
+  // }, [navigate]);
   // console.log("TOKEN:", localStorage.getItem("api_access_token"));
 
   // useEffect(() => {

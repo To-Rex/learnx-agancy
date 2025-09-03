@@ -24,7 +24,8 @@ import {
   ArrowDown,
   ArrowUp,
   ChevronDown,
-  LogOut
+  LogOut,
+  ShieldUser
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -124,7 +125,10 @@ const Admin: React.FC = () => {
 
   // Data states
   const [applications, setApplications] = useState([])
-  const [users, setUsers] = useState([])
+  const [users, setUsers] = useState<any[]>([]);
+  const [roles, setRoles] = useState<string[]>(["super_admin", "admin", "manager", "call_operator"]);
+  const [showUsersModal, setShowUsersModal] = useState(false);
+  const [editingItem, setEditingItem] = useState<any>(null);
   const [services, setServices] = useState([])
   const [servicesInput, setServicesInput] = useState([])
   const [stories, setStories] = useState([])
@@ -142,8 +146,9 @@ const Admin: React.FC = () => {
 
 
   // Modal states
-  const [editingItem, setEditingItem] = useState(null)
   const [editingService, setEditingService] = useState(null)
+  const [editingUsers, setEditingUsers] = useState(null)
+
   const [editingServiceInput, setEditingServiceInput] = useState(null)
   const [file, setFile] = useState<File | null>(null);
   const [showStoryModal, setShowStoryModal] = useState(false);
@@ -152,11 +157,15 @@ const Admin: React.FC = () => {
   const [showServiceInputModal, setShowServiceInputModal] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteClientsModalOpen, setClientsDeleteModalOpen] = useState(false);
+  const [deleteUsersModalOpen, setUsersDeleteModalOpen] = useState(false);
+
   const [deleteClientsInputModalOpen, setClientsInputDeleteModalOpen] = useState(false);
   const [deleteInputModalOpen, setInputDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
   const [clientsToDelete, setClientsToDelete] = useState<string | null>(null);
+  const [usersToDelete, setUsersToDelete] = useState<string | null>(null);
+
   const [serviceInputToDelete, setServiceInputToDelete] = useState<string | null>(null);
   const [selectedService, setSelectedService] = useState<any>(null);
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
@@ -168,6 +177,8 @@ const Admin: React.FC = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [openProfil, setOpenProfil] = useState(false)
+
+
 
   // admin 
   // const 
@@ -308,39 +319,41 @@ const Admin: React.FC = () => {
   };
 
   const handleDeleteFeature = async (idx: number, isNew = false) => {
-    // Yangilangan massivni oldindan hisoblab olish
-    let updatedFeatures = isNew
-      ? newFeatures.filter((_, i) => i !== idx)
-      : features.filter((_, i) => i !== idx);
-
-    // Frontend state-ni yangilash
     if (isNew) {
-      setNewFeatures(updatedFeatures);
-    } else {
-      setFeatures(updatedFeatures);
+      // Agar yangi element bo‘lsa, indeksni features.length dan ayirib olish kerak
+      const newIdx = idx - features.length;
+      setNewFeatures(prev => prev.filter((_, i) => i !== newIdx));
+      return; // serverga so‘rov yubormaymiz
     }
 
-    // Serverga butun yangilangan obyektni yuborish
+    // Eski element bo‘lsa, serverdan o‘chiramiz
+    const updatedFeatures = features.filter((_, i) => i !== idx);
+    setFeatures(updatedFeatures);
+
     try {
-      await fetch(`https://learnx-crm-production.up.railway.app/api/v1/services/update/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: service.title,
-          description: service.description,
-          icon: service.icon,
-          price: service.price,
-          features: updatedFeatures   // yangilangan massiv
-        })
-      });
+      if (editingItem?.id) {
+        await fetch(
+          `https://learnx-crm-production.up.railway.app/api/v1/services/update/${editingItem.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem('admin_access_token') || ""}`,
+            },
+            body: JSON.stringify({
+              title: serviceForm.title,
+              description: serviceForm.description,
+              icon: serviceForm.icon,
+              price: serviceForm.price,
+              features: updatedFeatures,
+            }),
+          }
+        );
+      }
     } catch (error) {
       console.error("Serverdan o‘chirishda xatolik:", error);
     }
   };
-
-
-
-
 
 
 
@@ -414,10 +427,6 @@ const Admin: React.FC = () => {
       console.error(err);
       alert("Kutilmagan xatolik yuz berdi");
     }
-
-    setNewFeaturesUz([]);
-    setNewFeaturesEn([]);
-    setNewFeaturesRu([]);
   };
 
   const handleDeleteServiceClick = (id: string) => {
@@ -895,12 +904,12 @@ const Admin: React.FC = () => {
 
     try {
       const token = localStorage.getItem("admin_access_token") || "";
-      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/partners/delete/${partnerToDelete}`,{
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/partners/delete/${partnerToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (res.ok) {
         loadPartners();
@@ -918,7 +927,7 @@ const Admin: React.FC = () => {
 
   const handleAddPartners = () => {
     setEditingItem(null);
-    setPartnerForm({ 
+    setPartnerForm({
       name: {
         en: '',
         uz: '',
@@ -1066,6 +1075,162 @@ const Admin: React.FC = () => {
 
   }
 
+
+  const [usersForm, setUsersForm] = useState({
+    id: "",
+    full_name: "",
+    username: "",
+    email: "",
+    phone: "",
+    role: "",
+    percentage_share: "",
+    branch_id: ""
+  });
+
+  // --- API dan foydalanuvchilarni olish ---
+  const fetchUsers = async () => {
+    try {
+      const token = localStorage.getItem("admin_access_token") || "";
+      const res = await fetch(
+        "https://learnx-crm-production.up.railway.app/api/v1/users/get-list",
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await res.json();
+      setUsers(Array.isArray(data.results) ? data.results : data);
+    } catch (err) {
+      console.error(err);
+      setUsers([]);
+    }
+  };
+
+
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  console.log(users); // state har doim yangilanadimi tekshirish
+
+
+  const handleAddUsers = () => {
+    setEditingItem(null);
+    setUsersForm({
+      id: "",
+      full_name: "",
+      username: "",
+      email: "",
+      phone: "",
+      role: "",
+      percentage_share: "",
+      branch_id: ""
+    });
+    setShowUsersModal(true);
+  };
+
+  // --- Mavjud userni tahrirlash ---
+  const handleEditUsers = (user: any) => {
+    setUsersForm({
+      id: user.id || "",
+      full_name: user.full_name || "",
+      username: user.username || "",
+      email: user.email || "",
+      phone: user.phone || "",
+      role: user.role || "",
+      percentage_share: "",
+      branch_id: ""
+    });
+    setEditingItem(user);
+    setShowUsersModal(true);
+  };
+
+  // --- Saqlash (yangi yoki update) ---
+  const handleSaveUsers = async () => {
+    try {
+      const token = localStorage.getItem("admin_access_token") || "";
+      const payload = {
+        id: usersForm.id,
+        full_name: usersForm.full_name,
+        username: usersForm.username,
+        email: usersForm.email || "",
+        phone: usersForm.phone,
+        role: usersForm.role
+      };
+
+      let url = "https://learnx-crm-production.up.railway.app/api/v1/users/create";
+      let method = "POST";
+
+      if (editingItem && editingItem.id) {
+        url = `https://learnx-crm-production.up.railway.app/api/v1/users/update/${editingItem.id}`;
+        method = "PUT";
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("User muvaffaqiyatli saqlandi");
+        setUsers(prev =>
+          prev.map(u => u.id === editingItem.id ? { ...u, ...payload } : u)
+        );
+        setShowUsersModal(false);
+      }
+      else {
+        console.error("Xatolik:", data?.message);
+        toast("Userni saqlashda xatolik: " + (data?.message));
+      }
+    } catch (error) {
+      console.error("Kutilmagan xatolik:", error);
+      toast("Userni saqlashda kutilmagan xatolik yuz berdi");
+    }
+  };
+  const handleDeleteUsersClick = (id: string) => {
+    setUsersToDelete(id);
+    setUsersDeleteModalOpen(true);
+  };
+
+  const handleConfirmUsersDelete = async () => {
+    if (!usersToDelete) return;
+
+    try {
+      const token = localStorage.getItem('admin_access_token') || "";
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/users/delete/${usersToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.ok) {
+        toast.success("Mijoz o'chirildi");
+        setUsers(prev => prev.filter(u => u.id !== usersToDelete));
+        setUsersDeleteModalOpen(false);
+        setUsersToDelete(null);
+      }
+      else {
+        const errorData = await res.json();
+        toast(`Xatolik yuz berdi: ${errorData.message || res.statusText}`);
+      }
+    } catch (error) {
+      console.error("Xizmatni o'chirishda xatolik:", error);
+      toast("Xizmatni o'chirishda xatolik yuz berdi");
+    }
+  };
+
+
+
+
+
+
+
   const fetchPartners = async () => {
     const { data, error } = await supabase.from('partners').select('*');
     if (!error) setPartners(data);
@@ -1136,12 +1301,6 @@ const Admin: React.FC = () => {
       setHasNextPage(false);
     }
   };
-
-
-
-
-
-
 
 
   useEffect(() => {
@@ -1234,7 +1393,10 @@ const Admin: React.FC = () => {
     { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
     { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' },
     { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' },
+    { id: 'user', name: 'Adminlar', icon: ShieldUser, color: 'from-emerald-300 to-green-400' },
     { id: 'adminProfil', name: 'Admin profil', icon: Shield, color: 'from-teal-300 to-cyan-600' }
+
+
   ];
 
 
@@ -1355,11 +1517,11 @@ const Admin: React.FC = () => {
           'Content-Type': 'application/json'
         }
       });
-  
+
       if (!res.ok) {
         throw new Error("Arizalarni olishda xatolik");
       }
-  
+
       const data = await res.json();
       setApplication(data);
       console.log("Arizalar muvaffaqiyatli olindi:", data);
@@ -1394,15 +1556,11 @@ const Admin: React.FC = () => {
   // }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+    <div className="min-h-screen ">
       <Toaster position="top-right" />
 
       {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-2000"></div>
-        <div className="absolute top-40 left-40 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-blob animation-delay-4000"></div>
-      </div>
+      
 
       {/* Header */}
       <div className="relative bg-white/10 backdrop-blur-md border-b border-white/20   top-0 z-40">
@@ -1437,35 +1595,35 @@ const Admin: React.FC = () => {
               </button>
               <div>
                 <div onClick={() => setOpenProfil(!openProfil)} className='cursor-pointer active:scale-95 duration-500'>
-                  <img src={adminlogo} alt="admin logo image" 
-                    className='w-[48px] h-12 rounded-full object-cover'/>
+                  <img src={adminlogo} alt="admin logo image"
+                    className='w-[48px] h-12 rounded-full object-cover' />
                 </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-          {openProfil && (
-            <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
-              <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center backdrop-blur-xl bg-purple-500/20 w-[180px] text-white'>
-                <h2 className='py-3 bg-purple-900 font-semibold'>Admin Full name</h2>
-                <span onClick={() => setActiveTab('adminProfil')}
-                  className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-400/50 py-3'>
-                  <Settings className='h-5'/>
-                  <p>Profil sozlamari</p>
-                </span>
-                <button onClick={handleSignOut}
-                  // className="text-center px-4 w-full py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-300 shadow-sm"
-                  className='py-2 w-full hover:bg-red-500'
-                  >
-                  <span className='flex items-center gap-1'>
-                    <LogOut className='h-5 font-bold ml-5'/>
-                    Chiqish
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
+      {openProfil && (
+        <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
+          <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center backdrop-blur-xl bg-purple-500/20 w-[180px] text-white'>
+            <h2 className='py-3 bg-purple-900 font-semibold'>Admin Full name</h2>
+            <span onClick={() => setActiveTab('adminProfil')}
+              className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-400/50 py-3'>
+              <Settings className='h-5' />
+              <p>Profil sozlamari</p>
+            </span>
+            <button onClick={handleSignOut}
+              // className="text-center px-4 w-full py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg hover:from-red-600 hover:to-pink-700 transition-all duration-300 shadow-sm"
+              className='py-2 w-full hover:bg-red-500'
+            >
+              <span className='flex items-center gap-1'>
+                <LogOut className='h-5 font-bold ml-5' />
+                Chiqish
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col lg:flex-row gap-8">
@@ -2179,7 +2337,6 @@ const Admin: React.FC = () => {
                                     </button>
 
 
-
                                   </div>
                                   <input
                                     value={f.uz}
@@ -2619,116 +2776,116 @@ const Admin: React.FC = () => {
               )}
 
               {activeTab === 'contacts' && (
-                  <motion.div
-                    key="contacts"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="bg-white/10  rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
-                  >
-                    <div className="p-8 border-b border-white/20 flex-shrink-0">
-                      <h2 className="text-2xl font-bold text-white flex items-center">
-                        <Mail className="h-6 w-6 mr-3 text-teal-400" />
-                        Murojatlar boshqaruvi
-                      </h2>
-                    </div>
+                <motion.div
+                  key="contacts"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="bg-white/10  rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
+                >
+                  <div className="p-8 border-b border-white/20 flex-shrink-0">
+                    <h2 className="text-2xl font-bold text-white flex items-center">
+                      <Mail className="h-6 w-6 mr-3 text-teal-400" />
+                      Murojatlar boshqaruvi
+                    </h2>
+                  </div>
 
-                    {/* Bu yerda scrollable qism */}
-                    <div className="overflow-y-auto flex-grow px-6 pb-6">
-                      {loading ? (
-                        <div className="p-4 text-white">Yuklanmoqda...</div>
-                      ) : (
-                        <table className="w-full">
-                          <thead className="bg-white/5">
+                  {/* Bu yerda scrollable qism */}
+                  <div className="overflow-y-auto flex-grow px-6 pb-6">
+                    {loading ? (
+                      <div className="p-4 text-white">Yuklanmoqda...</div>
+                    ) : (
+                      <table className="w-full">
+                        <thead className="bg-white/5">
+                          <tr>
+                            {['№', 'Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
+                              <th
+                                key={header}
+                                className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
+                              >
+                                {header}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/10 text-center">
+                          {contacts.length === 0 ? (
                             <tr>
-                              {['№', 'Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
-                                <th
-                                  key={header}
-                                  className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
-                                >
-                                  {header}
-                                </th>
-                              ))}
+                              <td colSpan={6} className="text-center text-purple-200 py-8">
+                                Ma'lumot topilmadi
+                              </td>
                             </tr>
-                          </thead>
-                          <tbody className="divide-y divide-white/10 text-center">
-                            {contacts.length === 0 ? (
-                              <tr>
-                                <td colSpan={6} className="text-center text-purple-200 py-8">
-                                  Ma'lumot topilmadi
+                          ) : (
+                            contacts.map((contact, index) => (
+                              <motion.tr
+                                key={contact.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.05 }}
+                                className="hover:bg-white/5 transition-all duration-300"
+                              >
+                                <td className=' text-white font-bold'>{index + 1}</td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center">
+                                    <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
+                                      <span className="text-white font-semibold text-sm">
+                                        {contact.name?.charAt(0)?.toUpperCase() || '-'}
+                                      </span>
+                                    </div>
+                                    <div className="font-semibold text-white">{contact?.name || '-'}</div>
+                                  </div>
                                 </td>
-                              </tr>
-                            ) : (
-                              contacts.map((contact, index) => (
-                                <motion.tr
-                                  key={contact.id}
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: index * 0.05 }}
-                                  className="hover:bg-white/5 transition-all duration-300"
-                                >
-                                  <td className=' text-white font-bold'>{index + 1}</td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center">
-                                      <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
-                                        <span className="text-white font-semibold text-sm">
-                                          {contact.name?.charAt(0)?.toUpperCase() || '-'}
-                                        </span>
-                                      </div>
-                                      <div className="font-semibold text-white">{contact?.name || '-'}</div>
-                                    </div>
-                                  </td>
-                                  <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
-                                  <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
-                                  <td className="px-6 py-4  ">
-                                    <div className="w-[250px] trun text-purple-200">{contact?.message || '-'}</div>
-                                  </td>
-                                  <td className="px-6 py-4 text-purple-200 text-sm">
-                                    {contact?.created_at
-                                      ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
-                                      : '-'}
-                                  </td>
-                                  <td className="px-6 py-4">
-                                    <div className="flex items-center space-x-2">
-                                      <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                                        <Eye className="h-4 w-4" />
-                                      </button>
-                                      <button
-                                        onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </button>
-                                    </div>
-                                  </td>
-                                </motion.tr>
-                              ))
-                            )}
-                          </tbody>
-                        </table>
-                      )}
-                      {deleteModalOpen && (
-                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                          <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
-                            <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
-                            <div className="flex justify-end space-x-4">
-                              <button
-                                onClick={() => setDeleteModalOpen(false)}
-                                className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
-                              >
-                                Bekor qilish
-                              </button>
-                              <button
-                                onClick={handleConfirmContactDelete}
-                                className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
-                              >
-                                O'chirish
-                              </button>
-                            </div>
+                                <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
+                                <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
+                                <td className="px-6 py-4  ">
+                                  <div className="w-[250px] trun text-purple-200">{contact?.message || '-'}</div>
+                                </td>
+                                <td className="px-6 py-4 text-purple-200 text-sm">
+                                  {contact?.created_at
+                                    ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
+                                    : '-'}
+                                </td>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center space-x-2">
+                                    <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </motion.tr>
+                            ))
+                          )}
+                        </tbody>
+                      </table>
+                    )}
+                    {deleteModalOpen && (
+                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                        <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                          <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                          <div className="flex justify-end space-x-4">
+                            <button
+                              onClick={() => setDeleteModalOpen(false)}
+                              className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                            >
+                              Bekor qilish
+                            </button>
+                            <button
+                              onClick={handleConfirmContactDelete}
+                              className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                            >
+                              O'chirish
+                            </button>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </motion.div>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
 
               )}
 
@@ -3042,6 +3199,216 @@ const Admin: React.FC = () => {
                 <ClientDetailsPage clientId={selectedClientId} />
               )}
 
+              {activeTab === "user" && (
+                <div className="bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
+                    <h2 className="text-xl sm:text-2xl font-bold text-white text-center sm:text-left">
+                      Users List
+                    </h2>
+                    <button
+                      onClick={handleAddUsers}
+                      className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-emerald-300 to-green-400 text-white rounded-xl hover:from-emerald-500 hover:to-green-400 transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base"
+                    >
+                      <Plus className="h-4 w-4" />
+                      <span>Yangi admin</span>
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 sm:space-y-4 overflow-y-auto max-h-[70vh] sm:max-h-[69vh] pr-1">
+                    {users.length > 0 ? (
+                      users.map((user: any, index: number) => (
+                        <motion.div
+                          key={user.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.05 }}
+                          className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-0 rounded-xl p-3 border border-white/20 hover:bg-white/10 transition-all duration-300"
+                        >
+                          {/* Chap qism */}
+                          <div className="flex items-center space-x-3 sm:space-x-4">
+                            {user.avatar_url ? (
+                              <img
+                                src={user.avatar_url}
+                                alt={user.full_name}
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover border-2 border-white/30"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm sm:text-lg font-bold">
+                                {user.full_name?.charAt(0)?.toUpperCase()}
+                                {user.full_name?.split(" ")[1]?.charAt(0)?.toUpperCase()}
+                              </div>
+                            )}
+                            <div>
+                              <h3 className="text-white font-semibold text-sm sm:text-base">{user.full_name}</h3>
+                              <h3 className="text-gray-500 font-medium text-xs sm:text-sm">{user.username}</h3>
+                              <div className="  mt-2 text-gray-400 text-xs sm:text-sm">
+                                <span className="flex items-center"><Mail className="w-4 h-4 mr-1" />{user.email || "—"}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* O'ng qism */}
+                          <div className="flex flex-wrap justify-between sm:justify-end items-center sm:space-x-6 gap-3">
+                            <div className='block '>
+                              <div className="flex items-center bg-white/10 backdrop-blur-sm rounded-xl px-3 sm:px-4 py-1 sm:py-2 cursor-pointer hover:bg-white/20 text-xs sm:text-sm">
+                                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-green-400 mr-1" />
+                                <span className="text-white font-medium">{user.role}</span>
+                              </div>
+                              <span className="flex items-center text-gray-400"><Phone className="w-4 h-4 mr-1" />{user.phone || "—"}</span>
+
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                <Eye className="h-4 w-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEditUsers(user)}
+                                className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
+                              >
+                                <Edit className="h-5 w-5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteUsersClick(user.id)}
+                                className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      ))
+                    ) : (
+                      <p className="text-center text-gray-400 text-sm sm:text-base">Hech narsa topilmadi</p>
+                    )}
+                  </div>
+                  {showUsersModal && (
+                    <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
+                      <div className="backdrop-blur-3xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                        <div className="flex justify-between items-center mb-4">
+                          <h2 className="text-2xl text-center font-bold text-white">
+                            {editingItem ? "Adminni tahrirlash" : "Yangi admin qo'shish"}
+                          </h2>
+                          <button onClick={() => setShowUsersModal(false)}
+                            className="w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300">
+                            <X className="w-5 h-5 text-white" />
+                          </button>
+                        </div>
+
+                        {/* Form */}
+                        <div className="space-y-6">
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">
+                              Ismi, familiyasi
+                            </label>
+                            <input type="text"
+                              name="full_name"
+                              value={usersForm.full_name || ''}
+                              onChange={(e) =>
+                                setUsersForm({
+                                  ...usersForm,
+                                  full_name: e.target.value, // ✅ yangi qiymatni yozish
+                                })
+                              }
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required
+                            />
+                            <label className="block text-white text-sm font-semibold mb-2">
+                              Username
+                            </label>
+                            <input type="text" name="username"
+                              value={usersForm.username || ''}
+                              onChange={(e) =>
+                                setUsersForm({
+                                  ...usersForm,
+                                  username: e.target.value, // ✅ yangi qiymatni yozish
+                                })
+                              }
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required
+                            />
+                            <label className="block text-white text-sm font-semibold mb-2">
+                              Email
+                            </label>
+                            <input type="email" name="email"
+                              value={usersForm.email || ''}
+                              onChange={(e) =>
+                                setUsersForm({
+                                  ...usersForm,
+                                  email: e.target.value, // ✅ yangi qiymatni yozish
+                                })
+                              }
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required
+                            />
+                            <label className="block text-white text-sm font-semibold mt-4 my-2">Telefon raqam </label>
+                            <input type="text"
+                              name="phone"
+                              value={usersForm.phone || ''}
+                              onChange={(e) =>
+                                setUsersForm({
+                                  ...usersForm,
+                                  phone: e.target.value, // ✅ yangi qiymatni yozish 
+                                })
+                              }
+                              className="w-full px-4 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required />
+                          </div>
+                          <div>
+                            <label className="block text-white text-sm font-semibold mb-2">Role</label>
+                            <select
+                              name="role"
+                              value={usersForm.role || ""}
+                              onChange={(e) =>
+                                setUsersForm({ ...usersForm, role: e.target.value })
+                              }
+                              className="w-full px-3 py-3 bg-white/10 border border-white/30 rounded-lg text-white placeholder-white/60 backdrop-blur-lg focus:outline-none focus:border-white focus:ring-2 focus:ring-white transition-all duration-300"
+                              required
+                            >
+                              {roles.map((r) => (
+                                <option className='bg-[#714895]' key={r} value={r}>{r}</option>
+                              ))}
+                            </select>
+                          </div>
+
+                          {/* Form Buttons */}
+                          <div className="flex gap-4 pt-2">
+                            <button type="button" onClick={() => setShowUsersModal(false)}
+                              className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">
+                              Bekor qilish
+                            </button>
+                            <button type="button" onClick={handleSaveUsers}
+                              className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-300 to-green-400 text-white rounded-xl hover:from-emerald-500 hover:to-green-400 rounded-lg font-semibold transition-all duration-300 transform hover:scale-95">
+                              Saqlash
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {deleteUsersModalOpen && (
+                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                        <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
+                        <div className="flex justify-end space-x-4">
+                          <button
+                            onClick={() => setUsersDeleteModalOpen(false)}
+                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                          >
+                            Bekor qilish
+                          </button>
+                          <button
+                            onClick={handleConfirmUsersDelete}
+                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                          >
+                            O'chirish
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               {activeTab === "adminProfil" && (
                 <div className="border border-white/40 rounded-2xl overflow-hidden">
                   <div className="bg-white/5 min-h-[72vh] backdrop-blur-sm p-6 text-white">
@@ -3064,10 +3431,10 @@ const Admin: React.FC = () => {
                         <form className="flex flex-col max-w-[750px] gap-2">
                           <label htmlFor="fullname">Ismi, Familiyasi</label>
                           <input id="fullname" type="text"
-                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2"/>
+                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2" />
                           <label htmlFor="email">Email</label>
                           <input id="email" type="email"
-                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2"/>
+                            className="w-full border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30 mb-2" />
                           <button type="button"
                             className="w-[130px] border p-2 rounded-lg border-white/30 bg-[#20C997] hover:bg-[#17B48A] active:scale-95 transition">
                             O'zgartirish
@@ -3081,13 +3448,13 @@ const Admin: React.FC = () => {
                       <div className="grid grid-cols-2 gap-4">
                         <input type="password"
                           placeholder="Hozirgi parolni kiriting"
-                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30" />
                         <input type="password"
                           placeholder="Yangi parolni kiriting"
-                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30" />
                         <input type="password"
                           placeholder="Yangi parolni tasdiqlang"
-                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30"/>
+                          className="w-[380px] border border-white/20 rounded-lg bg-white/5 p-2 text-white placeholder-white/50 backdrop-blur-lg focus:outline-none focus:border-white/30" />
                         <button type="button"
                           className="border border-white/20 w-[380px] rounded-lg h-[44px] bg-[#20C997] hover:bg-[#17B48A] active:scale-95 transition">
                           Parolni o'zgartirish
@@ -3097,8 +3464,6 @@ const Admin: React.FC = () => {
                   </div>
                 </div>
               )}
-
-
             </AnimatePresence >
           </div >
         </div >
