@@ -296,7 +296,7 @@ const Contact: React.FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="bg-white p-8 rounded-2xl shadow-lg">
           <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">{t('contact.location')}</h2>
           <div className="h-96 rounded-xl overflow-hidden">
-            <iframe src="https://yandex.uz/map-widget/v1/?ll=69.285801%2C41.333185&z=16&l=map" width="100%" height="100%" frameBorder="0" allowFullScreen className="rounded-xl" title="LearnX location"></iframe>
+            <iframe src="https://yandex.uz/map-widget/v1/?ll=69.285801%2C41.333185&z=16&l=map" width="100%" height="100%" frameBorder="0" allowFullScreen className="rounded-xl" title="UnoGroup location"></iframe>
           </div>
         </motion.div>
       </div>

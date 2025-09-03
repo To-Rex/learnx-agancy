@@ -125,7 +125,7 @@ const translations = {
       error: "Ro'yxatdan o'tish jarayonida xatolik yuz berdi",
       alreadyHave: "Allaqachon hisobingiz bormi?",
       login: "Kirish",
-      why: "Nima uchun LearnX?",
+      why: "Nima uchun UnoGroup?",
       benefits: [
         "Shaxsiy yo'nalish va maslahat",
         "98% muvaffaqiyat kafolati",
@@ -253,8 +253,8 @@ const translations = {
     'home.services.title': 'Bizning xizmatlarimiz',
     'home.services.description': 'Professional jamoa sizga chet davlatlarga ta\'lim olish va ishlash uchun barcha zarur xizmatlarni taqdim etadi',
     'home.testimonials.title': 'Talabalarimizning hikoyalari',
-    'home.testimonials.person1': 'LearnX orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.',
-    'home.testimonials.person2': "Ta'lim grantini olishda LearnX jamoasi katta yordam berdi. Endi Kanadada o'qiyapman!",
+    'home.testimonials.person1': 'UnoGroup orqali Work & Travel dasturiga qatnashib, ajoyib tajriba oldim. Jarayon juda oson va qulay edi.',
+    'home.testimonials.person2': "Ta'lim grantini olishda UnoGroup jamoasi katta yordam berdi. Endi Kanadada o'qiyapman!",
     'home.testimonials.description': 'Bizga ishongan talabalarimizning muvaffaqiyat hikoyalari',
     'home.partners.title': 'Hamkor universitetlar',
     'home.partners.description': 'Dunyoning eng yaxshi universitetlari bilan hamkorlik',
@@ -502,7 +502,7 @@ const translations = {
       error: "An error occurred during registration",
       alreadyHave: "Already have an account?",
       login: "Login",
-      why: "Why LearnX?",
+      why: "Why UnoGroup?",
       benefits: [
         "Personal guidance and counseling",
         "98% success guarantee",
@@ -877,7 +877,7 @@ const translations = {
       error: "Произошла ошибка при регистрации",
       alreadyHave: "Уже есть аккаунт?",
       login: "Войти",
-      why: "Почему LearnX?",
+      why: "Почему UnoGroup?",
       benefits: [
         "Индивидуальное сопровождение и консультации",
         "98% гарантия успеха",
@@ -1001,8 +1001,8 @@ const translations = {
     'Yillik tajriba': 'Лет опыта',
 
     // Testimonial
-    'home.testimonials.person1': 'Я принял участие в программе Work & Travel через LearnX и получил(а) замечательный опыт. Процесс был очень простым и удобным',
-    'home.testimonials.person2': 'Команда LearnX оказала большую помощь в получении образовательного гранта. Теперь я учусь в Канаде!',
+    'home.testimonials.person1': 'Я принял участие в программе Work & Travel через UnoGroup и получил(а) замечательный опыт. Процесс был очень простым и удобным',
+    'home.testimonials.person2': 'Команда UnoGroup оказала большую помощь в получении образовательного гранта. Теперь я учусь в Канаде!',
 
     // Home page
     'home.hero.span': 'Первая образовательная платформа в Узбекистане',

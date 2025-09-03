@@ -167,6 +167,7 @@ const Home: React.FC = () => {
       </div>
     )
   }
+  
   if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
 
   return (
@@ -189,8 +190,7 @@ const Home: React.FC = () => {
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.2, duration: 0.6 }}
-                  className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm"
-                >
+                  className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm">
                   <Star className="h-4 w-4 text-yellow-400" />
                   <span>{t('home.hero.span')}</span>
                 </motion.div>
