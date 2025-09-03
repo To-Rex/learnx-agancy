@@ -343,7 +343,7 @@ const Home: React.FC = () => {
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
         </div>
-        <Marquee speed={120} pauseOnHover={true} autoFill={true} >
+        <Marquee speed={120} pauseOnHover={true}  >
           <div className="flex items-center gap-8 whitespace-nowrap">
             {partners.length > 0 ? (
               partners.map((partner, i) => (
@@ -354,7 +354,7 @@ const Home: React.FC = () => {
                     className="w-40 h-40 rounded-2xl object-cover"
                   />
                   <h2 className="text-sm font-medium text-gray-800 truncate">
-                    {partner.name[language] || partner.name.uz}
+                    {partner.name[language] || partner.name.en}
                   </h2>
                 </div>
               ))

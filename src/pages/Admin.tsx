@@ -1759,7 +1759,7 @@ const Admin: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen bg-gray-900">
       <Toaster position="top-right" />
 
       {/* Header */}
@@ -1807,7 +1807,7 @@ const Admin: React.FC = () => {
         <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
           <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center backdrop-blur-xl bg-purple-500/20 w-[180px] text-white'>
             <h2 className='py-3 bg-purple-900 font-semibold'>Admin Full name</h2>
-            <span onClick={() => setActiveTab('adminProfil')}
+            <span onClick={() => {setActiveTab('adminProfil') ; setOpenProfil(false)}}
               className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-400/50 py-3'>
               <Settings className='h-5' />
               <p>Profil sozlamari</p>

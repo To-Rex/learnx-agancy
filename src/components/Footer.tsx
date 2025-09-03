@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
+import { GraduationCap, Mail, Phone, MapPin, Instagram, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext'
 import { BsTelegram } from 'react-icons/bs';
