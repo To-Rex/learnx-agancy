@@ -75,8 +75,8 @@ const Apply: React.FC = () => {
   }, [])
 
   const countries = [
-    'AQSh', 'Kanada', 'Buyuk Britaniya', 'Germaniya', 'Fransiya',
-    'Avstraliya', 'Niderlandiya', 'Shvetsiya', 'Norvegiya', 'Daniya'
+    'AQSh', 'Kanada', 'Buyuk Britaniya', 'Germaniya', 'Fransiya', 
+    'Avstraliya', 'Niderlandiya', 
   ]
 
   const userFiles = async () => {
@@ -249,7 +249,7 @@ const Apply: React.FC = () => {
 
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 {t('apply.program')}
@@ -406,12 +406,11 @@ const Apply: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          className="text-center mb-12">
+          <h1 className="text-4xl lg:text-[40px] font-bold text-gray-800 mb-4">
             {t('apply.title')}
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             {t('apply.description')}
           </p>
         </motion.div>
@@ -450,11 +449,9 @@ const Apply: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white p-8 rounded-2xl shadow-lg"
-        >
+          className="bg-white p-7 rounded-2xl shadow-lg">
           <form>
             {renderStep()}
-
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
               <button
@@ -476,7 +473,7 @@ const Apply: React.FC = () => {
 
           {/* Login prompt for non-authenticated users */}
           {!user && (
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-blue-800 text-center">
                 Ariza topshirish uchun tizimga kirishingiz kerak.{' '}
                 <Link to="/login" className="font-semibold underline hover:text-blue-900">

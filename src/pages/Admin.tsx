@@ -1074,7 +1074,6 @@ const Admin: React.FC = () => {
   const handleSignOut = async () => {
     await signOut()
     navigate('/admin/login')
-
   }
 
 
@@ -1111,7 +1110,7 @@ const Admin: React.FC = () => {
     fetchUsers();
   }, []);
 
-  console.log(users); // state har doim yangilanadimi tekshirish
+  // console.log(users); // state har doim yangilanadimi tekshirish
 
 
   const handleAddUsers = () => {

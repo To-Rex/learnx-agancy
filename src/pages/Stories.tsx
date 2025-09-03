@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Star, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
@@ -10,6 +10,7 @@ const Stories: React.FC = () => {
   const [filteredStories, setFilteredStories] = useState<any[]>([])
   const [selectedCountry, setSelectedCountry] = useState('all')
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadStories()
@@ -21,7 +22,7 @@ const Stories: React.FC = () => {
 
   const loadStories = async () => {
     try {
-      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list") // API manzilini yozing
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/client-stories/get-list")
       const data = await res.json()
 
       if (data && data.length > 0) {
@@ -54,15 +55,24 @@ const Stories: React.FC = () => {
     }
   }
 
+  const navigateUser = () => {
+    const token = localStorage.getItem('api_access_token')
+    if(token){
+      navigate('/apply');
+    }else {
+      navigate('/login')
+    }
+  }
+
   const countries = ['all', ...Array.from(new Set(stories.map(story => story.country)))]
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   )
+  // }
 
   const stats = [
     { number: "2000+", label: t('stories.stat.successfulStudents') },
@@ -123,7 +133,6 @@ const Stories: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1, duration: 0.6 }}
-              whileHover={{ y: -5 }}
               className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all overflow-hidden group"
             >
               {/* Image */}
@@ -131,7 +140,7 @@ const Stories: React.FC = () => {
                 <img
                   src={story.image}
                   alt={story.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full px-3 py-1 text-sm font-semibold text-gray-800">
                   {story.country}
@@ -222,16 +231,13 @@ const Stories: React.FC = () => {
               {t('stories.ctaText')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/apply"
-                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl inline-block"
-              >
+              <button onClick={navigateUser}
+                className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl inline-block">
                 {t('stories.apply')}
-              </Link>
+              </button>
               <Link
                 to="/contact"
-                className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all inline-block"
-              >
+                className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-xl font-semibold hover:bg-gray-50 transition-all inline-block">
                 {t('stories.consultation')}
               </Link>
             </div>

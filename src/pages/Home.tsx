@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import Marquee from "react-fast-marquee";
 import {
   ArrowRight, FileText, Users, Globe, Star,
@@ -35,6 +35,7 @@ interface Testimonial {
   rating: number
   image: string
 }
+
 interface Partners {
   id: string // UUID string sifatida
   name: string // name.en dan olinadi
@@ -76,13 +77,12 @@ const Home: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const  navigate = useNavigate()
 
   const loadAllData = async () => {
     setLoading(true)
     setError(null)
     try {
-      const token = localStorage.getItem('api_access_token') || ''
-
       // Services
       // Services
       // Services yuklash
@@ -156,17 +156,26 @@ const Home: React.FC = () => {
     }
   }
 
+  const navigateUser = () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/apply');
+    } else {
+      navigate('/login');
+    }
+  };
+
   useEffect(() => {
     loadAllData()
   }, [language])
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+  //     </div>
+  //   )
+  // }
   
   if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
 
@@ -183,18 +192,8 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="space-y-8"
-            >
+              className="space-y-8">
               <div className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, x: -50 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.2, duration: 0.6 }}
-                  className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 text-sm">
-                  <Star className="h-4 w-4 text-yellow-400" />
-                  <span>{t('home.hero.span')}</span>
-                </motion.div>
-
                 <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   {t('home.hero.title')}
                   <span className="block text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-orange-300">
@@ -208,21 +207,18 @@ const Home: React.FC = () => {
               </div>
 
               <div className="flex flex-col items-start sm:items-center space-y-2 gap-4 sm:flex-row ">
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Link
-                    to="/apply"
-                    className="bg-gradient-to-r mt-2 from-yellow-400 to-orange-500 text-gray-900 px-8 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all flex items-center justify-center space-x-2 shadow-lg hover:shadow-xl"
-                  >
+                <motion.div  whileTap={{ scale: 0.95 }}>
+                  <button onClick={navigateUser}
+                    className="bg-gradient-to-r mt-2 from-yellow-500 to-orange-500 text-gray-800 px-8 py-4 rounded-xl font-semibold hover:from-yellow-400 hover:to-orange-400 transition-all flex items-center justify-center space-x-2">
                     <span>{t('home.hero.apply')}</span>
                     <ArrowRight className="h-5 w-5" />
-                  </Link>
+                  </button>
                 </motion.div>
 
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <motion.div  whileTap={{ scale: 0.95 }}>
                   <Link
                     to="/contact"
-                    className="border-2 border-white/30 text-white px-12 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all text-center"
-                  >
+                    className="border-2 border-white/30 text-white px-12 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all text-center">
                     {t('home.hero.consultation')}
                   </Link>
                 </motion.div>
@@ -338,6 +334,7 @@ const Home: React.FC = () => {
           </div>
         </div>
       </section>
+      
       {/* Partners Section */}
       <section className="bg-gray-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -346,15 +343,15 @@ const Home: React.FC = () => {
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
         </div>
-        <Marquee>
+        <Marquee speed={120} pauseOnHover={true} autoFill={true} >
           <div className="flex items-center gap-8 whitespace-nowrap">
             {partners.length > 0 ? (
               partners.map((partner, i) => (
-                <div key={i} className="flex items-center gap-3 p-2">
+                <div key={i} className="flex items-center flex-col gap-4 p-2">
                   <img
                     src={partner.logo}
                     alt={partner.name[language] || partner.name.uz}
-                    className="w-10 h-10 rounded-full object-cover"
+                    className="w-40 h-40 rounded-2xl object-cover"
                   />
                   <h2 className="text-sm font-medium text-gray-800 truncate">
                     {partner.name[language] || partner.name.uz}
@@ -386,26 +383,19 @@ const Home: React.FC = () => {
             <p className="text-xl mb-12 md:mb-8 max-w-2xl mx-auto text-blue-100">
               {t('home.cta.description')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-9 md:gap-4 justify-center">
+            <div className="flex items-center sm:flex-row gap-9 md:gap-4 justify-center">
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link
-                  to="/apply"
-                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-12 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl"
-                >
+                whileTap={{ scale: 0.95 }}>
+                <button onClick={navigateUser}
+                  className="bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 px-12 py-4 rounded-xl font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-lg hover:shadow-xl">
                   {t('home.cta.apply')}
-                </Link>
+                </button>
               </motion.div>
               <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
+                whileTap={{ scale: 0.95 }}>
                 <Link
                   to="/contact"
-                  className="border-2 border-white/30 text-white px-16 py-4 rounded-xl font-semibold hover:bg-white/10 backdrop-blur-sm transition-all"
-                >
+                  className="border-2 border-white/30 text-white px-16 py-4 rounded-xl bg-black/5 font-semibold hover:bg-white/10 backdrop-blur-sm transition-all">
                   {t('home.cta.contact')}
                 </Link>
               </motion.div>

@@ -4,6 +4,7 @@ import { Menu, X, GraduationCap, User, LogOut, Globe } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useLanguage } from '../contexts/LanguageContext'
 import { motion, AnimatePresence } from 'framer-motion'
+import Marquee from 'react-fast-marquee'
 
 
 const Navbar: React.FC = () => {
@@ -34,6 +35,7 @@ const Navbar: React.FC = () => {
     await signOut()
     setIsOpen(false)
   }
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -51,7 +53,16 @@ const Navbar: React.FC = () => {
   }, []);
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-gray-100">
+    <>
+    <div className='fixed z-50 top-0 left-0 right-0'>
+      <Marquee speed={110} 
+        className="bg-white border-b border-gray-500 text-red-500 p-1"
+        pauseOnHover >
+          Bu sayt test rejimida ishlamoqda    
+      </Marquee>
+    </div>
+
+    <nav className="bg-white/95 backdrop-blur-md shadow-lg sticky z-40 top-7 border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -85,7 +96,7 @@ const Navbar: React.FC = () => {
                     layoutId="activeTab"
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full"
                     initial={false}
-                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                    // transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   />
                 )}
               </Link>
@@ -98,17 +109,13 @@ const Navbar: React.FC = () => {
             <div className="relative" ref={languageMenuRef}>
               <button
                 onClick={() => setShowLanguageMenu((prev) => !prev)}
-                className="flex items-center space-x-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-100 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md"
-              >
+                className="flex items-center space-x-2 px-4 py-2 text-sm bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border border-blue-100 rounded-xl transition-all duration-300 shadow-sm hover:shadow-md">
                 <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
                   <Globe className="h-3 w-3 text-white" />
                 </div>
                 <span className="text-xl">
                   {languages.find((lang) => lang.code === language)?.flag}
                 </span>
-                {/* <span className="text-sm font-semibold text-gray-700">
-                  {languages.find((lang) => lang.code === language)?.code.toUpperCase()}
-                </span> */}
               </button>
 
               <AnimatePresence>
@@ -318,6 +325,7 @@ const Navbar: React.FC = () => {
         </AnimatePresence>
       </div>
     </nav>
+    </>
   )
 }
 

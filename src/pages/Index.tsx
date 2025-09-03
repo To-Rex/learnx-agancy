@@ -152,14 +152,8 @@ export default function UserFilesPage() {
 
       <div className="space-y-6 ">
         {checklist.map((item) => {
-          const label =
-            item.name?.uz ||
-            item.name?.en ||
-            item.name?.ru ||
-            "Nomsiz hujjat";
-
+          const label = item.name?.uz || item.name?.en || item.name?.ru || "Nomsiz hujjat";
           const currentFile = item.uploaded_doc?.file_url || "";
-
           return (
             <div key={item.service_input_id} className="border border-gray-200 rounded-lg p-4">
               <FileUpload
@@ -202,12 +196,9 @@ export default function UserFilesPage() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmitAll)} className="flex justify-end mt-6">
-        <button
-          type="submit"
-          onClick={sendDocuments}
+        <button type="submit" onClick={sendDocuments}
           disabled={submitting}
-          className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 font-semibold"
-        >
+          className="px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-lg hover:from-green-700 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2 font-semibold">
           {submitting ? (
             <>
               <CircleDashed className="h-5 w-5 animate-spin" />

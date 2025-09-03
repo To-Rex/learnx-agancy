@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 
 interface AuthContextType {
   user: User | null
@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [initializing, setInitializing] = useState(true)
-  // const navigate =useNavigate()
+  // const navigate = useNavigate();
 
   // useEffect(() => {
   //   const token = localStorage.getItem("api_access_token");
@@ -169,8 +169,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { data: null, error: apiError };
     }
   };
-
-
 
   const signIn = async (email: string, password: string) => {
     setLoading(true);

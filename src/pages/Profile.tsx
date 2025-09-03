@@ -364,14 +364,12 @@ const Profile: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white p-6 rounded-xl shadow-lg "
-            >
+              className="bg-white p-6 rounded-xl shadow-lg ">
               <div className="flex items-center justify-between mb-6 ">
                 <h3 className="text-xl font-bold text-gray-900">Mening arizalarim</h3>
                 <Link
                   to="/apply"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                >
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                   <Plus className="h-4 w-4" />
                   <span>Yangi ariza</span>
                 </Link>

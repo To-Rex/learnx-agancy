@@ -2,6 +2,7 @@ import React from 'react';
 import { GraduationCap, Mail, Phone, MapPin, Facebook, Instagram, Linkedin, Youtube } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '../contexts/LanguageContext'
+import { BsTelegram } from 'react-icons/bs';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -25,17 +26,17 @@ const Footer: React.FC = () => {
               {t('home.hero.description')}
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-white/10">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-300 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-white/10">
+              {/* <a target='_blank' href="#" className="text-gray-300 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-white/10">
+                <Facebook className="h-6 w-6" />
+              </a> */}
+              <a target='_blank' href="https://www.instagram.com/learnx_agency" className="text-gray-300 hover:text-pink-400 transition-colors p-2 rounded-lg hover:bg-white/10">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-white/10">
-                <Linkedin className="h-5 w-5" />
+              <a target='_blank' href="https://telegram.me/LearnX_agency" className="text-gray-300 hover:text-blue-400 transition-colors p-2 rounded-lg hover:bg-white/10">
+                <BsTelegram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-gray-300 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/10">
-                <Youtube className="h-5 w-5" />
+              <a target='_blank' href="https://www.youtube.com/@learnxagency" className="text-gray-300 hover:text-red-400 transition-colors p-2 rounded-lg hover:bg-white/10">
+                <Youtube className="h-6 w-6" />
               </a>
             </div>
           </div>
@@ -119,7 +120,7 @@ const Footer: React.FC = () => {
                   <MapPin className="h-4 w-4 text-orange-400" />
                 </div>
                 <span className="text-gray-300 text-sm hover:text-white">{t('contact.info.address')}
-                  <a target='_blank' href="https://yandex.uz/map-widget/v1/?ll=69.285628%2C41.332677&z=16&l=map"> : Toshkent, O'zbekiston</a>
+                  <a target='_blank' href="https://yandex.uz/maps/10335/tashkent/house/YkAYdAZiQUAAQFprfX91cH1lZw==/?ll=69.213107%2C41.341247&z=20.6"> : Toshkent, O'zbekiston</a>
                 </span>
               </div>
             </div>
