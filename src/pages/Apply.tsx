@@ -82,7 +82,7 @@ const Apply: React.FC = () => {
 
   const countries = [
     'AQSh', 'Kanada', 'Buyuk Britaniya', 'Germaniya', 'Fransiya', 
-    'Avstraliya', 'Niderlandiya', 'Shvetsiya', 'Norvegiya', 'Daniya'
+    'Avstraliya', 'Niderlandiya', 
   ]
 
   const userFiles = async () => {
@@ -107,7 +107,7 @@ const Apply: React.FC = () => {
       if(resData?.id){
         navigate(`/userfiles/${resData.id}`)
       }else{
-        toast.error('Ariza yaratishda xatolik yuz berdi! Tizimga kiring')
+        toast.error('Ariza yuborishdan oldin tizimga kiring')
       }
     }catch(error) {
       console.error('Xatolik:', error)
@@ -257,7 +257,7 @@ const Apply: React.FC = () => {
 
       case 1:
         return (
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                {t('apply.program')}
@@ -414,12 +414,11 @@ const Apply: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+          className="text-center mb-12">
+          <h1 className="text-4xl lg:text-[40px] font-bold text-gray-800 mb-4">
             {t('apply.title')}
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto">
             {t('apply.description')}
           </p>
         </motion.div>
@@ -458,25 +457,17 @@ const Apply: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
-          className="bg-white p-8 rounded-2xl shadow-lg"
-        >
+          className="bg-white p-7 rounded-2xl shadow-lg">
           <form>
             {renderStep()}
-
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                <button 
-                onClick={() => navigate('/profile')}
-                  // onClick={() => navigate(`/profil${application_id}`)}
+            <div className="flex justify-between mt-5 pt-4 border-t border-gray-200">
+                <button onClick={() => navigate('/profile')}
                   className='border text-white bg-red-500 py-2 px-5 rounded-lg hover:bg-red-400'>
                     orqaga
                 </button>
-                <button
-                  type="button"
-                  onClick={userFiles}
-                  // onClick={nextStep}
-                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400"
-                >
+                <button type="button" onClick={userFiles}
+                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400">
                   {t('apply.next')}
                 </button>
             </div>
@@ -484,7 +475,7 @@ const Apply: React.FC = () => {
           
           {/* Login prompt for non-authenticated users */}
           {!user && (
-            <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-blue-800 text-center">
                 Ariza topshirish uchun tizimga kirishingiz kerak.{' '}
                 <Link to="/login" className="font-semibold underline hover:text-blue-900">

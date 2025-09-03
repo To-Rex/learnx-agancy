@@ -1065,7 +1065,6 @@ const Admin: React.FC = () => {
   const handleSignOut = async () => {
     await signOut()
     navigate('/admin/login')
-
   }
 
   const fetchPartners = async () => {

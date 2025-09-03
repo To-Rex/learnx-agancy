@@ -173,7 +173,11 @@ const translations = {
       "nextStory": "Sizning hikoyangiz keyingi bo'lsin!",
       "ctaText": "Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating",
       "apply": "Ariza topshirish",
-      "consultation": "Bepul maslahat"
+      "consultation": "Bepul maslahat",
+      "stories.stat.successfulStudents" : 'salom',
+      "stories.stat.partnerCountries": '1',
+      "stories.stat.successRate": '1',
+      "stories.stat.yearsExperience": '1'
     },
 
     contact: {
