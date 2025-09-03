@@ -343,10 +343,8 @@ const Home: React.FC = () => {
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
         </div>
-        <Marquee 
-          speed={100} pauseOnHover={true} autoFill={true} play={true} 
-        >
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-8">
+        <Marquee>
+          <div className="flex items-center gap-8 whitespace-nowrap">
             {partners.length > 0 ? (
               partners.map((partner, i) => (
                 <div key={i} className="flex items-center flex-col gap-4 p-2">
@@ -361,12 +359,13 @@ const Home: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-center text-gray-500 col-span-full">
+              <p className="text-center text-gray-500">
                 Hamkorlar ma'lumotlari topilmadi.
               </p>
             )}
           </div>
         </Marquee>
+
 
       </section>
 
