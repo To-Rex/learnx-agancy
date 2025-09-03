@@ -25,7 +25,9 @@ import {
   ArrowUp,
   ChevronDown,
   LogOut,
-  ShieldUser
+  ShieldUser,
+  Edit2,
+  Edit2Icon
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
@@ -1107,7 +1109,7 @@ const Admin: React.FC = () => {
     fetchUsers();
   }, []);
 
-  console.log(users); // state har doim yangilanadimi tekshirish
+  // console.log(users); // state har doim yangilanadimi tekshirish
 
 
   const handleAddUsers = () => {

@@ -343,7 +343,7 @@ const Home: React.FC = () => {
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
         </div>
-        <Marquee>
+        <Marquee speed={120} pauseOnHover={true} autoFill={true} >
           <div className="flex items-center gap-8 whitespace-nowrap">
             {partners.length > 0 ? (
               partners.map((partner, i) => (
