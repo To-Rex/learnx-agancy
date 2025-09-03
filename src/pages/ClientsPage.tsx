@@ -89,7 +89,7 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
 
 
   if (loadingClient) {
-    return <p className="text-white text-center">Client ma'lumotlari yuklanmoqda...</p>;
+    return <p className="text-gary-700 text-center">Client ma'lumotlari yuklanmoqda...</p>;
   }
 
   if (!client) {
@@ -114,7 +114,7 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
               className="w-20 h-20 rounded-full object-cover border-2 border-white/30"
             />
           ) : client ? (
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-gray-600 text-3xl font-bold">
               {client.full_name?.charAt(0)?.toUpperCase()}
               {client.full_name?.split(" ")[1]?.charAt(0)?.toUpperCase()}
             </div>
@@ -122,13 +122,13 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
 
 
           <div>
-            <h2 className="text-3xl font-bold text-white">{client.full_name}</h2>
+            <h2 className="text-3xl font-bold text-gray-600">{client.full_name}</h2>
             <p className="text-gray-400 text-sm">ID: {client.id}</p>
           </div>
         </div>
 
         {/* Details */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-gray-600">
           <div className="flex items-center space-x-3">
             <Mail className="w-5 h-5 text-gray-400" />
             <span>{client.email || "—"}</span>
@@ -168,14 +168,10 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
                 : "—"}
             </span>
           </div>
-          <div className="flex items-center space-x-3">
-            <Building className="w-5 h-5 text-gray-400" />
-            <span>Arizalar soni : {client.applications_count || "—"}</span>
-          </div>
         </div>
       </motion.div>
       {loadingApp ? (
-        <p className="text-white text-center mt-4">Application yuklanmoqda...</p>
+        <p className="text-gray-600 text-center mt-4">Application yuklanmoqda...</p>
       ) : app && app.length > 0 ? (
         <div className="mt-6 space-y-4">
           {app.map((a: any) => (
@@ -188,7 +184,7 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
             >
               {/* Status */}
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold text-white">Ariza ID: {a.id.slice(0, 13)}</h3>
+                <h3 className="text-lg font-semibold text-gray-600">Ariza ID: {a.id.slice(0, 13)}</h3>
                 <span
                   className={`px-3 py-1 rounded-full text-sm font-medium ${a.status === "approved"
                     ? "bg-green-500/20 text-green-400"
@@ -215,7 +211,7 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
                   <span className="text-gray-400">Yaratilgan: </span>
                   {new Date(a.created_at).toLocaleDateString("uz-UZ")}
                 </p>
-                <p>
+                <p className="text-gray-800">
                   <span className="text-gray-400">Mijoz: </span>
                   {a.client?.full_name}
                 </p>
