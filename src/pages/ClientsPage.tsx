@@ -24,7 +24,6 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
         if (!res.ok) throw new Error("Ma'lumot yuklanmadi");
         const data = await res.json();
         setClient(data?.data || data);
-        console.log('idddd', data.id);
         localStorage.setItem("id", data.id)
       } catch (err) {
         console.error("Xatolik:", err);
@@ -38,7 +37,6 @@ const ClientDetailsPage = ({ clientId }: { clientId: string }) => {
 
   useEffect(() => {
     if (!client) return;
-    console.log('salommmm', client.id);
 
 
     const fetchApp = async (extraParams: Record<string, string | number | boolean> = {}) => {

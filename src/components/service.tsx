@@ -113,23 +113,23 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
         loadInputs();
     }, [service]);
 
-    if (loading) return <div className="p-4 text-white">Yuklanmoqda...</div>;
+    if (loading) return <div className="p-4 text-gray-600">Yuklanmoqda...</div>;
 
     return (
-        <div className="text-white">
+        <div className="text-gray-600 ">
             {/* Inputs list */}
             <div className="space-y-2">
                 {inputs.length === 0 ? (
-                    <p className="text-white/70">Inputlar mavjud emas</p>
+                    <p className="text-gray-600">Inputlar mavjud emas</p>
                 ) : (
                     inputs.map(input => (
-                        <div key={input.id} className="flex justify-between items-center p-4 border border-white/20 rounded-lg hover:bg-white/5 transition">
+                        <div key={input.id} className="flex justify-between items-center p-2 border border-gray-400 rounded-lg hover:bg-white/5 transition">
                             <h1>{input.title}</h1>
                             <div className="flex items-center space-x-2">
                                 <button className="text-blue-400"><Edit className="h-5 w-5" /></button>
                                 <button onClick={() => setInputToDelete(input.id)} className="text-red-400">
-                                    <VscDebugDisconnect  className="h-6 w-7"/>
-                                    </button>
+                                    <VscDebugDisconnect className="h-6 w-7" />
+                                </button>
                             </div>
                         </div>
                     ))
@@ -138,7 +138,7 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
 
             {/* Add button */}
             <div className="flex justify-center mt-4">
-                <button onClick={openAddModal} className="px-4 py-2 bg-green-500 rounded hover:bg-green-600">Qo'shish</button>
+                <button onClick={openAddModal} className="px-4 py-2 bg-blue-500 rounded text-white hover:bg-blue-600">Qo'shish</button>
             </div>
 
             {/* Delete modal */}
@@ -147,8 +147,8 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
                     <div className="bg-white/10 backdrop-blur-md p-6 rounded-lg">
                         <h3 className="text-white mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
                         <div className="flex justify-end space-x-2">
-                            <button onClick={() => setInputToDelete(null)} className="px-4 py-2 bg-gray-600 rounded">Bekor qilish</button>
-                            <button onClick={() => deleteInput(inputToDelete)} className="px-4 py-2 bg-red-600 rounded">O'chirish</button>
+                            <button onClick={() => setInputToDelete(null)} className="px-4 py-2 bg-gray-600 text-white rounded">Bekor qilish</button>
+                            <button onClick={() => deleteInput(inputToDelete)} className="px-4 py-2 bg-red-600 text-white rounded">O'chirish</button>
                         </div>
                     </div>
                 </div>
@@ -166,14 +166,14 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
                                         type="checkbox"
                                         checked={selectedInputs.includes(input.id)}
                                         onChange={() => toggleInput(input.id)}
-                                        className="accent-green-500"
+                                        className="accent-green-500 text-white"
                                     />
                                     <span>{input.name?.uz || "No title"}</span>
                                 </label>
                             ))}
                         </div>
                         <div className="flex justify-end mt-4">
-                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-red-500 rounded">Done</button>
+                            <button onClick={() => setShowAddModal(false)} className="px-4 py-2 bg-red-500 text-white rounded">Done</button>
                         </div>
                     </div>
                 </div>
