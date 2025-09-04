@@ -54,29 +54,23 @@ const Apply: React.FC = () => {
     exclude: [] // Hujjatlar localStorage’da saqlanmaydi
   })
 
-  // const steps = [
-  //   // { id: 1, title: t('apply.step1'), icon: User },
-  //   { id: 1, title: t('apply.step3'), icon: Briefcase },
-  //   // { id: 3, title: t('apply.step2'), icon: GraduationCap },
-  //   { id: 2, title: t('apply.step4'), icon: FileText }
-  // ]
 
   useEffect(() => {
-  const fetchPrograms = async () => {
-    try{
-      const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/services/get-list', {
-        method: 'GET',
-      })            
-      if (!res.ok) {
-        throw new Error(`HTTP xatolik: ${res.status}`)
+    const fetchPrograms = async () => {
+      try {
+        const res = await fetch('https://learnx-crm-production.up.railway.app/api/v1/services/get-list', {
+          method: 'GET',
+        })
+        if (!res.ok) {
+          throw new Error(`HTTP xatolik: ${res.status}`)
+        }
+        const data: Program[] = await res.json()
+        console.log('malumotlar', data);
+        setPrograms(data)
+      } catch (error) {
+        console.log(error);
       }
-      const data: Program[] = await res.json()
-      console.log('malumotlar', data);
-      setPrograms(data)
-    }catch(error){
-      console.log(error);
     }
-  }
     fetchPrograms()
   }, [])
 
@@ -86,6 +80,11 @@ const Apply: React.FC = () => {
   ]
 
   const userFiles = async () => {
+    {
+      !user && (
+       navigate("/register")
+      )
+    }
     if (!saveData) {
       toast.error('Maydon bosh, Dasturni tanlang!!!')
       return
@@ -97,32 +96,25 @@ const Apply: React.FC = () => {
           'Authorization': `Bearer ${localStorage.getItem('api_access_token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({service_id : saveData})
+        body: JSON.stringify({ service_id: saveData })
       })
       const resData = await res.json()
       console.log('Yangi ariza yaratildi:', resData);
       console.log(res);
       console.log(saveData)
 
-      if(resData?.id){
+      if (resData?.id) {
         navigate(`/userfiles/${resData.id}`)
-      }else{
-        toast.error('Ariza yuborishdan oldin tizimga kiring')
+      } else {
+        toast.error('Ariza yaratishda xatolik yuz berdi! Tizimga kiring')
       }
-    }catch(error) {
+    } catch (error) {
       console.error('Xatolik:', error)
       toast.error('Fayllarni yuklashda xatolik yuz berdi')
     }
   }
-  
-  // const nextStep = () => {
 
-  //   if (currentStep < 2) setCurrentStep(currentStep + 1)
-  // }
 
-  // const prevStep = () => {
-  //   if (currentStep > 1) setCurrentStep(currentStep - 1)
-  // }
 
   const renderStep = () => {
     switch (currentStep) {
@@ -143,7 +135,7 @@ const Apply: React.FC = () => {
       //             <p className="text-red-500 text-sm mt-1">{errors.firstName.message}</p>
       //           )}
       //         </div>
-              
+
       //         <div>
       //           <label className="block text-sm font-medium text-gray-700 mb-2">
       //             Familiya *
@@ -174,7 +166,7 @@ const Apply: React.FC = () => {
       //             <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
       //           )}
       //         </div>
-              
+
       //         <div>
       //           <label className="block text-sm font-medium text-gray-700 mb-2">
       //             Telegram username *
@@ -237,7 +229,7 @@ const Apply: React.FC = () => {
       //             <p className="text-red-500 text-sm mt-1">{errors.birthDate.message}</p>
       //           )}
       //         </div>
-              
+
       //         <div>
       //           <label className="block text-sm font-medium text-gray-700 mb-2">
       //             Manzil *
@@ -260,26 +252,26 @@ const Apply: React.FC = () => {
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-               {t('apply.program')}
+                {t('apply.program')}
               </label>
-              <select 
+              <select
                 value={saveData}
-                {...register("program", {onChange: (e) => {setSaveData(e.target.value)}} )}
+                {...register("program", { onChange: (e) => { setSaveData(e.target.value) } })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer outline-none "
               >
                 <option value="">{t('apply.program.placeholder')}</option>
                 {programs.map((program, index) => {
                   const programName =
-                  (language && program.title[language]) ||
+                    (language && program.title[language]) ||
                     program.title['uz'] ||
                     program.title['en'] ||
                     program.title['ru'] ||
                     'Nomsiz dastur';
 
-                return (
-                  <option key={program.id || `fallback-${index}`} value={program.id}>
-                    {programName}
-                  </option>
+                  return (
+                    <option key={program.id || `fallback-${index}`} value={program.id}>
+                      {programName}
+                    </option>
                   );
                 })}
               </select>
@@ -402,15 +394,15 @@ const Apply: React.FC = () => {
         return null
     }
   }
-  
+
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <Toaster position="top-right" />
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -461,18 +453,24 @@ const Apply: React.FC = () => {
           <form>
             {renderStep()}
             {/* Navigation Buttons */}
-            <div className="flex justify-between mt-5 pt-4 border-t border-gray-200">
-                <button onClick={() => navigate('/profile')}
-                  className='border text-white bg-red-500 py-2 px-5 rounded-lg hover:bg-red-400'>
-                    orqaga
-                </button>
-                <button type="button" onClick={userFiles}
-                  className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400">
-                  {t('apply.next')}
-                </button>
+            <div className="flex justify-between mt-8 pt-6 border-t border-gray-200">
+              <button
+                onClick={() => navigate('/profile')}
+                // onClick={() => navigate(`/profil${application_id}`)}
+                className='border text-white bg-red-500 py-2 px-5 rounded-lg hover:bg-red-400'>
+                orqaga
+              </button>
+              <button
+                type="button"
+                onClick={userFiles}
+                // onClick={nextStep}
+                className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-400"
+              >
+                {t('apply.next')}
+              </button>
             </div>
           </form>
-          
+
           {/* Login prompt for non-authenticated users */}
           {!user && (
             <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">

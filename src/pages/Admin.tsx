@@ -26,6 +26,7 @@ import {
   ChevronDown,
   LogOut,
   ShieldUser,
+  GraduationCap,
   Edit2,
   Edit2Icon
 } from 'lucide-react'
@@ -135,7 +136,7 @@ const Admin: React.FC = () => {
   const [stories, setStories] = useState([])
   const [partners, setPartners] = useState([])
   const [contacts, setContacts] = useState([])
-  const [clients, setClients] = useState<any[]>([]); 
+  const [clients, setClients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
@@ -172,9 +173,9 @@ const Admin: React.FC = () => {
   const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [active, setActive] = useState("connection");
   const limit = 10
-  const [sortField, setSortField] = useState("full_name"); 
-  const [sortDesc, setSortDesc] = useState(true); 
-  const [searchField, setSearchField] = useState("email"); 
+  const [sortField, setSortField] = useState("full_name");
+  const [sortDesc, setSortDesc] = useState(true);
+  const [searchField, setSearchField] = useState("email");
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [openProfil, setOpenProfil] = useState(false)
@@ -1384,16 +1385,16 @@ const Admin: React.FC = () => {
 
 
   const tabs = [
-    { id: 'dashboard', name: 'Boshqaruv paneli', icon: BarChart3, color: 'from-blue-500 to-purple-600' },
-    { id: 'clients', name: 'Mijozlar', icon: Users, color: "from-violet-700 to-violet-400 " },
-    { id: 'applications', name: 'Arizalar', icon: FileText, color: 'from-green-500 to-teal-600' },
-    { id: 'services', name: 'Xizmatlar', icon: Settings, color: 'from-orange-500 to-red-600' },
-    { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, color: 'from-purple-500 to-pink-600' },
-    { id: 'partners', name: 'Hamkorlar', icon: Building, color: 'from-indigo-500 to-blue-600' },
-    { id: 'contacts', name: 'Murojatlar', icon: Mail, color: 'from-teal-500 to-cyan-600' },
-    { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, color: 'from-teal-300 to-cyan-600' },
-    { id: 'user', name: 'Adminlar', icon: ShieldUser, color: 'from-emerald-300 to-green-400' },
-    { id: 'adminProfil', name: 'Admin profil', icon: Shield, color: 'from-teal-300 to-cyan-600' }
+    { id: 'dashboard', name: 'Boshqaruv paneli', icon: BarChart3 },
+    { id: 'clients', name: 'Mijozlar', icon: Users, },
+    { id: 'applications', name: 'Arizalar', icon: FileText, },
+    { id: 'services', name: 'Xizmatlar', icon: Settings, },
+    { id: 'stories', name: 'Hikoyalar', icon: MessageSquare, },
+    { id: 'partners', name: 'Hamkorlar', icon: Building, },
+    { id: 'contacts', name: 'Murojatlar', icon: Mail, },
+    { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, },
+    { id: 'user', name: 'Adminlar', icon: ShieldUser, },
+    { id: 'adminProfil', name: 'Admin profil', icon: Shield, }
 
 
   ];
@@ -1768,28 +1769,26 @@ const Admin: React.FC = () => {
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-[54px] h-[54px] bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-2xl">
-                  <Crown className="h-6 w-6 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <GraduationCap className="h-6 w-6 text-blue-50" />
                 </div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center">
-                  <Sparkles className="h-3 w-3 text-white" />
-                </div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-white to-purple-200 bg-clip-text text-transparent">
-                  UnoGroup Admin
-                </h1>
-                <p className="text-purple-100 font-medium text-[13px]">Professional boshqaruv paneli</p>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  UnoGroup
+                </span>
+                <p className="text-[12px] font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Professional boshqaruv paneli</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <div onClick={() => setActiveTab('adminProfil')}
-                className="flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-white/20">
-                <Shield className="h-5 w-5 text-green-400" />
-                <span className="text-white font-medium">Admin</span>
+                className="flex items-center space-x-2  backdrop-blur-sm rounded-xl px-4 py-2 cursor-pointer hover:bg-white/20">
+                <Shield className="h-5 w-5 text-gray-500" />
+                <span className="text-gray-500 font-medium">Admin</span>
               </div>
               <button onClick={() => navigate('/')}
-                className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm text-white rounded-xl hover:bg-white/20 transition-all duration-300 border border-white/20">
+                className="flex items-center space-x-2 px-4 py-2 \ backdrop-blur-sm text-gray-500 rounded-xl hover:bg-white/20 transition-all duration-300">
                 <Home className="h-4 w-4" />
                 <span>Saytga qaytish</span>
               </button>
@@ -1838,17 +1837,17 @@ const Admin: React.FC = () => {
                     animate={{ opacity: 1, x: 0 }}
                     // transition={{ delay: index * 0.1 }}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl text-left transition-all duration-300 group ${activeTab === tab.id
-                      ? `bg-gradient-to-r ${tab.color} text-white shadow-2xl scale-105`
-                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-102'
-                      }`}>
-                    <div className={`p-2 rounded-lg ${activeTab === tab.id
-                      ? 'bg-white/20'
-                      : 'bg-white/10 group-hover:bg-white/20'
-                      } transition-all duration-300`}>
+                    className={`w-full flex items-center space-x-4 px-4 py-4 rounded-xl text-left transition-all duration-300 group `}>
+                    <div className={`p-2 rounded-lg  ${activeTab === tab.id
+                      ? 'bg-white/20 text-blue-700'
+                      : 'bg-white/10 text-gray-500 group-hover:bg-white/20'
+                      } transition-all duration-300 `}>
                       <tab.icon className="h-5 w-5" />
                     </div>
-                    <span className="font-semibold">{tab.name}</span>
+                    <span className={`font-semibol ${activeTab === tab.id
+                      ? ' text-blue-700'
+                      : 'bg-white/10 text-gray-500 group-hover:bg-white/20'
+                      }`}>{tab.name}</span>
                   </motion.button>
                 ))}
               </nav>
@@ -1873,57 +1872,54 @@ const Admin: React.FC = () => {
                         title: 'Jami arizalar',
                         value: stats.totalApplications,
                         icon: FileText,
-                        color: 'from-blue-500 to-cyan-600',
+                        color: 'from-blue-600 to-purple-600',
                         trend: `+${stats.weeklyGrowth} bu hafta`
                       },
                       {
                         title: 'Kutilayotgan',
                         value: stats.pendingApplications,
                         icon: Clock,
-                        color: 'from-yellow-500 to-orange-600',
+                        color: 'from-blue-600 to-purple-600',
                         trend: 'Jarayonda'
                       },
                       {
                         title: 'Tasdiqlangan',
                         value: stats.approvedApplications,
                         icon: CheckCircle,
-                        color: 'from-green-500 to-emerald-600',
+                        color: 'from-blue-600 to-purple-600',
                         trend: `+${stats.monthlyGrowth} bu oy`
                       },
                       {
                         title: 'Hamkorlar',
                         value: stats.totalPartners,
                         icon: Building,
-                        color: 'from-purple-500 to-pink-600',
+                        color: 'from-blue-600 to-purple-600',
                         trend: 'Universitetlar'
                       }
                     ].map((stat, index) => (
-                      <motion.div
+                      <div
                         key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-300 group hover:scale-105"
+                        className=" rounded-xl p-4  shadow-md "
                       >
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color} shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                        <div className="flex items-center justify-between mb-4 ">
+                          <div className={`p-3 rounded-xl bg-gradient-to-r ${stat.color}  group-hover:scale-110 transition-transform duration-300`}>
                             <stat.icon className="h-6 w-6 text-white" />
                           </div>
                           <div className="text-right">
-                            <div className="text-3xl font-bold text-white">{stat.value}</div>
-                            <div className="text-sm text-purple-200">{stat.trend}</div>
+                            <div className="text-3xl font-bold text-gray-500">{stat.value}</div>
+                            <div className="text-md font-medium text-blue-400">{stat.trend}</div>
                           </div>
                         </div>
-                        <h3 className="text-white/90 font-semibold">{stat.title}</h3>
-                      </motion.div>
+                        <h3 className="text-gray-500 font-semibold">{stat.title}</h3>
+                      </div>
                     ))}
                   </div>
 
                   {/* Recent Activity */}
-                  <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl">
+                  <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-md p-6 border-3 border-white/20">
                     <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-2xl font-bold text-white flex items-center">
-                        <Activity className="h-6 w-6 mr-3 text-purple-400" />
+                      <h3 className="text-2xl font-bold text-gray-600 flex items-center">
+                        <Activity className="h-6 w-6 mr-3 text-gray-600" />
                         So'nggi faoliyat
                       </h3>
                       <div className="flex items-center space-x-2">
@@ -1941,17 +1937,17 @@ const Admin: React.FC = () => {
                           className="flex items-center space-x-4 p-4 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
                         >
                           <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
-                            <FileText className="h-5 w-5 text-white" />
+                            <FileText className="h-5 w-5 text-gray-500" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-white">{app.full_name}</p>
-                            <p className="text-sm text-purple-200">{app.program_type} - {app.country_preference}</p>
+                            <p className="font-semibold text-gray-500">{app.full_name}</p>
+                            <p className="text-sm text-gray-500">{app.program_type} - {app.country_preference}</p>
                           </div>
                           <div className="text-right">
                             <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(app.status)}`}>
                               {getStatusText(app.status)}
                             </span>
-                            <p className="text-xs text-purple-200 mt-1">
+                            <p className="text-xs text-gray-500 mt-1">
                               {new Date(app.created_at).toLocaleDateString('uz-UZ')}
                             </p>
                           </div>
@@ -1966,7 +1962,7 @@ const Admin: React.FC = () => {
               {activeTab === "clients" && (
                 <div className="bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-white">Client List</h2>
+                    <h2 className="text-2xl font-bold text-gray-500">Client List</h2>
 
                     <div className="flex items-center space-x-4">
                       {/* --- Sort va Filter UI --- */}
@@ -1979,13 +1975,13 @@ const Admin: React.FC = () => {
                         </button>
 
                         {open && (
-                          <div className="absolute right-0 mt-2 w-56 bg-white/10 border border-white/20 backdrop-blur-md rounded-xl shadow-xl p-4 z-50 text-white space-y-3">
+                          <div className="absolute right-0 mt-2 w-56 bg-white/10 border border-white/20 backdrop-blur-md rounded-xl shadow-xl p-4 z-50 text-gray-700 space-y-3">
                             <div className="relative">
-                              <label className="text-sm text-white mb-1 block">Sort Field</label>
+                              <label className="text-sm text-gray-500 mb-1 block">Sort Field</label>
                               <select
                                 value={sortField}
                                 onChange={handleSortFieldChange}
-                                className="mt-1 w-full px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 appearance-none"
+                                className="mt-1 w-[90%] px-3 py-2 rounded-lg border border-gray-800  bg-white/10 text-gray-500"
                               >
                                 <option value="full_name">Ism</option>
                                 <option value="email">Email</option>
@@ -2008,25 +2004,25 @@ const Admin: React.FC = () => {
                       </div>
 
                       {/* Search Field */}
-                      <div className="relative w-[120px] mr-2">
+                      <div className="relative w-[120px] mr-2 ">
                         <select
                           value={searchField}
                           onChange={handleSearchFieldChange}
-                          className="mt-1 w-full px-3 py-2 rounded-lg bg-white/10 text-white border border-white/20 appearance-none"
+                          className="mt-1 w-full px-3 py-2  rounded-xl border-3 border"
                         >
-                          <option className='bg-[#714895]' value="full_name">Ism</option>
-                          <option className='bg-[#714895]' value="email">Email</option>
-                          <option className='bg-[#714895]' value="phone">Telefon</option>
+                          <option className='bg-[#8a76ff] text-white' value="full_name">Ism</option>
+                          <option className='bg-[#8a76ff] text-white' value="email">Email</option>
+                          <option className='bg-[#8a76ff] text-white' value="phone">Telefon</option>
                         </select>
-                        <ChevronDown className="absolute right-3 top-4 w-4 h-4 text-white pointer-events-none" />
+                        <ChevronDown className="absolute  top-4 w-4 h-4 text-white pointer-events-none" />
                       </div>
 
                       <div className="relative w-72">
-                        <Search className="absolute left-3 top-2.5 w-5 h-5 text-gray-400" />
+                        <Search className="absolute right-3 top-2.5 w-5 h-5 text-gray-400" />
                         <input
                           type="text"
                           placeholder="Qidirish..."
-                          className="w-full pl-10 pr-4 py-2 rounded-xl bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          className="w-full pl-10 pr-4 py-2 rounded-xl border-3 border bg-transparent   text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                           value={searchQuery}
                           onChange={handleSearchChange}
                         />
@@ -2034,7 +2030,7 @@ const Admin: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-4 overflow-y-auto max-h-[69vh]">
+                  <div className="space-y-4 overflow-y-auto max-h-[66vh]">
                     {clients.length > 0 ? (
                       clients.map((client: any, index: number) => (
                         <motion.div
@@ -2042,7 +2038,7 @@ const Admin: React.FC = () => {
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}
-                          className="flex justify-between items-center rounded-xl p-4 border border-white/20 hover:bg-white/10 transition-all duration-300"
+                          className="flex justify-between items-center rounded-xl p-4 border  hover:bg-gray-100 transition-all duration-300"
                         >
                           {/* Chap qism: avatar va info */}
                           <div className="flex items-center space-x-4">
@@ -2059,7 +2055,7 @@ const Admin: React.FC = () => {
                               </div>
                             )}
                             <div>
-                              <h3 className="text-white font-semibold">{client.full_name}</h3>
+                              <h3 className="text-gray-600 font-semibold">{client.full_name}</h3>
                               <div className="flex items-center space-x-3 text-gray-400 text-sm">
                                 <span className="flex items-center"><Mail className="w-4 h-4 mr-1" />{client.email || "—"}</span>
                                 <span className="flex items-center"><Phone className="w-4 h-4 mr-1" />{client.phone || "—"}</span>
@@ -2069,7 +2065,7 @@ const Admin: React.FC = () => {
 
                           {/* O'ng qism: oxirgi kontakt va action tugmalar */}
                           <div className="flex items-center space-x-6">
-                            <div className="text-right text-white text-sm">
+                            <div className="text-right text-gray-400 text-sm">
                               <p>{getLastContact(client.created_at)}</p>
                               <p className="text-gray-400 text-xs">Ro'yxatdan o'tgan</p>
                             </div>
@@ -2104,14 +2100,14 @@ const Admin: React.FC = () => {
                       onClick={() => currentPage > 1 && fetchClients(searchQuery, searchField, sortField, sortDesc, currentPage - 1)}
                       disabled={currentPage === 1}
                       className={`px-4 py-2 rounded-lg ${currentPage === 1
-                        ? "bg-gray-600 text-gray-400 cursor-not-allowed"
+                        ? "bg-gray-400 text-white cursor-not-allowed"
                         : "bg-violet-500 text-white hover:bg-purple-700"
                         }`}
                     >
                       Oldingi
                     </button>
 
-                    <span className="text-white">{currentPage}</span>
+                    <span className="text-gray-900">{currentPage}</span>
 
                     {/* Keyingi tugma */}
                     <button
@@ -2159,8 +2155,9 @@ const Admin: React.FC = () => {
                   className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
                   <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
-                      <h2 className="text-2xl font-bold text-white flex items-center">
-                        <FileText className="h-6 w-6 mr-3 text-blue-400" />Arizalar boshqaruvi
+                      <h2 className="text-2xl font-bold text-gray-600 flex items-center">
+                        <FileText className="h-6 w-6 mr-3 text-blue-400" />
+                        Arizalar boshqaruvi
                       </h2>
                       <div>
                         <button className="bg-blue-700 text-white py-2 px-4 shadow-lg rounded-lg">
@@ -2171,27 +2168,27 @@ const Admin: React.FC = () => {
                   </div>
 
                   <div className="flex justify-around items-center gap-10 my-3 p-3">
-                    <div className="w-[420px] flex items-center gap-2 text-white border border-gray-200 p-3 rounded-lg shadow-lg">
+                    <div className="w-[420px] flex items-center gap-2 text-gray-500 border border-gray-600 p-3 rounded-lg shadow-lg">
                       <Search />
                       <input type="text" value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="w-full focus:outline-none bg-transparent"
-                        placeholder="Ismi va raqami bo‘yicha qidiring"/>
+                        placeholder="Ismi va raqami bo‘yicha qidiring" />
                     </div>
 
-                    <div className="flex justify-center items-center gap-2 w-[170px] border border-white/50 p-3 text-center rounded-lg relative"
+                    <div className="flex justify-center items-center gap-2 w-[170px] border  border-3 p-3 text-center rounded-lg relative"
                       ref={dropdownRef}>
                       <div onClick={() => setIsOpen(!isOpen)}
-                        className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-100">
+                        className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-500">
                         <span>
                           {statuses.find((s) => s.value === selectedStatus)?.label ||
                             "Barcha statuslar"}
                         </span>
-                        <div className="text-white text-sm">▼</div>
+                        <div className="text-gray-500 text-sm">▼</div>
                       </div>
 
                       {isOpen && (
-                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-slate-600 via-purple-600 to-slate-600 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
                           {statuses.map((status) => (
                             <div
                               key={status.value}
@@ -2208,11 +2205,10 @@ const Admin: React.FC = () => {
                     <div className="text-4xl">
                       <button
                         onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
-                        className={`${
-                          selectedIds.length > 0
-                            ? "bg-red-700 hover:bg-red-800"
-                            : "bg-gray-400 cursor-not-allowed"
-                        } p-2 rounded-lg`}
+                        className={`${selectedIds.length > 0
+                          ? "bg-red-700 hover:bg-red-800"
+                          : "bg-gray-400 cursor-not-allowed"
+                          } p-2 rounded-lg`}
                         disabled={selectedIds.length === 0}
                       >
                         <Trash2 className="text-white text-4xl" />
@@ -2222,7 +2218,7 @@ const Admin: React.FC = () => {
 
                   <div className="m-4 overflow-hidden border-gray-500 rounded-lg border">
                     <table className="w-full">
-                      <thead className="bg-gradient-to-r from-slate-600/5 via-purple-600/50 to-slate-600/70 text-white text-sm uppercase tracking-wide">
+                      <thead className="bg-gradient-to-r  text-gray-400 text-sm uppercase tracking-wide">
                         <tr>
                           <th className="p-4 text-left font-semibold text-lg">#</th>
                           <th className="p-4 text-left font-semibold">Mijoz</th>
@@ -2233,16 +2229,15 @@ const Admin: React.FC = () => {
                           <th className="p-4 text-left font-semibold">Action</th>
                         </tr>
                       </thead>
-
                       <tbody className="divide-y divide-gray-500 text-sm">
                         {filterApp.map((app: any, index: number) => (
                           <tr
                             key={app.id || index}
-                            className="hover:bg-gray-500/20 transition-colors duration-200 text-white">
+                            className="hover:bg-gray-400/10 transition-colors duration-200 text-gray-600">
                             <td className="px-3 py-4">
                               <input type="checkbox" checked={selectedIds.includes(app.id)}
                                 onChange={() => handleCheckboxChange(app.id)}
-                                className="w-5 h-5 rounded-lg appearance-none border checked:bg-purple-900 checked:border-gray-100 transition-all duration-200 relative before:content-['✔'] before:absolute before:-top-[1px] before:text-sm before:left-[4px] before:text-white before:opacity-0 checked:before:opacity-100 border-gray-400 cursor-pointer"/>
+                                className="w-5 h-5 rounded-lg appearance-none border checked:bg-blue-700 checked:border-gray-100 transition-all duration-200 relative before:content-['✔'] before:absolute before:-top-[1px] before:text-sm before:left-[4px] before:text-white before:opacity-0 checked:before:opacity-100 border-gray-400 cursor-pointer" />
                             </td>
 
                             <td className="px-3 py-4 flex items-center gap-2">
@@ -2250,7 +2245,7 @@ const Admin: React.FC = () => {
                                 <img
                                   src={app.client.avatar_url}
                                   alt={app.client?.full_name || "Foydalanuvchi"}
-                                  className="w-12 h-12 rounded-full object-cover border-2 border-white/30"/>
+                                  className="w-12 h-12 rounded-full object-cover border-2 border-white/30" />
                               ) : app.client?.full_name ? (
                                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-lg font-bold">
                                   {app.client.full_name
@@ -2319,14 +2314,14 @@ const Admin: React.FC = () => {
                                 <div className="flex items-center gap-1 py-2">
                                   <input type="text" placeholder="Ism qidiring..." value={nameQuery}
                                     onChange={(e) => handleSearchAppClients(e.target.value)}
-                                    className="w-full bg-transparent border border-white/45 text-white rounded-lg p-2"/>
+                                    className="w-full bg-transparent border border-white/45 text-white rounded-lg p-2" />
                                   <button onClick={handleSaveApp}
                                     className="px-4 py-2 mx-1 bg-green-600 text-white rounded-lg hover:bg-green-700">
                                     Save
                                   </button>
                                   <Edit2 onClick={() => setIsEditingAppName(false)}
-                                  className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-10 h-10 mr-1" />
-                              </div>
+                                    className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-10 h-10 mr-1" />
+                                </div>
 
                                 {isSearching && (
                                   <div className="absolute w-full mt-1 bg-slate-700 rounded-lg shadow-lg p-2 text-white">
@@ -2338,11 +2333,12 @@ const Admin: React.FC = () => {
                                   <div className="absolute text-white bg-white/10 backdrop-blur-sm rounded-lg shadow-lg max-h-48 w-[310px] overflow-y-auto z-10">
                                     {searchResults.map((client) => (
                                       <div key={client.id} onClick={() => {
-                                          setNameQuery(client.full_name);
-                                          setSelectedApp((prev: any) => ({...prev, client: { ...(prev?.client || {}),id: client.id, full_name: client.full_name, avatar_url: client.avatar_url, },
-                                          }));
-                                          setSearchResults([]);
-                                        }}
+                                        setNameQuery(client.full_name);
+                                        setSelectedApp((prev: any) => ({
+                                          ...prev, client: { ...(prev?.client || {}), id: client.id, full_name: client.full_name, avatar_url: client.avatar_url, },
+                                        }));
+                                        setSearchResults([]);
+                                      }}
                                         className="flex items-center gap-3 p-2 hover:bg-white/20 cursor-pointer">
                                         <img src={client.avatar_url || adminlogo}
                                           alt={client.full_name}
@@ -2358,15 +2354,15 @@ const Admin: React.FC = () => {
                                 <img
                                   src={selectedApp.client?.avatar_url || adminlogo}
                                   alt={selectedApp.client?.full_name || "Client avatar"}
-                                  className="rounded-full h-16 w-16"/>
+                                  className="rounded-full h-16 w-16" />
                                 <input value={selectedApp.client?.full_name || ""}
                                   readOnly
-                                  className="text-white border border-white/45 rounded-lg bg-transparent p-2"/>
+                                  className="text-white border border-white/45 rounded-lg bg-transparent p-2" />
                                 <button onClick={() => {
-                                    setIsEditingAppName(true);
-                                    setNameQuery("");
-                                    setSearchResults([]);
-                                  }}
+                                  setIsEditingAppName(true);
+                                  setNameQuery("");
+                                  setSearchResults([]);
+                                }}
                                   className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                                   <Edit2 />
                                 </button>
@@ -2378,19 +2374,19 @@ const Admin: React.FC = () => {
                             {isEditingApp ? (
                               <div className="flex items-center gap-3 w-full">
                                 <input type="search" placeholder="Application qidiring..."
-                                  className="flex-1 bg-transparent text-white border border-white/40 rounded-lg py-2 px-3"/>
+                                  className="flex-1 bg-transparent text-white border border-white/40 rounded-lg py-2 px-3" />
                                 <button onClick={() => setIsEditingApp(false)}
                                   className="bg-blue-600 px-4 py-2 rounded-lg text-white">
                                   Save
                                 </button>
                               </div>
                             ) : (
-                              <input type="text" value={selectedApp?.id || ""} 
+                              <input type="text" value={selectedApp?.id || ""}
                                 placeholder="Application Id"
-                                className="w-[300px] border border-white/40 bg-transparent py-2 px-3 rounded-lg text-white"/>
+                                className="w-[300px] border border-white/40 bg-transparent py-2 px-3 rounded-lg text-white" />
                             )}
                             <Edit2Icon onClick={() => setIsEditingApp(!isEditingApp)}
-                              className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-9 h-9 mr-1"/>
+                              className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-9 h-9 mr-1" />
                           </div>
                         </div>
                       </div>
@@ -2419,6 +2415,11 @@ const Admin: React.FC = () => {
                               value: "rejected",
                               color: "bg-red-300 text-red-700",
                             },
+                            {
+                              label: "Noma'lum",
+                              value: "uknown",
+                              color: "bg-yellow-300 text-white",
+                            },
                           ].map((item, i) => (
                             <label
                               key={i}
@@ -2426,7 +2427,7 @@ const Admin: React.FC = () => {
                             >
                               <input type="radio" name="status" value={item.value} className="cursor-pointer"
                                 checked={selectedStatus === item.value}
-                                onChange={() => handleStatusChange(item.value)}/>
+                                onChange={() => handleStatusChange(item.value)} />
                               {item.label}
                             </label>
                           ))}
@@ -2438,21 +2439,19 @@ const Admin: React.FC = () => {
                   <div className="flex justify-center items-center my-4">
                     <button onClick={handleAppPrevPage}
                       disabled={appCurrentPage === 1}
-                      className={`px-6 py-2 font-semibold text-gray-800 rounded-lg ${
-                        appCurrentPage === 1
-                          ? "bg-white/40 cursor-not-allowed"
-                          : "bg-white/85 hover:bg-white cursor-pointer"
-                      }`}
+                      className={`px-6 py-2 font-semibold text-white rounded-lg ${appCurrentPage === 1
+                        ? "bg-gray-400 cursor-not-allowed"
+                        : "bg-gray-400  cursor-pointer"
+                        }`}
                     >
                       Oldingi
                     </button>
-                    <span className="text-gray-100 mx-4">{appCurrentPage}</span>
+                    <span className="text-gray-800 mx-4">{appCurrentPage}</span>
                     <button
                       onClick={handleAppNextPage}
                       disabled={!appHasNextPage}
-                      className={`px-6 py-2 font-semibold text-white rounded-lg ${
-                        appHasNextPage ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-700 cursor-not-allowed"
-                      }`}
+                      className={`px-6 py-2 font-semibold text-white rounded-lg ${appHasNextPage ? "bg-blue-500 hover:bg-blue-600" : "bg-gray-700 cursor-not-allowed"
+                        }`}
                     >
                       Keyingi
                     </button>
@@ -2463,14 +2462,14 @@ const Admin: React.FC = () => {
               {activeTab === "services" && (
                 <>
                   {/* Header va Yangi Xizmat tugmasi */}
-                  <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl mb-6">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
-                      <Settings className="h-6 w-6 mr-3 text-orange-400" />
+                  <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mb-6">
+                    <h2 className="text-2xl font-bold text-gray-600 flex items-center">
+                      <Settings className="h-6 w-6 mr-3 text-blue-400" />
                       Xizmatlar boshqaruvi
                     </h2>
                     <button
                       onClick={handleAddService}
-                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r bg-blue-500 text-white rounded-xl  hover:bg-blue-700-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Yangi xizmat</span>
@@ -2480,7 +2479,7 @@ const Admin: React.FC = () => {
                   {/* Services ro'yxati */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {services.length === 0 ? (
-                      <p className="text-white">Hech qanday xizmat topilmadi</p>
+                      <p className="text-gray-500">Hech qanday xizmat topilmadi</p>
                     ) : (
                       services.map((service, index) => {
                         const IconComponent = iconMap[service.icon.name] || FileText;
@@ -2492,10 +2491,9 @@ const Admin: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
+                            className="bg-white/5 border shadow-md rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
                           >
-                            <div className="flex justify-between items-start mb-4">
-                              <IconComponent className={` h-5 w-5 text-${iconColor}-400`} />
+                            <div className="flex justify-end items-start mb-4">
                               <div className="flex items-center space-x-2">
                                 <button
                                   onClick={() => handleEditService(service)}
@@ -2513,17 +2511,17 @@ const Admin: React.FC = () => {
                                 </button>
                               </div>
                             </div>
-                            <h3 className="font-bold text-white text-lg group-hover:text-purple-200 transition-colors flex items-center space-x-2">
+                            <h3 className="font-bold text-gray-500 text-lg group-hover:text-gray-600 transition-colors flex items-center space-x-2">
                               <span>{service.title.uz}</span>
                             </h3>
-                            <p className="text-purple-200 mb-2 text-sm leading-relaxed">
+                            <p className="text-gray-500 mb-2 text-sm leading-relaxed">
                               {service.description.uz}
                             </p>
-                            <p className="text-purple-300 mb-4 text-sm">
+                            <p className="text-gray-500 mb-4 text-sm">
                               <strong>Features:</strong> {service.features.map(f => f.uz).join(", ")}
                             </p>
                             <div className="flex justify-between items-center">
-                              <span className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                              <span className="text-2xl font-bold bg-gradient-to-r text-gray-400 bg-clip-text text-transparent">
                                 {service.price}
                               </span>
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold bg-${iconColor}-500/20 text-${iconColor}-300 border border-${iconColor}-500/30`}>
@@ -2538,13 +2536,13 @@ const Admin: React.FC = () => {
 
                   {/* Service Modal */}
                   {showServiceModal && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 w-full max-w-xl border border-white/20 max-h-[90vh] overflow-y-auto">
+                    <div className="fixed inset-0  backdrop-blur-sm  flex items-center justify-center z-50">
+                      <div className="bg-gray-50 shadow-lg   rounded-2xl p-8 w-full max-w-xl border  max-h-[90vh] overflow-y-auto">
                         <div className="flex justify-between items-center mb-6">
-                          <h2 className="text-2xl font-bold text-white">
+                          <h2 className="text-2xl font-bold text-gray-900">
                             {editingItem ? "Xizmatni tahrirlash" : "Yangi xizmat"}
                           </h2>
-                          <button onClick={() => setShowServiceModal(false)} className="text-white" aria-label="Modalni yopish">
+                          <button onClick={() => setShowServiceModal(false)} className="text-gray-900" aria-label="Modalni yopish">
                             <X className="h-6 w-6" />
                           </button>
                         </div>
@@ -2553,14 +2551,14 @@ const Admin: React.FC = () => {
                           {/* Title */}
                           {["uz", "en", "ru"].map((lang) => (
                             <div key={lang}>
-                              <label className="block text-white mb-1">Mavzu ({lang.toUpperCase()})</label>
+                              <label className="block text-gray-900 text-md font-medium mb-1">Mavzu ({lang.toUpperCase()})</label>
                               <input
                                 type="text"
                                 value={serviceForm.title[lang]}
                                 onChange={(e) =>
                                   setServiceForm({ ...serviceForm, title: { ...serviceForm.title, [lang]: e.target.value } })
                                 }
-                                className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                className="w-full p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                               />
                             </div>
                           ))}
@@ -2568,36 +2566,36 @@ const Admin: React.FC = () => {
                           {/* Description */}
                           {["uz", "en", "ru"].map((lang) => (
                             <div key={lang}>
-                              <label className="block text-white mb-1">Tavsif ({lang.toUpperCase()})</label>
+                              <label className="block text-gray-900 text-md font-medium  mb-1">Tavsif ({lang.toUpperCase()})</label>
                               <textarea
                                 value={serviceForm.description[lang]}
                                 onChange={(e) =>
                                   setServiceForm({ ...serviceForm, description: { ...serviceForm.description, [lang]: e.target.value } })
                                 }
-                                className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                                className="w-full p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                               />
                             </div>
                           ))}
 
                           {/* Price */}
                           <div>
-                            <label className="block text-white mb-1">Narx</label>
+                            <label className="block text-gray-900 text-md font-medium  mb-1">Narx</label>
                             <input
                               type="text"
                               value={serviceForm.price}
                               onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
-                              className="w-full p-2 rounded bg-white/10 text-white border border-white/20"
+                              className="w-full p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                             />
                           </div>
 
                           {/* Features */}
                           <div className="border rounded p-5 mt-5">
-                            <h1 className="text-white text-center font-bold text-xl">Xususiyatlar</h1>
+                            <h1 className="text-gray-900 text-center font-bold text-xl">Xususiyatlar</h1>
                             <div className="mt-5">
                               {features.concat(newFeatures).map((f, idx) => (
                                 <div key={idx} className="w-full gap-2 mb-2">
                                   <div className='w-full flex items-center justify-between mt-5'>
-                                    <h1 className="text-gray-200  font-medium text-md">Xususiyat (UZ)</h1>
+                                    <h1 className="text-gray-900  font-medium text-md">Xususiyat (UZ)</h1>
                                     <button
                                       className="p-1 text-red-400 hover:bg-red-500/20 rounded"
                                       onClick={() => handleDeleteFeature(idx, idx >= features.length)}
@@ -2615,7 +2613,7 @@ const Admin: React.FC = () => {
                                       if (idx < features.length) setFeatures(arr.slice(0, features.length));
                                       else setNewFeatures(arr.slice(features.length));
                                     }}
-                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                                   />
                                   <input
                                     value={f.en}
@@ -2625,7 +2623,7 @@ const Admin: React.FC = () => {
                                       if (idx < features.length) setFeatures(arr.slice(0, features.length));
                                       else setNewFeatures(arr.slice(features.length));
                                     }}
-                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                                   />
                                   <input
                                     value={f.ru}
@@ -2635,7 +2633,7 @@ const Admin: React.FC = () => {
                                       if (idx < features.length) setFeatures(arr.slice(0, features.length));
                                       else setNewFeatures(arr.slice(features.length));
                                     }}
-                                    className="w-full mt-1 p-2 rounded bg-white/10 text-white border border-white/20"
+                                    className="w-full mt-1 p-2 rounded bg-white/10 text-gray-500 border border-gray-400"
                                   />
                                 </div>
                               ))}
@@ -2663,19 +2661,19 @@ const Admin: React.FC = () => {
                     </div>
                   )}
                   {deleteModalOpen && (
-                    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 max-w-sm w-full border border-white/20 text-white">
+                    <div className="fixed inset-0 flex backdrop-blur-sm items-center justify-center z-50">
+                      <div className="bg-gray-50 shadow-lg  rounded-2xl p-6 max-w-sm w-full border  text-gray-900">
                         <h3 className="text-lg font-semibold mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
                         <div className="flex justify-end space-x-4">
                           <button
                             onClick={() => setDeleteModalOpen(false)}
-                            className="px-4 py-2 bg-gray-600 rounded hover:bg-gray-700"
+                            className="px-4 py-2 bg-gray-600 rounded text-white hover:bg-gray-700"
                           >
                             Bekor qilish
                           </button>
                           <button
                             onClick={handleConfirmServiceDelete}
-                            className="px-4 py-2 bg-red-600 rounded hover:bg-red-700"
+                            className="px-4 py-2 text-white bg-red-600 rounded hover:bg-red-700"
                           >
                             O'chirish
                           </button>
@@ -2694,17 +2692,17 @@ const Admin: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
+                    className="bg-white/10 backdrop-blur-md rounded-2xl border shadow-2xl"
                   >
-                    <div className="p-8 border-b border-white/20">
+                    <div className="p-8 border-b border-gray-400">
                       <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-white flex items-center">
-                          <MessageSquare className="h-6 w-6 mr-3 text-purple-400" />
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                          <MessageSquare className="h-6 w-6 mr-3 text-blue-400" />
                           Hikoyalar boshqaruvi
                         </h2>
                         <button
                           onClick={handleAddStory}
-                          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:from-purple-600 hover:to-pink-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                          className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                         >
                           <Plus className="h-4 w-4" />
                           <span>Yangi hikoya</span>
@@ -2720,7 +2718,7 @@ const Admin: React.FC = () => {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
-                            className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 group hover:scale-105"
+                            className="bg-white/5  shadow-xl border-2 border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 group hover:scale-105"
                           >
                             {story.image && (
                               <div className="h-48 overflow-hidden">
@@ -2731,11 +2729,11 @@ const Admin: React.FC = () => {
                                 />
                               </div>
                             )}
-                            <div className="p-6">
+                            <div className="p-6 ">
                               <div className="flex justify-between items-start mb-3">
                                 <div>
-                                  <h3 className="font-bold text-white">{story.name}</h3>
-                                  <p className="text-sm text-purple-200">{story.country}</p>
+                                  <h3 className="font-bold text-gray-900">{story.name}</h3>
+                                  <p className="text-sm text-gray-700">{story.country}</p>
                                 </div>
                                 <div className="flex items-center space-x-2">
                                   {story.featured && (
@@ -2757,7 +2755,7 @@ const Admin: React.FC = () => {
                                   </button>
                                 </div>
                               </div>
-                              <p className="text-purple-200 text-sm line-clamp-3 mb-3">{story.text}</p>
+                              <p className="text-gray-500 text-sm line-clamp-3 mb-3">{story.text}</p>
                               <div className="flex items-center">
                                 {[...Array(story.rating)].map((_, i) => (
                                   <Star key={i} className="h-4 w-4 text-yellow-400 fill-current" />
@@ -2794,7 +2792,7 @@ const Admin: React.FC = () => {
 
                   {showStoryModal && (
                     <div className="fixed inset-0 z-50 bg-black/30 flex items-center justify-center p-4">
-                      <div className="backdrop-blur-3xl rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
+                      <div className="bg-white/10 backdrop-blur-md rounded-2xl p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto border border-white/20 shadow-2xl">
                         <div className="flex justify-between items-center mb-4">
                           <h2 className="text-2xl text-center font-bold text-white">
                             {editingService ? "Hikoyani tahrirlash" : "Yangi hikoya qo'shish"}
@@ -2875,7 +2873,7 @@ const Admin: React.FC = () => {
                               Bekor qilish
                             </button>
                             <button type="button" onClick={handleSaveStory}
-                              className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95">
+                              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95">
                               Saqlash
                             </button>
                           </div>
