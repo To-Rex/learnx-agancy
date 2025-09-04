@@ -2890,11 +2890,11 @@ const Admin: React.FC = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
-                    className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl"
+                    className="bg-white/10 backdrop-blur-md rounded-2xl border shadow-2xl"
                   >
                     <div className="p-8 border-b border-white/20">
                       <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-white flex items-center">
+                        <h2 className="text-2xl font-bold text-gray-900 flex items-center">
                           <Building className="h-6 w-6 mr-3 text-indigo-400" />
                           Hamkorlar boshqaruvi
                         </h2>
@@ -2917,11 +2917,20 @@ const Admin: React.FC = () => {
                             transition={{ delay: index * 0.1 }}
                             className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
                           >
+                            {
+                              partner.image && (
+                                <div className="h-48 overflow-hidden">
+                                  <img src={partner.image} alt={partner.name}
+                                    className="w-full h-full object-cover rounded-2xl group-hover:scale-110 transition-transform duration-300"
+                                  />
+                                </div>
+                              )
+                            }
                             <div className="flex justify-between items-start mb-4">
                               <div className='flex flex-col items-center'>
-                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.en}</h3>
-                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.ru}</h3>
-                                <h3 className="font-semibold text-white text-lg group-hover:text-indigo-200 transition-colors">{partner.name.uz}</h3>
+                                <h3 className="font-semibold text-gray-700 text-lg group-hover:text-gary-800 transition-colors">{partner.name.en}</h3>
+                                <h3 className="font-semibold text-gray-700 text-lg group-hover:text-gary-800 transition-colors">{partner.name.ru}</h3>
+                                <h3 className="font-semibold text-gray-700 text-lg group-hover:text-gary-800 transition-colors">{partner.name.uz}</h3>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <button onClick={() => handleEditPartners(partner)}
@@ -2934,15 +2943,6 @@ const Admin: React.FC = () => {
                                 </button>
                               </div>
                             </div >
-                            {
-                              partner.image && (
-                                <div className="h-48 overflow-hidden">
-                                  <img src={partner.image} alt={partner.name}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                  />
-                                </div>
-                              )
-                            }
                           </motion.div >
                         ))}
                       </div >
@@ -3029,7 +3029,7 @@ const Admin: React.FC = () => {
                               <button
                                 onClick={handleSavePartners}
                                 type="button"
-                                className="flex-1 px-6 py-2 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
+                                className="flex-1 px-6 py-2 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-95"
                               >
                                 Saqlash
                               </button>
@@ -3048,11 +3048,11 @@ const Admin: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/10  rounded-2xl border border-white/20 shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
+                  className="bg-white/10  rounded-2xl border  shadow-2xl overflow-hidden max-h-[550px] flex flex-col"
                 >
                   <div className="p-8 border-b border-white/20 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
-                      <Mail className="h-6 w-6 mr-3 text-teal-400" />
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center">
+                      <Mail className="h-6 w-6 mr-3 text-blue-700" />
                       Murojatlar boshqaruvi
                     </h2>
                   </div>
@@ -3060,7 +3060,7 @@ const Admin: React.FC = () => {
                   {/* Bu yerda scrollable qism */}
                   <div className="overflow-y-auto flex-grow px-6 pb-6">
                     {loading ? (
-                      <div className="p-4 text-white">Yuklanmoqda...</div>
+                      <div className="p-4 text-gray-800">Yuklanmoqda...</div>
                     ) : (
                       <table className="w-full">
                         <thead className="bg-white/5">
@@ -3068,7 +3068,7 @@ const Admin: React.FC = () => {
                             {['№', 'Ism', 'Email', 'Telefon', 'Xabar', 'Sana', 'Amallar'].map((header) => (
                               <th
                                 key={header}
-                                className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider"
+                                className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
                               >
                                 {header}
                               </th>
@@ -3078,7 +3078,7 @@ const Admin: React.FC = () => {
                         <tbody className="divide-y divide-white/10 text-center">
                           {contacts.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="text-center text-purple-200 py-8">
+                              <td colSpan={6} className="text-center text-gray-500 py-8">
                                 Ma'lumot topilmadi
                               </td>
                             </tr>
@@ -3089,9 +3089,9 @@ const Admin: React.FC = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="hover:bg-white/5 transition-all duration-300"
+                                className="hover:bg-gray-400/10 border rounded-xl transition-all duration-300 "
                               >
-                                <td className=' text-white font-bold'>{index + 1}</td>
+                                <td className=' text-gary-400 font-bold'>{index + 1}</td>
                                 <td className="px-6 py-4">
                                   <div className="flex items-center">
                                     <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-cyan-600 rounded-full flex items-center justify-center mr-3">
@@ -3099,15 +3099,15 @@ const Admin: React.FC = () => {
                                         {contact.name?.charAt(0)?.toUpperCase() || '-'}
                                       </span>
                                     </div>
-                                    <div className="font-semibold text-white">{contact?.name || '-'}</div>
+                                    <div className="font-semibold text-gray-500">{contact?.name || '-'}</div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-purple-200">{contact?.email || '-'}</td>
-                                <td className="px-6 py-4 text-purple-200">{contact?.phone || '-'}</td>
+                                <td className="px-6 py-4 text-gray-500">{contact?.email || '-'}</td>
+                                <td className="px-6 py-4 text-gray-500">{contact?.phone || '-'}</td>
                                 <td className="px-6 py-4  ">
-                                  <div className="w-[250px] trun text-purple-200">{contact?.message || '-'}</div>
+                                  <div className="w-[250px] trun text-gray-500">{contact?.message || '-'}</div>
                                 </td>
-                                <td className="px-6 py-4 text-purple-200 text-sm">
+                                <td className="px-6 py-4 text-gray-500 text-sm">
                                   {contact?.created_at
                                     ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
                                     : '-'}
@@ -3157,16 +3157,16 @@ const Admin: React.FC = () => {
               )}
 
               {activeTab === "service_inputs" && (
-                <div className="border border-white/10 rounded-2xl p-6">
+                <div className="border  rounded-2xl p-6">
                   {/* Header */}
                   <div className="p-5 border-b flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-white flex items-center">
-                      <FilePenLine className="h-6 w-6 mr-3 text-teal-400" />
+                    <h2 className="text-2xl font-bold text-gray-800 flex items-center">
+                      <FilePenLine className="h-6 w-6 mr-3 text-blue-400" />
                       Xizmat inputlari boshqaruvi
                     </h2>
                     <button
                       onClick={handleAddServiceInput}
-                      className="flex items-center space-x-2 px-6 py-3 bg-teal-400 text-white rounded-xl hover:text-emerald-200 transition-all duration-300 shadow-lg hover:shadow-xl"
+                      className="flex items-center space-x-2 px-6 py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Yangi xizmat input</span>
@@ -3179,8 +3179,8 @@ const Admin: React.FC = () => {
                       onClick={() => setActive("connection")}
                       className={`relative px-6 py-3 rounded-lg font-medium transition-all duration-300 
           ${active === "connection"
-                          ? "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-lg scale-105"
-                          : "bg-white/10 text-white hover:bg-white/20"
+                          ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg scale-105"
+                          : "border border-gray-500 text-gray-600  hover:bg-gray-500 hover:text-white"
                         }`}
                     >
                       connection
@@ -3190,8 +3190,8 @@ const Admin: React.FC = () => {
                       onClick={() => setActive("all-inputs")}
                       className={`relative px-6 py-3 rounded-lg font-medium transition-all duration-300 
           ${active === "all-inputs"
-                          ? "bg-gradient-to-r from-teal-400 to-emerald-500 text-white shadow-lg scale-105"
-                          : "bg-white/10 text-white hover:bg-white/20"
+                          ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg scale-105"
+                          : "border border-gray-500 text-gray-600  hover:bg-gray-500 hover:text-white"
                         }`}
                     >
                       all inputs
@@ -3206,7 +3206,7 @@ const Admin: React.FC = () => {
                         <table className="w-full">
                           <thead className="bg-white/5">
                             <tr>
-                              <th className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
+                              <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                                 Hammasi
                               </th>
                             </tr>
@@ -3214,7 +3214,7 @@ const Admin: React.FC = () => {
                           <tbody className="divide-y divide-white/10">
                             {services.length === 0 ? (
                               <tr>
-                                <td colSpan={6} className="text-center text-purple-200 py-8">
+                                <td colSpan={6} className="text-center text-gray-700 py-8">
                                   Ma'lumot topilmadi
                                 </td>
                               </tr>
@@ -3225,11 +3225,11 @@ const Admin: React.FC = () => {
                                   initial={{ opacity: 0, y: 20 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   transition={{ delay: 0.05 }}
-                                  className="hover:bg-white/5 transition-all duration-300 cursor-pointer"
+                                  className=" text-gray-900 transition-all duration-300 cursor-pointer"
                                 >
                                   <td className="px-6 py-4">
                                     <div
-                                      className="font-semibold text-white cursor-pointer"
+                                      className="font-semibold text-gray-700 cursor-pointer border rounded-md p-3"
                                       onClick={() => {
                                         setSelectedService(service);
                                         localStorage.setItem('service_input', service.id);
@@ -3247,7 +3247,7 @@ const Admin: React.FC = () => {
 
                       {/* Editor pane */}
                       {selectedService && (
-                        <div className="w-[65%] bg-white/5 rounded-xl p-6 shadow-lg">
+                        <div className="w-[65%]  rounded-xl p-6 shadow-lg">
                           <ServiceInputEditor
                             service={selectedService}
                             onClose={() => setSelectedService(null)}
@@ -3264,7 +3264,7 @@ const Admin: React.FC = () => {
                       <table className="w-full table-fixed">
                         <thead className="bg-white/5">
                           <tr>
-                            <th className="px-6 py-4 text-left text-xs font-semibold text-purple-200 uppercase tracking-wider">
+                            <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                               All inputs
                             </th>
                           </tr>
@@ -3272,7 +3272,7 @@ const Admin: React.FC = () => {
                         <tbody className="divide-y divide-white/10">
                           {servicesInput.length === 0 ? (
                             <tr>
-                              <td colSpan={6} className="text-center text-purple-200 py-8">
+                              <td colSpan={6} className="text-center text-gray-700 py-8">
                                 Ma'lumot topilmadi
                               </td>
                             </tr>
@@ -3284,11 +3284,8 @@ const Admin: React.FC = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.05 }}
                                 className="hover:bg-white/5 transition-all duration-300 cursor-pointer"
-                              // onClick={() => {
-                              //   handleEditServiceInput(service_input); // Bosilganda modal ochiladi
-                              // }}
                               >
-                                <td className="px-6 py-4 flex justify-between items-center font-semibold text-white">
+                                <td className="p-2 mt-3 rounded-lg flex justify-between items-center font-semibold text-gray-700 border border-gray-400 ">
                                   <h1>{service_input?.name.uz || "-"}</h1>
                                   <div className="flex items-center gap-2">
                                     <button className="text-green-400 hover:bg-green-500/20 p-2 rounded transition-all duration-300">
@@ -3450,7 +3447,7 @@ const Admin: React.FC = () => {
                             </button>
                             <button
                               onClick={handleSaveServiceInput}
-                              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
                             >
                               Saqlash
                             </button>
