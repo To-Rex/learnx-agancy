@@ -1,11 +1,12 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CheckCircle, ArrowRight, FileText, Users, Plane, Award, Clock, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
 
 const Process: React.FC = () => {
   const { t } = useLanguage()
+  const navigate = useNavigate()
   
   const steps = [
     {
@@ -102,6 +103,15 @@ const Process: React.FC = () => {
       orange: "from-orange-500 to-orange-600"
     }
     return gradients[color as keyof typeof gradients] || gradients.blue
+  }
+
+  const navigateUser = () => {
+    const token = localStorage.getItem('api_access_token')
+    if(token){
+      navigate('/apply');
+    }else {
+      navigate('/login');
+    }
   }
 
   return (
@@ -233,18 +243,14 @@ const Process: React.FC = () => {
               {t('process.ready.description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/contact"
-                className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors inline-block"
-              >
+              <Link to="/contact"
+                className="bg-white text-blue-600 px-8 py-4 rounded-xl font-semibold hover:bg-gray-100 transition-colors inline-block">
                 {t('process.ready.consultation')}
               </Link>
-              <Link
-                to="/apply"
-                className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors inline-block"
-              >
+              <button onClick={navigateUser}
+                className="border-2 border-white/30 text-white px-8 py-4 rounded-xl font-semibold hover:bg-white/10 transition-colors inline-block">
                 {t('process.ready.apply')}
-              </Link>
+              </button>
             </div>
           </div>
         </motion.div>

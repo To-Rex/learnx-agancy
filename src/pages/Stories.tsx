@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { Star, MapPin, Calendar, ArrowRight, Filter } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext'
 
 const Stories: React.FC = () => {
   const { t } = useLanguage()
+  const {user} = useAuth()
   const [stories, setStories] = useState<any[]>([])
   const [filteredStories, setFilteredStories] = useState<any[]>([])
   const [selectedCountry, setSelectedCountry] = useState('all')
@@ -56,8 +58,7 @@ const Stories: React.FC = () => {
   }
 
   const navigateUser = () => {
-    const token = localStorage.getItem('api_access_token')
-    if(token){
+    if(user){
       navigate('/apply');
     }else {
       navigate('/login')
