@@ -1760,7 +1760,7 @@ const Admin: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900">
+    <div className="min-h-screen ">
       <Toaster position="top-right" />
 
       {/* Header */}
@@ -2152,7 +2152,7 @@ const Admin: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
+                  className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-md overflow-hidden">
                   <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
                       <h2 className="text-2xl font-bold text-gray-600 flex items-center">

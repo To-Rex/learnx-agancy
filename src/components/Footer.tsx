@@ -46,27 +46,27 @@ const Footer: React.FC = () => {
             <h3 className="text-lg font-semibold mb-6 text-white">{t('footer.links')}</h3>
             <ul className="space-y-3">
               <li>
-                <Link to="/services" className="text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-200 block">
+                <Link to="/services" className="text-gray-300 hover:text-white transition-colors hover:scale-105 block">
                   {t('nav.services')}
                 </Link>
               </li>
               <li>
-                <Link to="/process" className="text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-200 block">
+                <Link to="/process" className="text-gray-300 hover:text-white transition-colors hover:scale-105 block">
                   {t('nav.process')}
                 </Link>
               </li>
               <li>
-                <Link to="/stories" className="text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-200 block">
+                <Link to="/stories" className="text-gray-300 hover:text-white transition-colors hover:scale-105 block">
                   {t('nav.stories')}
                 </Link>
               </li>
               <li>
-                <Link to="/contact" className="text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-200 block">
+                <Link to="/contact" className="text-gray-300 hover:text-white transition-colors hover:scale-105 block">
                   {t('nav.contact')}
                 </Link>
               </li>
               <li>
-                <Link to="/apply" className="text-gray-300 hover:text-white transition-colors hover:translate-x-1 transform duration-200 block">
+                <Link to="/apply" className="text-gray-300 hover:text-white transition-colors hover:scale-105 block">
                   {t('home.hero.apply')}
                 </Link>
               </li>
