@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useLanguage } from '../contexts/LanguageContext'
+import { useAuth } from '../contexts/AuthContext';
 
 interface Service {
   id: string
@@ -78,6 +79,7 @@ const Home: React.FC = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const  navigate = useNavigate()
+  const {user} = useAuth()
 
   const loadAllData = async () => {
     setLoading(true)
@@ -157,8 +159,7 @@ const Home: React.FC = () => {
   }
 
   const navigateUser = () => {
-    const token = localStorage.getItem('token');
-    if (token) {
+    if (user) {
       navigate('/apply');
     } else {
       navigate('/login');
@@ -336,25 +337,25 @@ const Home: React.FC = () => {
       </section>
       
       {/* Partners Section */}
-      <section className="bg-gray-50 py-20">
+      <section className="bg-gray-50 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="text-center mb-16">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">{t('home.partners.title')}</h2>
             <p className="text-xl text-gray-600">{t('home.partners.description')}</p>
           </motion.div>
         </div>
-        <Marquee speed={120} pauseOnHover={true} autoFill={true} >
+        <Marquee speed={120} pauseOnHover={true}  >
           <div className="flex items-center gap-8 whitespace-nowrap">
             {partners.length > 0 ? (
               partners.map((partner, i) => (
-                <div key={i} className="flex items-center flex-col gap-4 p-2">
+                <div key={i} className="flex items-center flex-col gap-3 p-2">
                   <img
                     src={partner.logo}
                     alt={partner.name[language] || partner.name.uz}
-                    className="w-40 h-40 rounded-2xl object-cover"
+                    className="w-28 h-28 rounded-full object-cover mx-14"
                   />
-                  <h2 className="text-sm font-medium text-gray-800 truncate">
-                    {partner.name[language] || partner.name.uz}
+                  <h2 className="font-medium text-gray-800 truncate">
+                    {partner.name[language] || partner.name.en}
                   </h2>
                 </div>
               ))

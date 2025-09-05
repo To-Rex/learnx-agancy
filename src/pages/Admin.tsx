@@ -28,13 +28,14 @@ import {
   ShieldUser,
   GraduationCap,
   Edit2,
-  Edit2Icon
+  Edit2Icon,
+  PhoneIncoming
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import toast, { Toaster } from 'react-hot-toast'
 import { Building, Download, Eye, Filter, Mail, Search, Sparkles } from 'lucide-react'
-import ServiceInputEditor from '../components/service'
+import ServiceInputEditor from '../components/serviceInputCopmonent'
 import ClientDetailsPage from './ClientsPage'
 import adminlogo from '../../public/76.jpg'
 
@@ -62,6 +63,15 @@ interface Partner {
     uz: string;
     ru: string;
   };
+}
+
+interface contactType{
+  id: string;
+  name: string;
+  phone: number;
+  email: string;
+  message: string;
+  created_at: number;
 }
 
 // interface PartnerForm {
@@ -161,7 +171,6 @@ const Admin: React.FC = () => {
   const [deleteClientsModalOpen, setClientsDeleteModalOpen] = useState(false);
   const [deleteUsersModalOpen, setUsersDeleteModalOpen] = useState(false);
 
-  const [deleteClientsInputModalOpen, setClientsInputDeleteModalOpen] = useState(false);
   const [deleteInputModalOpen, setInputDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
@@ -179,11 +188,7 @@ const Admin: React.FC = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [openProfil, setOpenProfil] = useState(false)
-
-
-
-  // admin 
-  // const 
+  const [selectedContact, setSelectedContact] = useState<any | null>(null);
 
   // Contact get 
   const fetchContacts = async () => {
@@ -1244,6 +1249,7 @@ const Admin: React.FC = () => {
     setSortField(value);
     fetchClients(searchQuery, searchField, value, sortDesc);
   };
+
   const handleSearchFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setSearchField(value);
@@ -1393,10 +1399,9 @@ const Admin: React.FC = () => {
     { id: 'partners', name: 'Hamkorlar', icon: Building, },
     { id: 'contacts', name: 'Murojatlar', icon: Mail, },
     { id: 'service_inputs', name: 'Xizmatlar inputi', icon: FilePenLine, },
+    { id: "Leads", name: "Leads", icon: PhoneIncoming },
     { id: 'user', name: 'Adminlar', icon: ShieldUser, },
     { id: 'adminProfil', name: 'Admin profil', icon: Shield, }
-
-
   ];
 
 
@@ -1668,18 +1673,18 @@ const Admin: React.FC = () => {
     }
   };
 
-  const handleClientSelect = (clientName: string | null) => {
-    setSelectedClient(clientName);
+  // const handleClientSelect = (clientName: string | null) => {
+  //   setSelectedClient(clientName);
 
-    if (clientName) {
-      const filtered = applications.filter(app =>
-        app.client?.full_name?.toLowerCase().includes(clientName.toLowerCase())
-      );
-      setFilteredApplications(filtered);
-    } else {
-      setFilteredApplications([]);
-    }
-  };
+  //   if (clientName) {
+  //     const filtered = applications.filter(app =>
+  //       app.client?.full_name?.toLowerCase().includes(clientName.toLowerCase())
+  //     );
+  //     setFilteredApplications(filtered);
+  //   } else {
+  //     setFilteredApplications([]);
+  //   }
+  // };
 
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedAppId) return;
@@ -1718,8 +1723,7 @@ const Admin: React.FC = () => {
 
   const handleStatusUpdate = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch(
-        `https://learnx-crm-production.up.railway.app/api/v1/applications/${id}/update-status`,
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/${id}/update-status`,
         {
           method: "PATCH",
           headers: {
@@ -1742,30 +1746,30 @@ const Admin: React.FC = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative">
-            <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
-            </div>
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
-          <p className="text-purple-200">Iltimos kuting</p>
-        </div>
-      </div>
-    )
-  }
+  // if (loading) {
+  //   return (
+  //     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+  //       <div className="text-center">
+  //         <div className="relative">
+  //           <div className="w-32 h-32 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-8"></div>
+  //           <div className="absolute inset-0 flex items-center justify-center">
+  //             <Sparkles className="h-8 w-8 text-purple-400 animate-pulse" />
+  //           </div>
+  //         </div>
+  //         <h3 className="text-2xl font-bold text-white mb-2">Ma'lumotlar yuklanmoqda...</h3>
+  //         <p className="text-purple-200">Iltimos kuting</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   return (
     <div className="min-h-screen ">
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="relative bg-white/10 backdrop-blur-md border-b border-white/20 top-0 z-40">
-        <div className="max-w-[1460px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative bg-gray-300/50 backdrop-blur-md border-b border-white/20 top-0 z-40">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -1806,7 +1810,7 @@ const Admin: React.FC = () => {
         <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
           <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center backdrop-blur-xl bg-purple-500/20 w-[180px] text-white'>
             <h2 className='py-3 bg-purple-900 font-semibold'>Admin Full name</h2>
-            <span onClick={() => setActiveTab('adminProfil')}
+            <span onClick={() => {setActiveTab('adminProfil') ; setOpenProfil(false)}}
               className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-400/50 py-3'>
               <Settings className='h-5' />
               <p>Profil sozlamari</p>
@@ -2049,7 +2053,7 @@ const Admin: React.FC = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl overflow-hidden">
+                  className="bg-gray-200/30 backdrop-blur-md rounded-2xl border border-white/20 shadow-md overflow-hidden">
                   <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
                       <h2 className="text-2xl font-bold text-gray-600 flex items-center">
@@ -2057,7 +2061,7 @@ const Admin: React.FC = () => {
                         Arizalar boshqaruvi
                       </h2>
                       <div>
-                        <button className="bg-blue-700 text-white py-2 px-4 shadow-lg rounded-lg">
+                        <button className="bg-blue-600 text-white py-2 px-4 rounded-lg">
                           + Ariza qo'shish
                         </button>
                       </div>
@@ -2065,7 +2069,7 @@ const Admin: React.FC = () => {
                   </div>
 
                   <div className="flex justify-around items-center gap-10 my-3 p-3">
-                    <div className="w-[420px] flex items-center gap-2 text-gray-500 border border-gray-600 p-3 rounded-lg shadow-lg">
+                    <div className="w-[420px] bg-white flex items-center gap-2 text-gray-500 border border-gray-600 p-3 rounded-lg">
                       <Search />
                       <input type="text" value={search}
                         onChange={(e) => setSearch(e.target.value)}
@@ -2073,25 +2077,23 @@ const Admin: React.FC = () => {
                         placeholder="Ismi va raqami bo‘yicha qidiring" />
                     </div>
 
-                    <div className="flex justify-center items-center gap-2 w-[170px] border  border-3 p-3 text-center rounded-lg relative"
+                    <div className="flex justify-center bg-white items-center gap-2 w-[170px] border  border-3 p-3 text-center rounded-lg relative"
                       ref={dropdownRef}>
                       <div onClick={() => setIsOpen(!isOpen)}
                         className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-500">
                         <span>
-                          {statuses.find((s) => s.value === selectedStatus)?.label ||
-                            "Barcha statuslar"}
+                          {statuses.find((s) => s.value === selectedStatus)?.label || "Barcha statuslar"}
                         </span>
                         <div className="text-gray-500 text-sm">▼</div>
                       </div>
 
                       {isOpen && (
-                        <div className="absolute top-full left-0 mt-2 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+                        <div className="absolute top-full  left-0 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
                           {statuses.map((status) => (
                             <div
                               key={status.value}
                               onClick={() => handleSelect(status.value)}
-                              className="p-3 hover:bg-slate-300/20 cursor-pointer"
-                            >
+                              className="p-2 hover:bg-slate-300/20 cursor-pointer">
                               {status.label}
                             </div>
                           ))}
@@ -2103,17 +2105,16 @@ const Admin: React.FC = () => {
                       <button
                         onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
                         className={`${selectedIds.length > 0
-                          ? "bg-red-700 hover:bg-red-800"
+                          ? "bg-red-500 hover:bg-red-600"
                           : "bg-gray-400 cursor-not-allowed"
                           } p-2 rounded-lg`}
-                        disabled={selectedIds.length === 0}
-                      >
+                        disabled={selectedIds.length === 0}>
                         <Trash2 className="text-white text-4xl" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="m-4 overflow-hidden border-gray-500 rounded-lg border">
+                  <div className="m-4 overflow-hidden border-gray-300 rounded-lg border">
                     <table className="w-full">
                       <thead className="bg-gradient-to-r  text-gray-400 text-sm uppercase tracking-wide">
                         <tr>
@@ -2926,7 +2927,6 @@ const Admin: React.FC = () => {
                   }
                 </>
               )}
-
               {activeTab === 'contacts' && (
                 <motion.div
                   key="contacts"
@@ -2943,7 +2943,7 @@ const Admin: React.FC = () => {
                   </div>
 
                   {/* Bu yerda scrollable qism */}
-                  <div className="overflow-y-auto flex-grow px-6 pb-6">
+                  <div className="overflow-y-auto flex-grow px-6 pb-6 w-[1100px]">
                     {loading ? (
                       <div className="p-4 text-gray-800">Yuklanmoqda...</div>
                     ) : (
@@ -2969,7 +2969,7 @@ const Admin: React.FC = () => {
                               </td>
                             </tr>
                           ) : (
-                            contacts.map((contact, index) => (
+                            contacts.map((contact: contactType, index) => (
                               <motion.tr
                                 key={contact.id}
                                 initial={{ opacity: 0, y: 10 }}
@@ -3013,19 +3013,43 @@ const Admin: React.FC = () => {
                                     ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
                                     : '-'}
                                 </td>
-
-                                {/* Amallar */}
-                                <td className="px-6 py-4 flex items-center space-x-2">
-                                  <button className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                                    <Eye className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteContactClick(contact.id)}
-                                    className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </button>
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center space-x-2">
+                                    <button onClick={() => setSelectedContact(contact)}
+                                      className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300">
+                                      <Trash2 className="h-4 w-4" />
+                                    </button>
+                                  </div>
                                 </td>
+                                {selectedContact && (
+                                  <div onClick={() => setSelectedContact(null)} className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
+                                    <div onClick={(e) => e.stopPropagation()} className="bg-white/80 p-6 rounded-lg w-[500px] text-start text-lg space-y-4">
+                                      <h2 className="text-2xl text-gray-800 font-semibold mb-4">Ariza tafsilotlari</h2>
+                                      <p><strong>Ism:</strong> {selectedContact.name}</p>
+                                      <a target='_blank' href={`mailto:${selectedContact.email}`} className='flex gap-2'>
+                                        <strong className='text-gray-800'>Email:</strong> 
+                                        <p className='hover:underline text-blue-500'>{selectedContact.email}</p>
+                                      </a>
+                                      <a href={`tel:${selectedContact.phone}`} className='flex gap-2'>
+                                        <strong className='text-gray-800'>Telefon:</strong> 
+                                        <p className='hover:underline text-blue-500 '>{selectedContact.phone}</p>
+                                      </a>
+                                      <div className="text-gray-800">
+                                        <strong>Xabar:</strong>
+                                        <p className="whitespace-pre-wrap break-words">{selectedContact.message}</p>
+                                      </div>
+                                      <button onClick={() => setSelectedContact(null)}
+                                        className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+                                        Yopish
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
                               </motion.tr>
                             ))
                           )}
@@ -3054,7 +3078,6 @@ const Admin: React.FC = () => {
                 </motion.div>
 
               )}
-
               {activeTab === "service_inputs" && (
                 <div className="border  rounded-2xl p-6">
                   {/* Header */}
@@ -3353,11 +3376,33 @@ const Admin: React.FC = () => {
                   )}
                 </div>
               )}
-
               {activeTab === "clientDetails" && (
                 <ClientDetailsPage clientId={selectedClientId} />
               )}
-
+              {activeTab === "Leads" && (
+                <div className='border border-white/20 bg-gray-200/40 min-h-screen p-6 rounded-2xl shadow-sm'>
+                  <div className='flex justify-between items-center gap-6 px-8'>
+                    <select>
+                      <option disabled value="">Tanlang</option>
+                      <option value="">Operator</option>
+                      <option value="">Menenjer</option>
+                    </select>
+                    <h1 className='text-2xl font-semibold text-gray-700'>Leads</h1>
+                    <button className='bg-blue-600 text-white py-2 px-4 rounded-md '>+ Yangi lead</button>
+                  </div>
+                  <div className='flex justify-between items-center gap-4 border border-red-500'>
+                    <div className=' border border-red-500'>
+                      <h2>Yangi lead</h2>
+                    </div>
+                    <div className=' border border-red-500'>
+                      <h2>Jarayonda</h2>
+                    </div>
+                    <div className=' border border-red-500'>
+                      <h2>Rad etildi</h2>
+                    </div>
+                  </div>
+                </div>
+              )}
               {activeTab === "user" && (
                 <div className="bg-white/10 border  shadow-2xl rounded-2xl p-6">
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">

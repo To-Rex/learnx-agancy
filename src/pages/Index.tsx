@@ -131,7 +131,7 @@ export default function UserFilesPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4">
           </div>
-          <span>{t("apply.loading") ?? "Yuklanmoqda..."}</span>
+          <span>{"Yuklanmoqda..."}</span>
         </div>
       </div>
     );
