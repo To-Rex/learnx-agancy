@@ -1722,30 +1722,30 @@ const Admin: React.FC = () => {
     }
   };
 
-  // const handleStatusUpdate = async (id: string, newStatus: string) => {
-  //   try {
-  //     const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/${id}/update-status`,
-  //       {
-  //         method: "PATCH",
-  //         headers: {
-  //           "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
-  //           "Content-Type": "application/json",
-  //         },
-  //         body: JSON.stringify({ status: newStatus }),
-  //       }
-  //     );
+  const handleStatusUpdate = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/${id}/update-status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
 
-  //     if (!res.ok) {
-  //       throw new Error("Status yangilashda xatolik yuz berdi");
-  //     }
+      if (!res.ok) {
+        throw new Error("Status yangilashda xatolik yuz berdi");
+      }
 
-  //     const data = await res.json();
-  //     setApplication(data);
-  //     console.log("Arizalar muvaffaqiyatli olindi:", data);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
+      const data = await res.json();
+      setApplication(data);
+      console.log("Arizalar muvaffaqiyatli olindi:", data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
 
   // if (loading) {
   //   return (
