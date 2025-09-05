@@ -31,14 +31,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
   const [initializing, setInitializing] = useState(true)
-  // const navigate = useNavigate();
-
-  // useEffect(() => {
-  //   const token = localStorage.getItem("api_access_token");
-  //   if (token) {
-  //     navigate("/profile", { replace: true });
-  //   }
-  // }, [navigate]);
 
   useEffect(() => {
     let mounted = true
@@ -246,7 +238,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
 
-  const adminSignIn = async (username: string, password: string) => {
+  const adminSignIn = async (username: string, password: string , role:string) => {
     try {
       setLoading(true);
       const response = await fetch("https://learnx-crm-production.up.railway.app/api/v1/auth/login", {
@@ -267,7 +259,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       setIsAdmin(true);
-      localStorage.setItem('admin_user', JSON.stringify({ username, role: 'admin' }));
+      localStorage.setItem('admin_user', JSON.stringify({ username, role }));
       localStorage.setItem('admin_access_token', data?.token);
       return { data: { success: true }, error: null };
     } catch (err) {
