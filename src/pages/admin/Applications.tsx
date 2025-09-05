@@ -331,66 +331,65 @@ const Applications = () => {
 //   };
 
   return (
-    <section className="bg-gray-50 rounded-xl my-2 pb-1">
-        <div className="py-6 px-8 border-b border-white/20">
-                    <div className="flex justify-between items-center">
-                        <h2 className="text-2xl font-bold text-gray-600 flex items-center">
-                        <FileText className="h-6 w-6 mr-3 text-blue-400" />
-                        Arizalar boshqaruvi
-                        </h2>
-                        <div>
-                        <button className="bg-blue-600 text-white py-2 px-4 rounded-lg">
-                            + Ariza qo'shish
-                        </button>
-                        </div>
-                    </div>
+    <section className="bg-gray-50 rounded-xl my-3 pb-1">
+        <div className="pt-6 px-8 border-b border-white/20">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold text-gray-600 flex items-center">
+                <FileText className="h-6 w-6 mr-3 text-blue-400" /> Arizalar boshqaruvi
+              </h2>
+              <div>
+                <button className="bg-blue-600 text-white py-2 px-4 rounded-lg">
+                    + Ariza qo'shish
+                </button>
+              </div>
+            </div>
         </div>
 
-        <div className="flex justify-around items-center gap-10 my-3 p-3">
-        <div className="w-[420px] bg-white flex items-center gap-2 text-gray-500 border border-gray-600 p-3 rounded-lg">
-            <Search />
-            <input type="text" value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full focus:outline-none bg-transparent"
-            placeholder="Ismi va raqami bo‘yicha qidiring" />
-        </div>
-
-        <div className="flex justify-center bg-white items-center gap-2 w-[170px] border  border-3 p-3 text-center rounded-lg relative"
-            ref={dropdownRef}>
-            <div onClick={() => setIsOpen(!isOpen)}
-            className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-500">
-            <span>
-                {statuses.find((s) => s.value === selectedStatus)?.label || "Barcha statuslar"}
-            </span>
-            <div className="text-gray-500 text-sm">▼</div>
+          <div className="flex justify-around items-center gap-10 my-2 p-3">
+            <div className="w-[420px] bg-white flex items-center gap-2 text-gray-500 border border-gray-600 p-3 rounded-lg">
+                <Search />
+                <input type="text" value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full focus:outline-none bg-transparent"
+                placeholder="Ismi va raqami bo‘yicha qidiring" />
             </div>
 
-            {isOpen && (
-            <div className="absolute top-full  left-0 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
-                {statuses.map((status) => (
-                <div
-                    key={status.value}
-                    onClick={() => handleSelect(status.value)}
-                    className="p-2 hover:bg-slate-300/20 cursor-pointer">
-                    {status.label}
+            <div className="flex justify-center bg-white items-center gap-2 w-[170px] border  border-3 p-3 text-center rounded-lg relative"
+                ref={dropdownRef}>
+                <div onClick={() => setIsOpen(!isOpen)}
+                className="flex justify-center items-center gap-2 w-[200px] text-center rounded-lg cursor-pointer text-gray-500">
+                <span>
+                    {statuses.find((s) => s.value === selectedStatus)?.label || "Barcha statuslar"}
+                </span>
+                <div className="text-gray-500 text-sm">▼</div>
                 </div>
-                ))}
-            </div>
-            )}
-        </div>
 
-        <div className="text-4xl">
-            <button
-            onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
-            className={`${selectedIds.length > 0
-                ? "bg-red-500 hover:bg-red-600"
-                : "bg-gray-400 cursor-not-allowed"
-                } p-2 rounded-lg`}
-            disabled={selectedIds.length === 0}>
-            <Trash2 className="text-white text-4xl" />
-            </button>
-        </div>
-        </div>
+                {isOpen && (
+                <div className="absolute top-full  left-0 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+                    {statuses.map((status) => (
+                    <div
+                        key={status.value}
+                        onClick={() => handleSelect(status.value)}
+                        className="p-2 hover:bg-slate-300/20 cursor-pointer">
+                        {status.label}
+                    </div>
+                    ))}
+                </div>
+                )}
+            </div>
+
+            <div className="text-4xl">
+                <button
+                onClick={selectedIds.length > 0 ? handleDeleteApp : undefined}
+                className={`${selectedIds.length > 0
+                    ? "bg-red-500 hover:bg-red-600"
+                    : "bg-gray-400 cursor-not-allowed"
+                    } p-2 rounded-lg`}
+                disabled={selectedIds.length === 0}>
+                <Trash2 className="text-white text-4xl" />
+                </button>
+            </div>
+          </div>
 
         <div className="m-4 overflow-hidden border-gray-300 rounded-lg border">
         <table className="w-full">

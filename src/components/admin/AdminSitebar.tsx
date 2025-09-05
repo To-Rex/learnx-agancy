@@ -22,7 +22,7 @@ const tabs = [
 
 const Sidebar: React.FC = () => {
   return (
-    <aside className="fixed z-50  w-64 bg-gray-900 text-gray-200 flex flex-col">
+    <aside className="fixed z-50  w-64 min-h-screen bg-gray-900 text-gray-200 flex flex-col">
         <div className="flex items-center space-x-4 px-6 py-4 text-2xl font-bold border-b border-gray-700">
           <div className="relative">
             <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
