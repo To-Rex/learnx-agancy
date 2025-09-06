@@ -33,8 +33,13 @@ import Contacts from './pages/admin/AdminContact'
 import Partners from './pages/admin/Partners'
 import AdminProfile from './pages/admin/AdminProfile'
 import Admins from './pages/admin/Admins'
-import Leads from './pages/admin/Leads'
 import ServicesInput from './pages/admin/ServicesInput'
+import Leads from './pages/admin/Leads/Leads'
+import CallManager from './pages/admin/Leads/CallManager.tsx/CallManager'
+import AgentFormPage from './pages/admin/Leads/agent-form/Index'
+import ConsultingManagerPage from './pages/admin/Leads/consultingmanager/Index'
+import DocumentManagerPage from './pages/admin/Leads/documentManager/Index'
+import DocumentEmployeePage from './pages/admin/Leads/documentEmploye/Index'
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -112,7 +117,13 @@ function App() {
                 <Route path="client/:id" element={<ClientDetailsPage />} />
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
-                <Route path='leads' element={<Leads />} />
+                <Route path="leads" element={< Leads/>}>
+                  <Route path="call-manager" element={<CallManager/>} />
+                  <Route path="agent-form" element={<AgentFormPage />} />
+                  <Route path="consulting-manager" element={<ConsultingManagerPage />} />
+                  <Route path="document-manager" element={<DocumentManagerPage />} />
+                  <Route path="document-employee" element={<DocumentEmployeePage />} />
+                </Route>
                 <Route path='service_inputs' element={<ServicesInput />} />
               </Route>
             </Routes>

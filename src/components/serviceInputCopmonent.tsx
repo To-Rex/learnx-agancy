@@ -143,25 +143,24 @@ const ServiceInputEditor: React.FC<ServiceInputEditorProps> = ({ service, onClos
 
             {/* Delete modal */}
             {inputToDelete && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-lg">
-                        <h3 className="text-white mb-4">Haqiqatan ham o'chirmoqchimisiz?</h3>
-                        <div className="flex justify-end space-x-2">
+                <div className='fixed inset-0 backdrop-blur-sm flex justify-center items-center rounded-md '>
+                    <div className='bg-gray-50 shadow-2xl p-6 rounded-lg  ml-24 max-w-[570px]'>
+                        <h1 className='text-2xl text-center text-gray-600 font-600 pb-4'>Haqiqatdan ham o'chirmoqchimisiz</h1>
+                        <div className='flex justify-center items-center gap-4 pt-4 ml-36'>
                             <button onClick={() => setInputToDelete(null)} className="px-4 py-2 bg-gray-600 text-white rounded">Bekor qilish</button>
                             <button onClick={() => deleteInput(inputToDelete)} className="px-4 py-2 bg-red-600 text-white rounded">O'chirish</button>
                         </div>
                     </div>
                 </div>
             )}
-
             {/* Add modal */}
             {showAddModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white/10 backdrop-blur-md p-6 rounded-lg max-h-[80vh] overflow-y-auto w-full max-w-md">
-                        <h2 className="text-white mb-4">Inputlarni tanlang</h2>
+                <div className="fixed inset-0  backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-gray-50 shadow-2xl p-6 rounded-lg max-h-[80vh] overflow-y-auto w-full max-w-md">
+                        <h2 className="text-gray-800 mb-4">Inputlarni tanlang</h2>
                         <div className="space-y-2">
                             {availableInputs.map(input => (
-                                <label key={input.id} className="flex items-center space-x-2 text-white border p-2 rounded">
+                                <label key={input.id} className="flex items-center space-x-2 text-gray-600 border p-2 rounded">
                                     <input
                                         type="checkbox"
                                         checked={selectedInputs.includes(input.id)}
