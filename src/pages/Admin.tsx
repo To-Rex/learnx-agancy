@@ -171,6 +171,7 @@ const Admin: React.FC = () => {
   const [deleteClientsModalOpen, setClientsDeleteModalOpen] = useState(false);
   const [deleteUsersModalOpen, setUsersDeleteModalOpen] = useState(false);
 
+  const [deleteClientsInputModalOpen, setClientsInputDeleteModalOpen] = useState(false);
   const [deleteInputModalOpen, setInputDeleteModalOpen] = useState(false);
   const [storyDeleteModal, setStoryDeleteModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);

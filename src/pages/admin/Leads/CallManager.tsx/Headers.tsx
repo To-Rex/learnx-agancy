@@ -29,9 +29,9 @@ const Headers: React.FC = () => {
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-1  rounded-md text-sm  font-medium transition ${isActive
-                ? "bg-blue-600 text-white"
-                : "text-gray-700 hover:bg-gray-600 hover:text-white"
+              className={`flex items-center gap-2 px-4 py-[5px] rounded-md font-medium transition ${isActive
+                ? "bg-gray-800 text-white"
+                : "text-gray-700 hover:bg-gray-200"
                 }`}
             >
               <Icon size={12} />
