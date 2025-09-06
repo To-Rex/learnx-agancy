@@ -113,10 +113,12 @@ function App() {
                 <Route path="client/:id" element={<ClientDetailsPage />} />
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
-                <Route path="leads" element={< Leads/>}>
-                  <Route path="call-manager" element={<CallManager/>} />
+                <Route path="leads" element={<Leads />}>
+                  <Route index element={<CallManager />} />  {/* <-- default chiqadi */}
                   <Route path="agent-form" element={<div>📝 Agent Form Page</div>} />
                   <Route path="consulting-manager" element={<div>📅 Consulting Manager Page</div>} />
+                  <Route path="document-manager" element={<div>📝 Document-manager Page</div>} />
+                  <Route path="document-employee" element={<div>📅 Document-employee Page</div>} />
                 </Route>
                 <Route path='service_inputs' element={<ServicesInput />} />
               </Route>

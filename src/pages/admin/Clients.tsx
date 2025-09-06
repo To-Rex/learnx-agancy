@@ -172,7 +172,7 @@ const Clients = () => {
   }
 
   return (
-    <div className="bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6">
+    <div className="bg-white/10 border border-white/20 shadow-2xl mt-10 rounded-2xl p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-500">Client List</h2>
 

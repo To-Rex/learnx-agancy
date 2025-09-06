@@ -246,7 +246,7 @@ const ServicesInput = () => {
 
   return (
     <>
-      <div className="border  rounded-2xl p-6">
+      <div className="border  rounded-2xl p-6 mt-10 shadow-2xl">
         {/* Header */}
         <div className="p-5 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">

@@ -331,7 +331,7 @@ const Applications = () => {
 //   };
 
   return (
-    <section className="bg-gray-50 rounded-xl my-2 pb-1">
+    <section className="bg-gray-50 rounded-xl my-2 pb-1 shadow-2xl mt-10">
         <div className="py-6 px-8 border-b border-white/20">
                     <div className="flex justify-between items-center">
                         <h2 className="text-2xl font-bold text-gray-600 flex items-center">

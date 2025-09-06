@@ -1,55 +1,78 @@
-import React from "react";
-import LeadsAssignment from "./LeadsAssigment";
-import { Link, useLocation } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import React, { useState } from "react";
+import LeadsAssignment from "./SelectAssigment";
+import { BsPeople } from "react-icons/bs";
+import { Instagram } from "lucide-react";
+import IncomingLeads from "./IncomingLeads";
+import ClassifyLeads from "./ClassifyLeads";
+import MonitorCalls from "./MonitorCalls";
+import ResultsMeetings from "./ResultsMeetings";
+import Footer from "./Footer";
+
 
 const CallManager: React.FC = () => {
-    const location = useLocation();
+    const [active, setActive] = useState("incoming");
 
-    const navItems = [
-        { path: "/admin/leads/agent-form", label: "Agent Form", icon: ArrowRight },
-        { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: ArrowRight },
+    const tabs = [
+        { id: "incoming", label: "1. Incoming Leads" },
+        { id: "classify", label: "2. Classify Leads" },
+        { id: "select", label: "3. Select & Assign" },
+        { id: "monitor", label: "4. Monitor Calls" },
+        { id: "results", label: "5. Results & Meetings" },
     ];
+
     return (
         <>
-            <div className="mt-5 border-b border-gray-400 mb-5">
-
-            </div>
+            {/* Header */}
+            <div className="mt-5 border-b border-gray-400 mb-5"></div>
             <div className="flex items-center justify-between mt-4">
-                {/* Title */}
-                <div className=" ">
+                <div>
                     <h1 className="text-3xl font-bold">Call Manager Dashboard</h1>
-                    <p className="text-lg font-medium">Manage lead workflow from Instagram targeting to agent assignment</p>
+                    <p className="text-md font-medium text-gray-500">
+                        Manage lead workflow from Instagram targeting to agent assignment
+                    </p>
                 </div>
-
-                {/* Navigation buttons */} 
-                <div className="rounded-md bg-[#dfdfdf8d] p-1 text-sm flex items-center gap-3">
-                    Workflow:
-                    <div className="flex items-center gap-3">
-                        {navItems.map(({ path, label, icon: Icon }) => {
-                            const isActive = location.pathname === path;
-                            return (
-                                <Link
-                                    key={path}
-                                    to={path}
-                                    className={`flex items-center gap-2 p-1 rounded-md  font-medium transition ${isActive
-                                        ? "bg-trasparent border border-gray-500 text-black"
-                                        : "text-gray-700 hover:bg-blue-600 hover:text-white"
-                                        }`}
-                                >
-                                    <Icon size={14} />
-                                    {label}
-                                </Link>
-                            );
-                        })}
-
+                <div className="flex items-center justify-between w-[35%]">
+                    <div className="border border-gray-300 rounded-lg flex items-center gap-2 p-2 text-sm">
+                        <Instagram className="text-gray-600" size={14} />
+                        150 New from Instagram
+                    </div>
+                    <div className="border border-gray-300 rounded-lg flex items-center gap-3 p-2">
+                        <BsPeople className="text-gray-600" size={14} />
+                        4 Active Agents
                     </div>
                 </div>
-
             </div>
-            <LeadsAssignment />
+
+            {/* Tabs */}
+            <div className=" pt-5">
+                <div className="flex items-center justify-between p-2  space-x-10  border rounded-lg bg-[#d7d7d784]">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActive(tab.id)}
+                            className={`relative p-1 rounded-lg font-medium text-sm transition-all duration-300
+                      ${active === tab.id
+                                    ? "bg-[#fff] text-gray-800 shadow-lg scale-105"
+                                    : " text-gray-900"
+                                }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="mt-6">
+                {active === "incoming" && <IncomingLeads />}
+                {active === "classify" && <ClassifyLeads />}
+                {active === "select" && <LeadsAssignment />}
+                {active === "monitor" && <MonitorCalls />}
+                {active === "results" && <ResultsMeetings />}
+            </div>
+            <Footer/>
         </>
-    )
+    );
 };
 
 export default CallManager;
