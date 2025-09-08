@@ -9,9 +9,27 @@ const Headers: React.FC = () => {
   const navItems = [
     { path: "/admin/leads", label: "Call Manager", icon: Home },
     { path: "/admin/leads/call-agent", label: "Call Agent", icon: FileText },
-    { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: Calendar },
-    { path: "/admin/leads/document-manager", label: "Document-manager", icon: FileText },
-    { path: "/admin/leads/document-employee", label: "Document-employee", icon: FileText }
+    {
+      path: "/admin/leads/consulting-manager",
+      label: "Consulting Manager",
+      icon: Calendar,
+    },
+    {
+      path: "/admin/leads/consulting-agent",
+      label: "Consulting Agent",
+      icon: Users,
+    },
+    {
+      path: "/admin/leads/document-manager",
+      label: "Document-manager",
+      icon: FileText,
+    },
+
+    {
+      path: "/admin/leads/document-employee",
+      label: "Document-employee",
+      icon: FileText,
+    },
   ];
 
   return (
@@ -23,18 +41,19 @@ const Headers: React.FC = () => {
 
       {/* Navigation buttons */}
       <div className="flex items-center gap-2">
-        {navItems.map(({ path, label, icon: Icon }) => {
+        {navItems.map(({ path, label, icon: icon }) => {
           const isActive = location.pathname === path;
           return (
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${isActive
-                ? "bg-gray-800 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-                }`}
+              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${
+                isActive
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-700 hover:bg-gray-200"
+              }`}
             >
-              <Icon size={12} />
+              <icon size={12} />
               {label}
             </Link>
           );
