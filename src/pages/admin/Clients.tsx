@@ -172,7 +172,7 @@ const Clients = () => {
   }
 
   return (
-    <div className="bg-white/10 border border-white/20 shadow-2xl rounded-2xl p-6">
+    <div className="bg-white/10 border border-white/20 shadow-2xl mt-10 rounded-2xl p-6">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-gray-500">Client List</h2>
 
@@ -284,11 +284,12 @@ const Clients = () => {
 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => { setSelectedClientId(client.id); setActiveTab("clientDetails"); }}
+                    onClick={() => navigate(`/admin/clients/${client.id}`)}
                     className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
+
 
                   <button
                     onClick={() => handleDeleteClientsClick(client.id)}

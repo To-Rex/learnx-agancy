@@ -63,7 +63,7 @@ const AdminLayout: React.FC = () => {
         </header>
 
         {/* Page content */}
-        <main className="p-4 flex-1 ml-64 mt-16 bg-white">
+        <main className="p-4 flex-1 ml-64 mt-16 bg-gray-100/50">
           <Outlet />
         </main>
       </div>

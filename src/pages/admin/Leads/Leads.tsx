@@ -1,6 +1,6 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
-import Headers from "./Headers";
+import Headers from "./CallManager.tsx/Headers";
 
 const Leads: React.FC = () => {
   return (

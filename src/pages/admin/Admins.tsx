@@ -163,7 +163,7 @@ const Admins = () => {
   };
   return (
     <>
-      <div className="bg-white/10 border  shadow-2xl rounded-2xl p-6">
+      <div className="bg-white/10 border  shadow-2xl mt-10 rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-700 text-center sm:text-left">
             Users List

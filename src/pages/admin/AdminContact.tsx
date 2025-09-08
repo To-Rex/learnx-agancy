@@ -77,7 +77,7 @@ const AdminContact = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -20 }}
-        className="bg-white/10  rounded-2xl   shadow-2xl overflow-hidden overflow-y-auto max-h-[600px] flex flex-col"
+        className="bg-white/10  rounded-2xl   shadow-2xl mt-10 overflow-hidden overflow-y-auto max-h-[600px] flex flex-col"
       >
         <div className="p-8 border-b  flex-shrink-0">
           <h2 className="text-2xl font-bold text-gray-900 flex items-center">

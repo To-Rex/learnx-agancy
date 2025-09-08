@@ -22,7 +22,7 @@ interface Agent {
   CurrentLeads: number;
 }
 
-const ConsultingManager: React.FC = () => {
+const SelectAssignment: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -218,4 +218,4 @@ const ConsultingManager: React.FC = () => {
   );
 };
 
-export default ConsultingManager;
+export default SelectAssignment;
