@@ -37,7 +37,7 @@ const ConsultingAgentPage = () => {
     setLoading(true);
     try {
       const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads",
+        "https://learnx-crm-production.up.railway.app/api/v1/leads  /get-agent-leads",
         {
           method: "GET",
           headers: {
