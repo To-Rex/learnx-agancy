@@ -54,7 +54,7 @@ interface FormData {
     malaysia: ["language", "professional", "bachelor", "master"],
     singapore: ["language", "professional", "bachelor", "master"],
     dubai: ["language", "bachelor", "master"],
-  }
+  } 
 
 const AgentFormPage = () => {
     const [leads, setLeads] = useState([])
@@ -277,7 +277,7 @@ const AgentFormPage = () => {
                             <p>{lead.source || 'nomalum'}</p>
                           </span>
                           <span className="flex gap-1 ">
-                            <p>Passport raqami:</p>
+                            <p className="font-semibold">Passport raqami:</p>
                             <p>{lead.passport_number || 'nomalum'}</p>
                           </span>
                           <span className="flex gap-1 ">
