@@ -9,6 +9,8 @@ import { RadioGroup, RadioGroupItem } from "../../../../components/ui/radio-grou
 // import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
 import { Button } from "../../../../components/ui/button"
 import toast from "react-hot-toast"
+import { Link } from "react-router-dom"
+import { NavLink } from "react-router-dom"
 // import { cn } from "../../../../lib copy/utils"
 // import {format} from 'date-fns'
 
@@ -56,7 +58,7 @@ interface FormData {
     dubai: ["language", "bachelor", "master"],
   } 
 
-const AgentFormPage = () => {
+const CallAgentPage = () => {
     const [leads, setLeads] = useState([])
     const [loading, setloading] = useState(false);
     const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
@@ -241,8 +243,8 @@ const AgentFormPage = () => {
       <div className="min-h-screen bg-background max-w-[1200px] border rounded-xl shadow-sm mx-auto p-4">
         {/* Header */}
         <div className="mb-4 p-2 rounded-xl pl-6">
-            <Button className="py-1 px-3 rounded-md bg-gray-200/20 hover:bg-gray-200">
-              <a href="" className="flex items-center gap-2">
+            <Button className="py-[2px] px-3 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200">
+              <a href="/admin/leads" className="flex items-center gap-2">
                 <ArrowLeft className="w-4 h-4" />Back to Call Manager
               </a>
             </Button>
@@ -499,4 +501,4 @@ const AgentFormPage = () => {
   )
 }
 
-export default AgentFormPage
+export default CallAgentPage

@@ -8,7 +8,7 @@ const Headers: React.FC = () => {
 
   const navItems = [
     { path: "/admin/leads", label: "Call Manager", icon: Home },
-    { path: "/admin/leads/agent-form", label: "Agent Form", icon: FileText },
+    { path: "/admin/leads/call-agent", label: "Call Agent", icon: FileText },
     { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: Calendar },
     { path: "/admin/leads/document-manager", label: "Document-manager", icon: FileText },
     { path: "/admin/leads/document-employee", label: "Document-employee", icon: FileText }

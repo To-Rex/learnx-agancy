@@ -35,14 +35,11 @@ import AdminProfile from './pages/admin/AdminProfile'
 import Admins from './pages/admin/Admins'
 import ServicesInput from './pages/admin/ServicesInput'
 import Leads from './pages/admin/Leads/Leads'
-import AgentFormPage from './pages/admin/Leads/agent-form/Index'
-import ConsultingManagerPage from './pages/admin/Leads/consultingmanager/Index'
-import DocumentManagerPage from './pages/admin/Leads/documentManager/Index'
-import DocumentEmployeePage from './pages/admin/Leads/documentEmploye/Index'
+import CallManager from './pages/admin/Leads/CallManager.tsx/CallManager'
 import ConsultingManager from './pages/admin/Leads/consultingmanager/Index'
 import DocumentManager from './pages/admin/Leads/documentManager/Index'
-import DocumentEmploye from './pages/admin/Leads/documentEmploye/Index'
-import CallManagerPage from './pages/admin/Leads/CallManager.tsx/CallManagerPage'
+import CallAgentPage from './pages/admin/Leads/agent-form/Index'
+import DocumentAgentPage from './pages/admin/Leads/documentAgent/Index'
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -121,11 +118,16 @@ function App() {
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
+<<<<<<< HEAD
                   <Route index element={<CallManagerPage />} />  {/* <-- default chiqadi */}
                   <Route path="agent-form" element={<AgentFormPage/>} />
+=======
+                  <Route index element={<CallManager />} />  {/* <-- default chiqadi */}
+                  <Route path="call-agent" element={<CallAgentPage/>} />
+>>>>>>> 71f2774d7dcd7725536c58b8f42fced7aceae4f8
                   <Route path="consulting-manager" element={<ConsultingManager/>} />
                   <Route path="document-manager" element={<DocumentManager/>} />
-                  <Route path="document-employee" element={<DocumentEmploye/>} />
+                  <Route path="document-agent" element={<DocumentAgentPage/>} />
                 </Route>
                 <Route path='service_inputs' element={<ServicesInput />} />
               </Route>
