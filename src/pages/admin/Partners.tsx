@@ -290,13 +290,13 @@ const Partners = () => {
                   }
 
                   className="w-full px-4 py-2 outline-none bg-white/10 border border-gray-400 rounded-lg text-gray-400 focus:bg-white/5 focus:border-white/5 focus:ring-1 focus:ring-gray-500" />
-                   {partnerForm.image && (
+                {partnerForm.image && (
                   <div className="mt-2">
                     <img src={partnerForm.image} alt="Current image"
                       className="h-16 w-16 object-contain rounded" />
                   </div>
-                  )}
-                  </div>
+                )}
+              </div>
               <div className="flex gap-4 pt-4">
                 <button type="button" onClick={() => setShowPartnerModal(false)}
                   className="flex-1 px-6 py-2 bg-gray-500 hover:bg-gray-600 text-white border border-white/30 rounded-lg font-semibold transition-all duration-300">

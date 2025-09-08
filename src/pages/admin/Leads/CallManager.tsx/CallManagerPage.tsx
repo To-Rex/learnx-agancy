@@ -20,7 +20,7 @@ const CallManagerPage: React.FC = () => {
                         Manage lead workflow from Instagram targeting to agent assignment
                     </p>
                 </div>
-                <div className="flex items-center justify-between w-[35%]">
+                {/* <div className="flex display-none items-center justify-between w-[35%]">
                     <div className="border border-gray-300 rounded-lg flex items-center gap-2 p-2 text-sm">
                         <Instagram className="text-gray-600" size={14} />
                         150 New from Instagram
@@ -29,7 +29,7 @@ const CallManagerPage: React.FC = () => {
                         <BsPeople className="text-gray-600" size={14} />
                         4 Active Agents
                     </div>
-                </div>
+                </div> */}
             </div>
             <CallManager/>
             <Footer />
