@@ -35,7 +35,6 @@ import AdminProfile from './pages/admin/AdminProfile'
 import Admins from './pages/admin/Admins'
 import ServicesInput from './pages/admin/ServicesInput'
 import Leads from './pages/admin/Leads/Leads'
-import CallManager from './pages/admin/Leads/CallManager.tsx/CallManager'
 import AgentFormPage from './pages/admin/Leads/agent-form/Index'
 import ConsultingManagerPage from './pages/admin/Leads/consultingmanager/Index'
 import DocumentManagerPage from './pages/admin/Leads/documentManager/Index'
@@ -43,6 +42,7 @@ import DocumentEmployeePage from './pages/admin/Leads/documentEmploye/Index'
 import ConsultingManager from './pages/admin/Leads/consultingmanager/Index'
 import DocumentManager from './pages/admin/Leads/documentManager/Index'
 import DocumentEmploye from './pages/admin/Leads/documentEmploye/Index'
+import CallManagerPage from './pages/admin/Leads/CallManager.tsx/CallManagerPage'
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -121,7 +121,7 @@ function App() {
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
-                  <Route index element={<CallManager />} />  {/* <-- default chiqadi */}
+                  <Route index element={<CallManagerPage />} />  {/* <-- default chiqadi */}
                   <Route path="agent-form" element={<AgentFormPage/>} />
                   <Route path="consulting-manager" element={<ConsultingManager/>} />
                   <Route path="document-manager" element={<DocumentManager/>} />

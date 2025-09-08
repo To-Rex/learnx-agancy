@@ -63,6 +63,7 @@ const Clients = () => {
         limit: String(limit),
         offset: String(offset),
       });
+      
 
       if (searchValue.trim()) {
         params.append("search_field", searchField);
