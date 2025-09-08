@@ -40,6 +40,7 @@ import AgentFormPage from './pages/admin/Leads/agent-form/Index'
 import ConsultingManagerPage from './pages/admin/Leads/consultingmanager/Index'
 import DocumentManagerPage from './pages/admin/Leads/documentManager/Index'
 import DocumentEmployeePage from './pages/admin/Leads/documentEmploye/Index'
+import ConsultingManager from './pages/admin/Leads/consultingmanager/Index'
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -114,13 +115,13 @@ function App() {
                 <Route path="stories" element={<StoriesAdmin />} />
                 <Route path="partners" element={<Partners />} />
                 <Route path="contacts" element={<Contacts />} />
-                <Route path="client/:id" element={<ClientDetailsPage />} />
+                <Route path="/admin/clients/:id" element={<ClientDetailsPage />} />
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
                   <Route index element={<CallManager />} />  {/* <-- default chiqadi */}
                   <Route path="agent-form" element={<div>📝 Agent Form Page</div>} />
-                  <Route path="consulting-manager" element={<div>📅 Consulting Manager Page</div>} />
+                  <Route path="consulting-manager" element={<ConsultingManager/>} />
                   <Route path="document-manager" element={<div>📝 Document-manager Page</div>} />
                   <Route path="document-employee" element={<div>📅 Document-employee Page</div>} />
                 </Route>

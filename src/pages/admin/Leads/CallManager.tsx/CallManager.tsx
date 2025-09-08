@@ -2,23 +2,12 @@ import React, { useState } from "react";
 import LeadsAssignment from "./SelectAssigment";
 import { BsPeople } from "react-icons/bs";
 import { Instagram } from "lucide-react";
-import IncomingLeads from "./IncomingLeads";
-import ClassifyLeads from "./ClassifyLeads";
-import MonitorCalls from "./MonitorCalls";
-import ResultsMeetings from "./ResultsMeetings";
 import Footer from "./Footer";
 
 
 const CallManager: React.FC = () => {
     const [active, setActive] = useState("incoming");
 
-    const tabs = [
-        { id: "incoming", label: "1. Incoming Leads" },
-        { id: "classify", label: "2. Classify Leads" },
-        { id: "select", label: "3. Select & Assign" },
-        { id: "monitor", label: "4. Monitor Calls" },
-        { id: "results", label: "5. Results & Meetings" },
-    ];
 
     return (
         <>
@@ -42,35 +31,8 @@ const CallManager: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Tabs */}
-            <div className=" pt-5">
-                <div className="flex items-center justify-between p-2  space-x-10  border rounded-lg bg-[#d7d7d784]">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActive(tab.id)}
-                            className={`relative p-1 rounded-lg font-medium text-sm transition-all duration-300
-                      ${active === tab.id
-                                    ? "bg-[#fff] text-gray-800 shadow-lg scale-105"
-                                    : " text-gray-900"
-                                }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Content */}
-            <div className="mt-6">
-                {active === "incoming" && <IncomingLeads />}
-                {active === "classify" && <ClassifyLeads />}
-                {active === "select" && <LeadsAssignment />}
-                {active === "monitor" && <MonitorCalls />}
-                {active === "results" && <ResultsMeetings />}
-            </div>
-            <Footer/>
+            <LeadsAssignment />
+            <Footer />
         </>
     );
 };

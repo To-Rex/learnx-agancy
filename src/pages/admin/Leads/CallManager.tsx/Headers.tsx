@@ -29,7 +29,7 @@ const Headers: React.FC = () => {
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-2 px-4 py-[5px] rounded-md font-medium transition ${isActive
+              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${isActive
                 ? "bg-gray-800 text-white"
                 : "text-gray-700 hover:bg-gray-200"
                 }`}
@@ -39,13 +39,6 @@ const Headers: React.FC = () => {
             </Link>
           );
         })}
-
-        {/* Workflow info */}
-        <div className="ml-auto">
-          <span className="px-3 py-1 text-sm text-gray-600 border rounded-md bg-gray-50">
-            Workflow: Agent → Manager → Consultant
-          </span>
-        </div>
       </div>
     </div>
   );

@@ -238,33 +238,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
 
-  const adminSignIn = async (username: string, password: string , role:string) => {
+  const adminSignIn = async (username: string, password: string, role: string) => {
     try {
       setLoading(true);
+
       const response = await fetch("https://learnx-crm-production.up.railway.app/api/v1/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifor: username, password })
       });
-      const data = await response.json();
-      console.log('UnoGroup CRM javobi:', data);
 
+      const data = await response.json();
+      console.log("UnoGroup CRM javobi:", data);
+
+      // Login muvaffaqiyatsiz bo‘lsa (status 200 emas yoki token yo‘q)
       if (!response.ok || !data?.token) {
         return { data: null, error: { message: "Noto‘g‘ri login yoki parol" } };
       }
 
-      const adminUsers = ['bron', 'admin', 'dev.dilshodjon'];
-      if (!adminUsers.includes(username)) {
-        return { data: null, error: { message: "Bu foydalanuvchi admin emas" } };
-      }
-
+      // Agar login muvaffaqiyatli bo‘lsa
       setIsAdmin(true);
-      localStorage.setItem('admin_user', JSON.stringify({ username, role }));
-      localStorage.setItem('admin_access_token', data?.token);
+      localStorage.setItem("admin_user", JSON.stringify({ username, role }));
+      localStorage.setItem("admin_access_token", data.token);
+
       return { data: { success: true }, error: null };
     } catch (err) {
-      console.error('Admin login xatosi:', err);
-      return { data: null, error: { message: 'Kirish jarayonida xatolik yuz berdi' } };
+      console.error("Admin login xatosi:", err);
+      return { data: null, error: { message: "Kirish jarayonida xatolik yuz berdi" } };
     } finally {
       setLoading(false);
     }

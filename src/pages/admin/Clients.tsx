@@ -284,11 +284,12 @@ const Clients = () => {
 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => { setSelectedClientId(client.id); setActiveTab("clientDetails"); }}
+                    onClick={() => navigate(`/admin/clients/${client.id}`)}
                     className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
+
 
                   <button
                     onClick={() => handleDeleteClientsClick(client.id)}
