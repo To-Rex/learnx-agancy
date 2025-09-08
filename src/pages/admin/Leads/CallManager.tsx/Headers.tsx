@@ -41,7 +41,7 @@ const Headers: React.FC = () => {
 
       {/* Navigation buttons */}
       <div className="flex items-center gap-2">
-        {navItems.map(({ path, label, icon: icon }) => {
+        {navItems.map(({ path, label, icon: Icon }) => {
           const isActive = location.pathname === path;
           return (
             <Link
@@ -53,7 +53,7 @@ const Headers: React.FC = () => {
                   : "text-gray-700 hover:bg-gray-200"
               }`}
             >
-              <icon size={12} />
+              <Icon size={12} />
               {label}
             </Link>
           );
