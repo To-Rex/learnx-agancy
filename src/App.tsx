@@ -30,7 +30,7 @@ import ClientDetailsPage from "./pages/ClientsPage";
 // Admin pages
 import AdminLogin from "./pages/AdminLogin";
 import AdminLayout from "./components/layouts/AdminLayout";
-import Dashboard from "./pages/admin/Dashboard";
+// import Dashboard from "./pages/admin/Dashboard";
 import Clients from "./pages/admin/Clients";
 import Applications from "./pages/admin/Applications";
 import ServicesAdmin from "./pages/admin/Services";
@@ -118,8 +118,8 @@ function App() {
                   </AdminProtectedRoute>
                 }
               >
-                <Route index element={<Dashboard />} />
-                <Route path="dashboard" element={<Dashboard />} />
+                {/* <Route index element={<Dashboard />} /> */}
+                {/* <Route path="dashboard" element={<Dashboard />} /> */}
                 <Route path="clients" element={<Clients />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="services" element={<ServicesAdmin />} />
