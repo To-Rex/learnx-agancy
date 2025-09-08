@@ -13,29 +13,33 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false);
+
 
   const { signIn, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
 
     try {
-      const { error } = await signIn(email, password)
+      const { error } = await signIn(email, password, rememberMe); // ✅ rememberMe uzatyapmiz
       if (error) {
-        toast.error(t('login.invalidCredentials'))
+        toast.error(t('login.invalidCredentials'));
       } else {
-        toast.success(t('login.success'))
-        navigate('/profile')
+        toast.success(t('login.success'));
+        navigate('/profile');
       }
     } catch (err) {
-      console.log(err)
-      toast.error(t('login.error'))
+      console.log(err);
+      toast.error(t('login.error'));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+
+
   useEffect(() => {
     localStorage.getItem("access_token") && navigate("/profile", { replace: true });
   }, [navigate]);
@@ -121,10 +125,16 @@ const Login: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div className="flex items-center ">
-                <input id="remember-me" name="remember-me" type="checkbox" className=" cursor-pointer h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700  cursor-pointer">{t('login.remember')}</label>
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={() => setRememberMe(!rememberMe)}
+                  className="cursor-pointer h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700  cursor-pointer">{t('login.remember')}</label>
               </div>
-              <Link to="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">{t('login.forgot')}</Link>
+              <Link to="/register" className="text-sm font-medium text-blue-600 hover:text-blue-500">{t('login.forgot')}</Link>
             </div>
 
             <button type="submit" disabled={loading} className="w-full flex justify-center items-center py-4 px-4 border border-transparent rounded-xl text-white font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl">

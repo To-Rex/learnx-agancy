@@ -52,10 +52,6 @@ interface leadType {
   source: string;
   passport_number: string;
   region: string;
-  birth_year?: number; // Added birth_year property
-  call_agent_id?: string; // Added call_agent_id property
-  current_agent_id?: string; // Added current_agent_id property
-  consulting_agent_id?: string; // Added consulting_agent_id property
 }
 
 const studyTypes = [
@@ -119,7 +115,7 @@ const CallAgentPage = () => {
     setSelectedLead(lead);
     setFormData({
       leadName: lead.name || "",
-      leadPhone: String(lead.phone) || "",
+      leadPhone: lead.phone || "",
       leadRegion: lead.region || "",
       studyType: "",
       country: "",
@@ -139,9 +135,8 @@ const CallAgentPage = () => {
     meetingDate: undefined,
   });
 
-  // Removed unused isSubmitting state
-  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const availableServices = formData.country
     ? countryServices[formData.country as keyof typeof countryServices]
@@ -173,7 +168,8 @@ const CallAgentPage = () => {
       comments: null,
       call_agent_id: selectedLead.call_agent_id,
       consulting_agent_id: selectedLead.consulting_agent_id || "",
-      current_agent_id: selectedLead.current_agent_id || "",
+      document_agent_id: selectedLead.document_agent_id || "",
+      current_agent_id: selectedLead.current_agent_id,
     };
 
     try {

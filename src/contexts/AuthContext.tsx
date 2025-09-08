@@ -162,26 +162,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (email: string, password: string, rememberMe: boolean) => {
     setLoading(true);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
     const accessToken = data?.session?.access_token || null;
+
     if (accessToken) {
-      localStorage.setItem('token', accessToken);
-      // API ga Supabase tokenni yuborish
+      // ✅ rememberMe bo‘yicha tokenni saqlash
+      if (rememberMe) {
+        localStorage.setItem('token', accessToken); // Uzoq muddat saqlash
+      } else {
+        sessionStorage.setItem('token', accessToken); // Faqat sessiya davomida
+      }
+
       try {
-        const apiResponse = await fetch('https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase', {
-          method: 'POST',  // API talab qilsa POST
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${accessToken}`,  // Supabase tokenni yuboramiz
-          },
-          body: JSON.stringify({ access_token: accessToken }),
-        });
+        // ✅ API ga Supabase tokenni yuborish
+        const apiResponse = await fetch(
+          'https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ access_token: accessToken }),
+          }
+        );
 
         if (!apiResponse.ok) {
           throw new Error(`API xatolik: ${apiResponse.status}`);
@@ -189,18 +200,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         const apiData = await apiResponse.json();
         console.log('API dan access token:', apiData);
-        console.log('client_id', apiData?.client?.id);
 
-
-        // API dan kelgan tokenni localStorage ga saqlash (agar API token qaytarsa)
+        // ✅ API tokenni ham saqlash
         if (apiData.token) {
-          localStorage.setItem('api_access_token', apiData?.token);
-        }
-        if (apiData.client.id) {
-          console.log('client_id', apiData?.client?.id);
-          localStorage.setItem('client_id', apiData?.client?.id);
+          if (rememberMe) {
+            localStorage.setItem('api_access_token', apiData.token);
+          } else {
+            sessionStorage.setItem('api_access_token', apiData.token);
+          }
         }
 
+        // ✅ client_id saqlash
+        if (apiData.client?.id) {
+          if (rememberMe) {
+            localStorage.setItem('client_id', apiData.client.id);
+          } else {
+            sessionStorage.setItem('client_id', apiData.client.id);
+          }
+        }
       } catch (apiError) {
         console.error('API bilan ishlashda xato:', apiError);
       }

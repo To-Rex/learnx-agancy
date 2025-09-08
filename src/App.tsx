@@ -46,7 +46,6 @@ import ConsultingManager from "./pages/admin/Leads/consultingmanager/Index";
 import DocumentManager from "./pages/admin/Leads/documentManager/Index";
 import CallAgentPage from "./pages/admin/Leads/agent-form/Index";
 import DocumentAgentPage from "./pages/admin/Leads/documentAgent/Index";
-import ConsultingAgentPage from "./pages/admin/Leads/consultingAgent";
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -148,10 +147,6 @@ function App() {
                   <Route
                     path="document-agent"
                     element={<DocumentAgentPage />}
-                  />
-                  <Route
-                    path="consulting-agent"
-                    element={<ConsultingAgentPage />}
                   />
                 </Route>
                 <Route path="service_inputs" element={<ServicesInput />} />

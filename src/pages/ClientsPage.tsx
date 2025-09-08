@@ -38,12 +38,13 @@ const ClientDetailsPage: React.FC<Props> = ({ clientId }) => {
   const [loadingApp, setLoadingApp] = useState(false);
 
   useEffect(() => {
-    if (!clientId) return;
+    const storedClientId = localStorage.getItem("clientId"); // faqat kalit
+    if (!storedClientId) return;
 
     const fetchClient = async () => {
       setLoadingClient(true);
       try {
-        const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/clients/get/${clientId}`, {
+        const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/clients/get/${storedClientId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
           },
@@ -65,7 +66,8 @@ const ClientDetailsPage: React.FC<Props> = ({ clientId }) => {
     };
 
     fetchClient();
-  }, [clientId]);
+  }, []); // endi dependency `clientId` emas, useEffect faqat bir marta ishlaydi
+
 
   useEffect(() => {
     if (!client) return;
@@ -157,15 +159,14 @@ const ClientDetailsPage: React.FC<Props> = ({ clientId }) => {
             >
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-gray-600">Ariza ID: {a.id.slice(0, 13)}</h3>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  a.status === "approved" ? "bg-green-500/20 text-green-400" :
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${a.status === "approved" ? "bg-green-500/20 text-green-400" :
                   a.status === "draft" ? "bg-yellow-500/20 text-yellow-400" :
-                  "bg-gray-500/20 text-gray-400"}`}>
+                    "bg-gray-500/20 text-gray-400"}`}>
                   {a.status}
                 </span>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-300">
-                <p><span className="text-gray-400">Xizmat ID: </span>{a.service_id?.slice(0,12) || "—"}</p>
+                <p><span className="text-gray-400">Xizmat ID: </span>{a.service_id?.slice(0, 12) || "—"}</p>
                 <p><span className="text-gray-400">Raqami: </span>{a.client?.phone || "—"}</p>
                 <p><span className="text-gray-400">Yaratilgan: </span>{new Date(a.created_at).toLocaleDateString("uz-UZ")}</p>
                 <p><span className="text-gray-400">Mijoz: </span>{a.client?.full_name || "—"}</p>
