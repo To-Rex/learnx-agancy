@@ -119,11 +119,11 @@ function App() {
                 <Route path='profile' element={<AdminProfile />} />
                 <Route path='user' element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
-                  <Route index element={<CallManagerPage/>} />  {/* <-- default chiqadi */}
-                  <Route path="call-agent" element={<CallAgentPage/>} />
-                  <Route path="consulting-manager" element={<ConsultingManager/>} />
-                  <Route path="document-manager" element={<DocumentManager/>} />
-                  <Route path="document-agent" element={<DocumentAgentPAge/>} />
+                  <Route index element={<CallManagerPage />} />  {/* <-- default chiqadi */}
+                  <Route path="call-agent" element={<CallAgentPage />} />
+                  <Route path="consulting-manager" element={<ConsultingManager />} />
+                  <Route path="document-manager" element={<DocumentManager />} />
+                  <Route path="document-agent" element={<DocumentAgentPAge />} />
                 </Route>
                 <Route path='service_inputs' element={<ServicesInput />} />
               </Route>

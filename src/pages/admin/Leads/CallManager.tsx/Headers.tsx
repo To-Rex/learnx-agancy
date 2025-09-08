@@ -11,7 +11,7 @@ const Headers: React.FC = () => {
     { path: "/admin/leads/call-agent", label: "Call Agent", icon: FileText },
     { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: Calendar },
     { path: "/admin/leads/document-manager", label: "Document-manager", icon: FileText },
-    { path: "/admin/leads/document-employee", label: "Document-employee", icon: FileText }
+    { path: "/admin/leads/document-agent", label: "Document-employee", icon: FileText }
   ];
 
   return (
