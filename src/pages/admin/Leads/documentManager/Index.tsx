@@ -128,7 +128,7 @@ const DocumentManager: React.FC = () => {
           body: JSON.stringify({
             agent_id: agent.id,
             lead_ids: selected,
-            role: "call_agent",
+            role: "document_agent",
           }),
         }
       );

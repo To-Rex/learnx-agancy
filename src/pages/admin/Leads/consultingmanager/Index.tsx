@@ -128,7 +128,7 @@ const ConsultingManager: React.FC = () => {
           body: JSON.stringify({
             agent_id: agent.id,
             lead_ids: selected,
-            role: "call_agent",
+            role: "consulting_agent",
           }),
         }
       );
