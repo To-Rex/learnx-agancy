@@ -9,9 +9,33 @@ const Headers: React.FC = () => {
   const navItems = [
     { path: "/admin/leads", label: "Call Manager", icon: Home },
     { path: "/admin/leads/call-agent", label: "Call Agent", icon: FileText },
+<<<<<<< HEAD
     { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: Calendar },
     { path: "/admin/leads/document-manager", label: "Document-manager", icon: FileText },
     { path: "/admin/leads/document-agent", label: "Document-agent", icon: FileText }
+=======
+    {
+      path: "/admin/leads/consulting-manager",
+      label: "Consulting Manager",
+      icon: Calendar,
+    },
+    {
+      path: "/admin/leads/consulting-agent",
+      label: "Consulting Agent",
+      icon: Users,
+    },
+    {
+      path: "/admin/leads/document-manager",
+      label: "Document-manager",
+      icon: FileText,
+    },
+
+    {
+      path: "/admin/leads/document-employee",
+      label: "Document-employee",
+      icon: FileText,
+    },
+>>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
   ];
 
   return (
@@ -29,10 +53,11 @@ const Headers: React.FC = () => {
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${isActive
-                ? "bg-gray-800 text-white"
-                : "text-gray-700 hover:bg-gray-200"
-                }`}
+              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${
+                isActive
+                  ? "bg-gray-800 text-white"
+                  : "text-gray-700 hover:bg-gray-200"
+              }`}
             >
               <Icon size={12} />
               {label}

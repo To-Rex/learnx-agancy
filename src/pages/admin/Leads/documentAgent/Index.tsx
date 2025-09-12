@@ -27,12 +27,10 @@ const DocumentAgentPage = () => {
   const [checklistData, setChecklistData] = useState<ChecklistItem[]>([]);
   const [checklistLoading, setChecklistLoading] = useState(false);
 
-  // ✅ Leadlarni olish
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-list?stage_in=initial&status_in=new",
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/get-list?stage_in=initial&status_in=new",
         {
           headers: {
             Authorization: `Bearer ${
@@ -52,7 +50,6 @@ const DocumentAgentPage = () => {
     }
   };
 
-  // ✅ Lead hujjat inputlarini olish
   const fetchLeadChecklist = async (leadId: string) => {
     setChecklistLoading(true);
     try {

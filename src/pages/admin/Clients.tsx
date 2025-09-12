@@ -64,6 +64,7 @@ const Clients = () => {
         offset: String(offset),
       });
 
+
       if (searchValue.trim()) {
         params.append("search_field", searchField);
         params.append("search_val", searchValue.trim());
@@ -284,11 +285,15 @@ const Clients = () => {
 
                 <div className="flex items-center space-x-2">
                   <button
-                    onClick={() => navigate(`/admin/clients/${client.id}`)}
+                    onClick={() => {
+                      localStorage.setItem("clientId", client.id); // clientId ni saqlash
+                      navigate(`/admin/clients/${client.id}`);
+                    }}
                     className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300"
                   >
                     <Eye className="h-4 w-4" />
                   </button>
+
 
 
                   <button

@@ -44,7 +44,8 @@ export default function LeadFileUpload({
 
       toast.success(`${input.name.uz} hujjati yuklandi!`);
       setFile(null);
-    } catch (err) {
+    } catch (error) {
+      console.error(error);
       toast.error("Faylni yuklashda muammo!");
     } finally {
       setUploading(false);

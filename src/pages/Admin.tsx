@@ -257,48 +257,6 @@ const Admin: React.FC = () => {
     image_file: null
   });
 
-  // const loadData = async () => {
-  //   try {
-  //     // Load applications, users, stories, partners, contacts from Supabase
-  //     const { data: appData, error: appError } = await supabase.from('applications').select('*');
-  //     if (appError) throw appError;
-  //     setApplications(appData);
-
-  //     const { data: userData, error: userError } = await supabase.from('users').select('*');
-  //     if (userError) throw userError;
-  //     setUsers(userData);
-
-  //     const { data: storyData, error: storyError } = await supabase.from('stories').select('*');
-  //     if (storyError) throw storyError;
-  //     setStories(storyData);
-
-  //     const { data: partnerData, error: partnerError } = await supabase.from('partners').select('*');
-  //     if (partnerError) throw partnerError;
-  //     setPartners(partnerData);
-
-  //     const { data: contactData, error: contactError } = await supabase.from('contact_submissions').select('*');
-  //     if (contactError) throw contactError;
-  //     setContacts(contactData);
-
-  //     // Update stats
-  //     setStats({
-  //       totalApplications: appData.length,
-  //       pendingApplications: appData.filter((app: any) => app.status === 'pending').length,
-  //       approvedApplications: appData.filter((app: any) => app.status === 'approved').length,
-  //       rejectedApplications: appData.filter((app: any) => app.status === 'rejected').length,
-  //       totalUsers: userData.length,
-  //       totalServices: services.length,
-  //       totalStories: storyData.length,
-  //       totalPartners: partnerData.length,
-  //       totalContacts: contactData.length,
-  //       monthlyGrowth: 0, // Implement logic as needed
-  //       weeklyGrowth: 0, // Implement logic as needed
-  //     });
-  //   } catch (err) {
-  //     console.error('Maʼlumotlarni yuklashda xato:', err);
-  //   }
-  // };
-
   const [features, setFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
   const [newFeatures, setNewFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
   const [serviceForm, setServiceForm] = useState({
