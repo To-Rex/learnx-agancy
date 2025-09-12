@@ -9,8 +9,6 @@ import { RadioGroup, RadioGroupItem } from "../../../../components/ui/radio-grou
 // import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
 import { Button } from "../../../../components/ui/button"
 import toast from "react-hot-toast"
-import { Link } from "react-router-dom"
-import { NavLink } from "react-router-dom"
 // import { cn } from "../../../../lib copy/utils"
 // import {format} from 'date-fns'
 
@@ -62,6 +60,8 @@ const CallAgentPage = () => {
     const [leads, setLeads] = useState([])
     const [loading, setloading] = useState(false);
     const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
+    const [studyTypes, setStudyTypes] = useState<{ value: string; label: string }[]>([]);
+
 
     const fetchLeads = async () => {
         setloading(true)
@@ -83,10 +83,6 @@ const CallAgentPage = () => {
             setloading(false)
         }
     }
-
-    useEffect(() => {
-        fetchLeads();
-    }, [])
 
     const handleLeadSelect = (lead: leadType) => {
         setSelectedLead(lead);
@@ -190,6 +186,34 @@ const CallAgentPage = () => {
           service: "", // Reset service when country changes
         }))
       }
+
+      const fetchStudyTypes = async () => {
+        try {
+          const response = await fetch(
+            "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
+            { method: "GET" }
+          );
+          const data = await response.json();
+          console.log("Services:", data);
+      
+          // Ma'lumotni formatlash
+          const formatted = (data || []).map((item: any) => ({
+            value: item.id, // API'dan id olamiz
+            label: item.title?.uz || item.title?.en || "Noma'lum", // asosiy ko'rsatish uchun
+          }));
+      
+          setStudyTypes(formatted);
+        } catch (error) {
+          console.error(error);
+          toast.error("Xatolik: study types olib kelishda muammo");
+        }
+      };
+
+      useEffect(() => {
+        fetchLeads();
+        fetchStudyTypes()
+    }, [])
+
     
       const isFormValid =
         formData.leadName &&
@@ -253,14 +277,13 @@ const CallAgentPage = () => {
         </div>  
 
         <div className="flex justify-around gap-10">
-            <div>
-                <h2 className="text-gray-800 text-lg font-semibold mb-4">Leads ro'yxati</h2>
-                <div className="border border-white/5 flex flex-col space-y-3">
-                { loading ? <p className="loader flex justify-center items-center m-10"></p>  : leads && 
+          <div>
+            <h2 className="text-gray-800 text-lg font-semibold mb-4">Leads ro'yxati</h2>
+            <div className="border border-white/5 flex flex-col space-y-3">
+              { loading ? <p className="loader flex justify-center items-center m-10"></p>  : leads && 
                 leads.map((lead: leadType, index) => (
-                    <div>
-                        <div onClick={() => handleLeadSelect(lead)}
-                  className={`cursor-pointer border border-gray-200 p-2 rounded-xl w-[500px] text-gray-700 transition 
+                <div>
+                  <div onClick={() => handleLeadSelect(lead)} className={`cursor-pointer border border-gray-200 p-2 rounded-xl w-[500px] text-gray-700 transition 
                     ${selectedLead?.id === lead.id ? "bg-blue-100" : "bg-white/5 hover:bg-gray-300/30"}`}>
                         <p className="p-1 text-red-500 text-lg">{index+1}</p>
                           <span className="flex gap-2">
@@ -290,7 +313,7 @@ const CallAgentPage = () => {
                     </div>
                 ))}
                 </div>
-            </div>
+          </div>
 
             {selectedLead ? (
             <form onSubmit={handleSubmit}>
@@ -337,29 +360,38 @@ const CallAgentPage = () => {
 
                 {/* Study Information */}
                 <Card>
-                <CardHeader>
+                  <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                     <GraduationCap className="w-5 h-5" />
                     Study Information
                     </CardTitle>
-                </CardHeader>
+                  </CardHeader>
                 <CardContent className="space-y-4">
                     <div>
                     <Label>Type of Study *</Label>
                     <Select
-                        value={formData.studyType}
-                        onValueChange={(value) => setFormData((prev) => ({ ...prev, studyType: value }))}>
-                        <SelectTrigger>
+                      value={formData.studyType}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({ ...prev, studyType: value }))
+                      }>
+                      <SelectTrigger>
                         <SelectValue placeholder="Select study type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {studyTypes.map((type) => (
+                      </SelectTrigger>
+                      <SelectContent>
+                        {studyTypes.length > 0 ? (
+                          studyTypes.map((type) => (
                             <SelectItem key={type.value} value={type.value}>
-                            {type.label}
+                              {type.label}
                             </SelectItem>
-                        ))}
-                        </SelectContent>
+                          ))
+                        ) : (
+                          <SelectItem value="none" disabled>
+                            No study types available
+                          </SelectItem>
+                        )}
+                      </SelectContent>
                     </Select>
+
                     </div>
                 </CardContent>
                 </Card>

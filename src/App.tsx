@@ -122,7 +122,7 @@ function App() {
                   <Route path="call-agent" element={<CallAgentPage/>} />
                   <Route path="consulting-manager" element={<ConsultingManager/>} />
                   <Route path="document-manager" element={<DocumentManager/>} />
-                  <Route path="document-agent" element={<DocumentAgentPage/>} />
+                  <Route path="document-agent" element={<DocumentAgentPage />} />
                 </Route>
                 <Route path='service_inputs' element={<ServicesInput />} />
               </Route>
