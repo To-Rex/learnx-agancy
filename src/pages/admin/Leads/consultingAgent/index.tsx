@@ -37,7 +37,7 @@ const ConsultingAgentPage = () => {
     setLoading(true);
     try {
       const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads",
+        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads?stage_in=consulting",
         {
           method: "GET",
           headers: {
@@ -74,11 +74,38 @@ const ConsultingAgentPage = () => {
   };
 
   const handleSubmit = () => {
-    // Submit logic here (API call)
-    alert(`Submitted: ${action}\nComment: ${comment}`);
-    setAction(null);
-    setComment("");
-    setSelectedLead(null);
+    if (!selectedLead) return;
+    // Update note field from input
+    const updatedLead = {
+      ...selectedLead,
+      note: formData.notes,
+    };
+    // Make API request
+    fetch(
+      "https://learnx-crm-production.up.railway.app/api/v1/leads/complete-as-consulting-agent",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${
+            localStorage.getItem("admin_access_token") || ""
+          }`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedLead),
+      }
+    ).then(async (res) => {
+      if (!res.ok) throw new Error("Failed to submit");
+      const data = await res.json();
+      // alert("Lead submitted successfully!");
+      setAction(null);
+      setComment("");
+      setSelectedLead(null);
+      setFormData({ notes: "" });
+      fetchLeads();
+    });
+    // .catch((err) => {
+    //   alert("Error submitting lead: " + err.message);
+    // });
   };
 
   return (
