@@ -165,72 +165,58 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signIn = async (email: string, password: string, rememberMe: boolean) => {
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    const accessToken = data?.session?.access_token || null;
-
-    if (accessToken) {
-      // ✅ rememberMe bo‘yicha tokenni saqlash
-      if (rememberMe) {
-        localStorage.setItem('token', accessToken); // Uzoq muddat saqlash
-      } else {
-        sessionStorage.setItem('token', accessToken); // Faqat sessiya davomida
+      if (error || !data?.user) {
+        setLoading(false);
+        return { data, error };
       }
 
-      try {
-        // ✅ API ga Supabase tokenni yuborish
-        const apiResponse = await fetch(
-          'https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({ access_token: accessToken }),
-          }
-        );
+      const storage = rememberMe ? localStorage : sessionStorage;
 
-        if (!apiResponse.ok) {
-          throw new Error(`API xatolik: ${apiResponse.status}`);
-        }
-
-        const apiData = await apiResponse.json();
-        console.log('API dan access token:', apiData);
-
-        // ✅ API tokenni ham saqlash
-        if (apiData.token) {
-          if (rememberMe) {
-            localStorage.setItem('api_access_token', apiData.token);
-          } else {
-            sessionStorage.setItem('api_access_token', apiData.token);
-          }
-        }
-
-        // ✅ client_id saqlash
-        if (apiData.client?.id) {
-          if (rememberMe) {
-            localStorage.setItem('client_id', apiData.client.id);
-          } else {
-            sessionStorage.setItem('client_id', apiData.client.id);
-          }
-        }
-      } catch (apiError) {
-        console.error('API bilan ishlashda xato:', apiError);
+      // Supabase session va access token
+      if (data.session?.access_token) {
+        storage.setItem('token', data.session.access_token);
       }
-    }
 
-    if (!error && data?.user) {
+      // API ga Supabase tokenni yuborish
+      const apiResponse = await fetch(
+        'https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${data.session?.access_token}`,
+          },
+          body: JSON.stringify({ access_token: data.session?.access_token }),
+        }
+      );
+
+      if (!apiResponse.ok) throw new Error(`API xatolik: ${apiResponse.status}`);
+      const apiData = await apiResponse.json();
+
+      // API token va client_id saqlash
+      if (apiData.token) storage.setItem('api_access_token', apiData.token);
+      if (apiData.client?.id) storage.setItem('client_id', apiData.client.id);
+
+      // User va session holatini saqlash
       setUser(data.user);
       setSession(data.session);
-      await checkAdminStatus(data.user);
-    }
 
-    setLoading(false);
-    return { data, error };
+      // Admin statusni tekshirish
+      await checkAdminStatus(data.user);
+
+      setLoading(false);
+      return { data, error: null };
+    } catch (err) {
+      console.error('SignIn xatolik:', err);
+      setLoading(false);
+      return { data: null, error: err };
+    }
   };
 
   const signInWithGoogle = async () => {

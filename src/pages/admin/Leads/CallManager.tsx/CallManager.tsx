@@ -153,7 +153,9 @@ const CallManager: React.FC = () => {
 
   return (
     <div className="border rounded-lg shadow-lg mt-3 p-4">
-
+      <div>
+        <h1 className="text-3xl font-bold">Call Manager Dashboard</h1>
+      </div>
       {loadingLeads || loadingAgents ? (
         <div className="flex justify-center items-center mt-10">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
