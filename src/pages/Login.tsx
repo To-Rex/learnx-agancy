@@ -41,8 +41,13 @@ const Login: React.FC = () => {
 
 
   useEffect(() => {
-    localStorage.getItem("access_token") && navigate("/profile", { replace: true });
+    const token = localStorage.getItem("supabase_token");
+    if (token) {
+      navigate("/profile", { replace: true });
+    }
   }, [navigate]);
+
+
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true)

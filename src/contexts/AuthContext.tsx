@@ -33,74 +33,71 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [initializing, setInitializing] = useState(true)
 
   useEffect(() => {
-    let mounted = true
-    const storedAdminUser = localStorage.getItem('admin_user')
-    if (storedAdminUser) {
-      setIsAdmin(true)
-      if (mounted) {
-        setLoading(false)
-        setInitializing(false)
-      }
-      return
-    }
+    let mounted = true;
+    let timeoutId: NodeJS.Timeout;
+
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+        // 🔹 Avval localStorage va sessionStorage'dan token qidiramiz
+        const savedToken =
+          localStorage.getItem("supabase_token") ||
+          sessionStorage.getItem("supabase_token");
 
-        if (error) {
-          console.error('Session error:', error)
+        // Agar token topilsa
+        if (savedToken) {
+          const { data, error } = await supabase.auth.getSession();
+
+          if (!error) {
+            setSession(data.session ?? null);
+            setUser(data.session?.user ?? null);
+            await checkAdminStatus(data.session?.user ?? null);
+          }
+        } else {
+          // Token bo‘lmasa ham Supabase ichki sessiyasini olib ko‘ramiz
+          const { data } = await supabase.auth.getSession();
+          setSession(data.session ?? null);
+          setUser(data.session?.user ?? null);
+          await checkAdminStatus(data.session?.user ?? null);
         }
 
-        // console.log('Initial session:', session)
-
         if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          await checkAdminStatus(session?.user)
-          setLoading(false)
-          setInitializing(false)
+          setLoading(false);
+          setInitializing(false);
         }
       } catch (error) {
-        console.error('Auth initialization error:', error)
+        console.error("Auth initialization error:", error);
         if (mounted) {
-          setLoading(false)
-          setInitializing(false)
+          setLoading(false);
+          setInitializing(false);
         }
       }
-    }
-    initializeAuth()
-    let timeoutId: NodeJS.Timeout
+    };
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      // console.log('Auth state change:', event, session)
+    initializeAuth();
 
-      // Clear previous timeout
-      if (timeoutId) {
-        clearTimeout(timeoutId)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        if (timeoutId) clearTimeout(timeoutId);
+
+        timeoutId = setTimeout(async () => {
+          if (mounted) {
+            setSession(session);
+            setUser(session?.user ?? null);
+            await checkAdminStatus(session?.user ?? null);
+            setLoading(false);
+            setInitializing(false);
+          }
+        }, 100);
       }
-
-      // Debounce auth state changes
-      timeoutId = setTimeout(async () => {
-        if (mounted) {
-          setSession(session)
-          setUser(session?.user ?? null)
-          await checkAdminStatus(session?.user)
-          setLoading(false)
-          setInitializing(false)
-        }
-      }, 100)
-    })
+    );
 
     return () => {
-      mounted = false
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-      subscription.unsubscribe()
-    }
-  }, [])
+      mounted = false;
+      if (timeoutId) clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
+  }, []);
+
 
   const checkAdminStatus = async (user: User | null) => {
     if (!user) {
@@ -124,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) return { data: null, error };
 
     const accessToken = data?.session?.access_token;
+    console.log("tooooooken", accessToken);
+
     if (!accessToken) {
       return { data: null, error: new Error('Supabase token olinmadi') };
     }
@@ -164,60 +163,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signIn = async (email: string, password: string, rememberMe: boolean) => {
     setLoading(true);
-
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      // 1. Supabase login
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (error || !data?.user) {
+      if (error || !data?.session?.access_token) {
         setLoading(false);
-        return { data, error };
+        return { data, error: error || new Error("Supabase token olinmadi") };
       }
 
-      const storage = rememberMe ? localStorage : sessionStorage;
+      const accessToken = data.session.access_token;
 
-      // Supabase session va access token
-      if (data.session?.access_token) {
-        storage.setItem('token', data.session.access_token);
+      // 2. Supabase o‘zi sessiyani localStorage da saqlaydi
+      // Shuning uchun rememberMe ishlashi uchun "sahifa yopilganda log out qilish"ni qo‘shamiz
+      if (!rememberMe) {
+        window.addEventListener("beforeunload", () => {
+          supabase.auth.signOut(); // sahifa yopilganda sessiyani o‘chiradi
+        });
       }
 
-      // API ga Supabase tokenni yuborish
+      // 3. API ga token yuborish
       const apiResponse = await fetch(
-        'https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase',
+        "https://learnx-crm-production.up.railway.app/api/v1/auth/login-with-supabase",
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${data.session?.access_token}`,
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ access_token: data.session?.access_token }),
+          body: JSON.stringify({ access_token: accessToken }),
         }
       );
 
       if (!apiResponse.ok) throw new Error(`API xatolik: ${apiResponse.status}`);
       const apiData = await apiResponse.json();
 
-      // API token va client_id saqlash
-      if (apiData.token) storage.setItem('api_access_token', apiData.token);
-      if (apiData.client?.id) storage.setItem('client_id', apiData.client.id);
+      // 4. API tokenni localStorage da saqlaymiz
+      if (apiData.token) localStorage.setItem("api_access_token", apiData.token);
+      if (apiData.client?.id) localStorage.setItem("client_id", apiData.client.id);
 
-      // User va session holatini saqlash
+      // 5. React state yangilash
       setUser(data.user);
       setSession(data.session);
-
-      // Admin statusni tekshirish
       await checkAdminStatus(data.user);
 
       setLoading(false);
       return { data, error: null };
     } catch (err) {
-      console.error('SignIn xatolik:', err);
+      console.error("SignIn xatolik:", err);
       setLoading(false);
       return { data: null, error: err };
     }
   };
+
+
+
+
+
 
   const signInWithGoogle = async () => {
     setLoading(true);

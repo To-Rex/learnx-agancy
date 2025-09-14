@@ -122,7 +122,7 @@ function App() {
                 {/* <Route index element={<Dashboard />} /> */}
                 {/* <Route path="dashboard" element={<Dashboard />} /> */}
                 <Route index element={<Clients />} />
-                      <Route path="client" element={<Clients />} />
+                <Route path="client" element={<Clients />} />
                 <Route path="applications" element={<Applications />} />
                 <Route path="services" element={<ServicesAdmin />} />
                 <Route path="stories" element={<StoriesAdmin />} />
