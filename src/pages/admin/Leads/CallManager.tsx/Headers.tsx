@@ -26,8 +26,8 @@ const Headers: React.FC = () => {
     },
 
     {
-      path: "/admin/leads/document-employee",
-      label: "Document-employee",
+      path: "/admin/leads/document-agent",
+      label: "Document-agent",
       icon: FileText,
     },
   ];
