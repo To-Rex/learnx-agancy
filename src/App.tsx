@@ -134,13 +134,6 @@ function App() {
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="user" element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
-<<<<<<< HEAD
-                  <Route index element={<CallManager />} />  {/* <-- default chiqadi */}
-                  <Route path="call-agent" element={<CallAgentPage/>} />
-                  <Route path="consulting-manager" element={<ConsultingManager/>} />
-                  <Route path="document-manager" element={<DocumentManager/>} />
-                  <Route path="document-agent" element={<DocumentAgentPage />} />
-=======
                   <Route index element={<CallManager />} />{" "}
                   {/* <-- default chiqadi */}
                   <Route path="call-agent" element={<CallAgentPage />} />
@@ -160,7 +153,6 @@ function App() {
                     path="document-agent"
                     element={<DocumentAgentPage />}
                   />
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
                 </Route>
                 <Route path="service_inputs" element={<ServicesInput />} />
               </Route>

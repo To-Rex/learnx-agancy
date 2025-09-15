@@ -28,13 +28,10 @@ import {
   RadioGroupItem,
 } from "../../../../components/ui/radio-group";
 // import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
-<<<<<<< HEAD
 import { Button } from "../../../../components/ui/button"
 import toast from "react-hot-toast"
-=======
-import { Button } from "../../../../components/ui/button";
-import toast from "react-hot-toast";
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
+// import { Button } from "../../../../components/ui/button";
+// import toast from "react-hot-toast";
 // import { cn } from "../../../../lib copy/utils"
 // import {format} from 'date-fns'
 
@@ -83,17 +80,17 @@ const countryServices = {
 };
 
 const CallAgentPage = () => {
-<<<<<<< HEAD
-    const [leads, setLeads] = useState([])
-    const [loading, setloading] = useState(false);
-    const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
-    const [studyTypes, setStudyTypes] = useState<{ value: string; label: string }[]>([]);
+// <<<<<<< HEAD
+    // const [leads, setLeads] = useState([])
+    // const [loading, setloading] = useState(false);
+    // const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
+    // const [studyTypes, setStudyTypes] = useState<{ value: string; label: string }[]>([]);
 
-=======
+// =======
   const [leads, setLeads] = useState([]);
   const [loading, setloading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
+// >>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
 
   const fetchLeads = async () => {
     setloading(true);
@@ -120,26 +117,6 @@ const CallAgentPage = () => {
     }
   };
 
-<<<<<<< HEAD
-    const handleLeadSelect = (lead: leadType) => {
-        setSelectedLead(lead);
-        setFormData({
-            leadName: lead.name || "",
-            leadPhone: lead.phone || "",
-            leadRegion: lead.region || "",
-            studyType: "",
-            country: "",
-            service: "",
-            transactionType: "online",
-            // meetingDate: null
-          });
-      
-    }
-
-    const [formData, setFormData] = useState<FormData>({
-      leadName: "",
-      leadPhone: "",
-=======
   useEffect(() => {
     fetchLeads();
   }, []);
@@ -150,7 +127,6 @@ const CallAgentPage = () => {
       leadName: lead.name || "",
       leadPhone: lead.phone || "",
       leadRegion: lead.region || "",
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
       studyType: "",
       country: "",
       service: "",
@@ -219,148 +195,6 @@ const CallAgentPage = () => {
           },
           body: JSON.stringify(payload),
         }
-<<<<<<< HEAD
-      
-        const payload = {
-          id: selectedLead.id,
-          name: formData.leadName || selectedLead.name,
-          phone: formData.leadPhone || selectedLead.phone,
-          email: selectedLead.email,
-          source: selectedLead.source,
-          passport_number: selectedLead.passport_number,
-          note: "",
-          service_id: formData.service || "",
-          country: formData.country || "",
-          meeting_type: formData.transactionType || "online",
-          meeting_time: formData.meetingDate
-            ? new Date(formData.meetingDate).toISOString()
-            : "",
-          region: formData.leadRegion || selectedLead.region,
-          birth_year: selectedLead.birth_year,
-          comments: null,
-          call_agent_id: selectedLead.call_agent_id,
-          consulting_agent_id: selectedLead.consulting_agent_id || "",
-          document_agent_id: selectedLead.document_agent_id || "",
-          current_agent_id: selectedLead.current_agent_id
-        };
-      
-        try {
-          const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/complete-as-call-agent",
-            {
-              method: "POST",
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(payload)
-            }
-          );
-      
-          const data = await res.json();
-          if (!res.ok) {
-            console.error("Xatolik:", data);
-            alert(data.message || "Yuborishda xatolik yuz berdi");
-          } else {
-            toast.success("Forma muvaffaqiyatli yuborildi!");
-            setSelectedLead(null);
-            setFormData({
-              leadName: "",
-              leadPhone: "",
-              studyType: "",
-              country: "",
-              service: "",
-              transactionType: "online",
-              meetingDate: undefined,
-              leadRegion: ""
-            });
-          }
-        } catch (error) {
-          console.error(error);
-        }
-      };
-    
-      const handleCountryChange = (country: string) => {
-        setFormData((prev) => ({
-          ...prev,
-          country,
-          service: "", // Reset service when country changes
-        }))
-      }
-
-      const fetchStudyTypes = async () => {
-        try {
-          const response = await fetch(
-            "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
-            { method: "GET" }
-          );
-          const data = await response.json();
-          console.log("Services:", data);
-      
-          // Ma'lumotni formatlash
-          const formatted = (data || []).map((item: any) => ({
-            value: item.id, // API'dan id olamiz
-            label: item.title?.uz || item.title?.en || "Noma'lum", // asosiy ko'rsatish uchun
-          }));
-      
-          setStudyTypes(formatted);
-        } catch (error) {
-          console.error(error);
-          toast.error("Xatolik: study types olib kelishda muammo");
-        }
-      };
-
-      useEffect(() => {
-        fetchLeads();
-        fetchStudyTypes()
-    }, [])
-
-    
-      const isFormValid =
-        formData.leadName &&
-        formData.leadPhone &&
-        formData.studyType &&
-        formData.country &&
-        formData.service &&
-        (formData.transactionType === "online" || formData.meetingDate)
-    
-      if (submitted) {
-        return (
-          <div className="min-h-screen bg-background flex items-center justify-center p-6">
-            <Card className="w-full max-w-md">
-              <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Send className="w-8 h-8 text-green-600" />
-                </div>
-                <h2 className="text-2xl font-bold text-green-600 mb-2">Form Submitted Successfully!</h2>
-                <p className="text-muted-foreground mb-6">
-                  The lead information has been sent to the consulting manager for review and scheduling.
-                </p>
-                <div className="space-y-3">
-                  <Button
-                    onClick={() => {
-                      setSubmitted(false)
-                      setFormData({
-                        leadName: "",
-                        leadPhone: "",
-                        studyType: "",
-                        country: "",
-                        service: "",
-                        transactionType: "online",
-                      })
-                    }}
-                    className="w-full"
-                  >
-                    Submit Another Form
-                  </Button>
-                  <Button  className="w-full bg-transparent">
-                    <a href="/consulting-manager">View in Consulting Manager</a>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        )
-=======
       );
 
       const data = await res.json();
@@ -380,7 +214,6 @@ const CallAgentPage = () => {
           meetingDate: undefined,
           leadRegion: "",
         });
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
       }
     } catch (error) {
       console.error(error);
@@ -466,43 +299,6 @@ const CallAgentPage = () => {
 
         <div className="flex justify-around gap-10">
           <div>
-<<<<<<< HEAD
-            <h2 className="text-gray-800 text-lg font-semibold mb-4">Leads ro'yxati</h2>
-            <div className="border border-white/5 flex flex-col space-y-3">
-              { loading ? <p className="loader flex justify-center items-center m-10"></p>  : leads && 
-                leads.map((lead: leadType, index) => (
-                <div>
-                  <div onClick={() => handleLeadSelect(lead)} className={`cursor-pointer border border-gray-200 p-2 rounded-xl w-[500px] text-gray-700 transition 
-                    ${selectedLead?.id === lead.id ? "bg-blue-100" : "bg-white/5 hover:bg-gray-300/30"}`}>
-                        <p className="p-1 text-red-500 text-lg">{index+1}</p>
-                          <span className="flex gap-2">
-                            <h2>Ismi:</h2><h2>{lead.name || "nomalum"}</h2>
-                          </span>
-                          <span className="flex gap-1 ">
-                            <p>Telefon raqami:</p>
-                            <p>{lead.phone || 'nomalum'}</p>
-                          </span>
-                          <span className="flex gap-1 ">
-                            <p>Email manzili:</p>
-                            <p>{lead.email || 'nomalum'}</p>
-                          </span>
-                          <span className="flex gap-1 ">
-                            <p>Manbasi:</p>
-                            <p>{lead.source || 'nomalum'}</p>
-                          </span>
-                          <span className="flex gap-1 ">
-                            <p className="font-semibold">Passport raqami:</p>
-                            <p>{lead.passport_number || 'nomalum'}</p>
-                          </span>
-                          <span className="flex gap-1 ">
-                            <p className="font-semibold">Manzili:</p>
-                            <p>{lead.region || "nomalum"}</p>
-                          </span>
-                        </div>
-                    </div>
-                ))}
-                </div>
-=======
             <h2 className="text-gray-800 text-lg font-semibold mb-4">
               Leads ro'yxati
             </h2>
@@ -552,7 +348,6 @@ const CallAgentPage = () => {
                 ))
               )}
             </div>
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
           </div>
 
           {selectedLead ? (
@@ -617,34 +412,6 @@ const CallAgentPage = () => {
                       Study Information
                     </CardTitle>
                   </CardHeader>
-<<<<<<< HEAD
-                <CardContent className="space-y-4">
-                    <div>
-                    <Label>Type of Study *</Label>
-                    <Select
-                      value={formData.studyType}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, studyType: value }))
-                      }>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select study type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {studyTypes.length > 0 ? (
-                          studyTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="none" disabled>
-                            No study types available
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
-
-=======
                   <CardContent className="space-y-4">
                     <div>
                       <Label>Type of Study *</Label>
@@ -665,7 +432,6 @@ const CallAgentPage = () => {
                           ))}
                         </SelectContent>
                       </Select>
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
                     </div>
                   </CardContent>
                 </Card>

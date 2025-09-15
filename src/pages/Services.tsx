@@ -30,7 +30,7 @@ interface Service {
 }
 
 interface FeatureItem {
-  icon: any
+  icon: any,
   title: string
   description: string
   color: string
@@ -105,7 +105,7 @@ const Services: React.FC = () => {
 
   if (error) return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <p className="text-red-600 text-lg">{error}</p>
+      <p className="text-red-600 text-lg">Ma'lumotlarn olishda xatolik yuz berdi</p>
     </div>
   )
 

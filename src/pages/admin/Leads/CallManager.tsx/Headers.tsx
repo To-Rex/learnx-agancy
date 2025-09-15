@@ -9,11 +9,6 @@ const Headers: React.FC = () => {
   const navItems = [
     { path: "/admin/leads", label: "Call Manager", icon: Home },
     { path: "/admin/leads/call-agent", label: "Call Agent", icon: FileText },
-<<<<<<< HEAD
-    { path: "/admin/leads/consulting-manager", label: "Consulting Manager", icon: Calendar },
-    { path: "/admin/leads/document-manager", label: "Document-manager", icon: FileText },
-    { path: "/admin/leads/document-agent", label: "Document-agent", icon: FileText }
-=======
     {
       path: "/admin/leads/consulting-manager",
       label: "Consulting Manager",
@@ -31,11 +26,10 @@ const Headers: React.FC = () => {
     },
 
     {
-      path: "/admin/leads/document-employee",
-      label: "Document-employee",
+      path: "/admin/leads/document-agent",
+      label: "Document-agent",
       icon: FileText,
     },
->>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
   ];
 
   return (

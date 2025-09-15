@@ -264,7 +264,7 @@ const Services = () => {
   return (
     <>
       {/* Header va Yangi Xizmat tugmasi */}
-      <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl mt-10 mb-6">
+      <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mt-10 mb-6">
         <h2 className="text-2xl font-bold text-gray-600 flex items-center">
           <Settings className="h-6 w-6 mr-3 text-blue-400" />
           Xizmatlar boshqaruvi
