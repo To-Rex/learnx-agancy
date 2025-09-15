@@ -7,7 +7,6 @@ import {
   Send,
   User,
 } from "lucide-react";
-// import { Calendar } from "../../../../components/ui/calendar"
 import {
   Card,
   CardContent,
@@ -27,11 +26,9 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "../../../../components/ui/radio-group";
-// import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
-import { Button } from "../../../../components/ui/button";
-import toast from "react-hot-toast";
-// import { cn } from "../../../../lib copy/utils"
-// import {format} from 'date-fns'
+
+import { Button } from "../../../../components/ui/button"
+import toast from "react-hot-toast"
 
 interface FormData {
   leadName: string;
@@ -42,6 +39,12 @@ interface FormData {
   transactionType: "online" | "offline";
   meetingDate?: Date;
   leadRegion?: string;
+  // birth_year: string;
+  // comments: null,
+  // call_agent_id:string;
+  // consulting_agent_id: string;
+  // document_agent_id: string;
+  // current_agent_id: string;
 }
 
 interface leadType {
@@ -52,14 +55,25 @@ interface leadType {
   source: string;
   passport_number: string;
   region: string;
+  birhday: number;
+
 }
 
-const studyTypes = [
-  { value: "master", label: "Master's Degree" },
-  { value: "bachelor", label: "Bachelor's Degree" },
-  { value: "professional", label: "Professional Training" },
-  { value: "language", label: "Language Course" },
-];
+interface ServiceType {
+  id: string;
+  title: {
+    uz?: string;
+    en?: string;
+    ru?: string;
+  };
+}
+
+// const studyTypes = [
+//   { value: "master", label: "Master's Degree" },
+//   { value: "bachelor", label: "Bachelor's Degree" },
+//   { value: "professional", label: "Professional Training" },
+//   { value: "language", label: "Language Course" },
+// ];
 
 const countries = [
   { value: "korea", label: "Korea" },
@@ -69,24 +83,90 @@ const countries = [
   { value: "dubai", label: "Dubai" },
 ];
 
-const countryServices = {
-  korea: ["master", "bachelor", "professional"],
-  australia: ["language", "professional", "bachelor", "master"],
-  malaysia: ["language", "professional", "bachelor", "master"],
-  singapore: ["language", "professional", "bachelor", "master"],
-  dubai: ["language", "bachelor", "master"],
-};
+// const countryServices = {
+//   korea: ["master", "bachelor", "professional"],
+//   australia: ["language", "professional", "bachelor", "master"],
+//   malaysia: ["language", "professional", "bachelor", "master"],
+//   singapore: ["language", "professional", "bachelor", "master"],
+//   dubai: ["language", "bachelor", "master"],
+// };
 
 const CallAgentPage = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setloading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
+  const [studyTypes, setStudyTypes] = useState<ServiceType[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  const [formData, setFormData] = useState<FormData>({
+    leadName: "",
+    leadPhone: "",
+    studyType: "",
+    country: "",
+    service: "",
+    transactionType: "online",
+    meetingDate: undefined,
+    leadRegion: "",
+  });
+
+  const fetchServices = async () => {
+    setLoadingServices(true);
+    try {
+      const res = await fetch(
+        "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${
+              localStorage.getItem("admin_access_token") || ""
+            }`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
+      setStudyTypes(data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Xizmatlarni olishda xatolik!");
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+    fetchServices();
+  }, []);
+
+  const availableServices = studyTypes.filter((s) => !!s.id);
+
+  const handleLeadSelect = (lead: leadType) => {
+    setSelectedLead(lead);
+    setFormData({
+      leadName: lead.name || "",
+      leadPhone: String(lead.phone) || "",
+      leadRegion: lead.region || "",
+      studyType: "",
+      country: "",
+      service: "",
+      transactionType: "online",
+    });
+  };
+
+  const handleCountryChange = (country: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      country,
+      service: "", // reset service
+    }));
+  };
 
   const fetchLeads = async () => {
     setloading(true);
     try {
       const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads",
+        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-list",
         {
           method: "GET",
           headers: {
@@ -107,48 +187,16 @@ const CallAgentPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
-  const handleLeadSelect = (lead: leadType) => {
-    setSelectedLead(lead);
-    setFormData({
-      leadName: lead.name || "",
-      leadPhone: lead.phone || "",
-      leadRegion: lead.region || "",
-      studyType: "",
-      country: "",
-      service: "",
-      transactionType: "online",
-      // meetingDate: null
-    });
-  };
-
-  const [formData, setFormData] = useState<FormData>({
-    leadName: "",
-    leadPhone: "",
-    studyType: "",
-    country: "",
-    service: "",
-    transactionType: "online",
-    meetingDate: undefined,
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const availableServices = formData.country
-    ? countryServices[formData.country as keyof typeof countryServices]
-    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead?.id) {
-      alert("Lead tanlanmadi!");
+      toast.error("Lead tanlanmadi!");
       return;
     }
-
+  
     const payload = {
       id: selectedLead.id,
       name: formData.leadName || selectedLead.name,
@@ -157,7 +205,7 @@ const CallAgentPage = () => {
       source: selectedLead.source,
       passport_number: selectedLead.passport_number,
       note: "",
-      service_id: formData.service || "",
+      service_id: formData.service,  
       country: formData.country || "",
       meeting_type: formData.transactionType || "online",
       meeting_time: formData.meetingDate
@@ -171,10 +219,10 @@ const CallAgentPage = () => {
       document_agent_id: selectedLead.document_agent_id || "",
       current_agent_id: selectedLead.current_agent_id,
     };
-
+  
     try {
       const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/complete-as-call-agent",
+        "https://learnx-crm-production.up.railway.app/api/v1/leads/create",
         {
           method: "POST",
           headers: {
@@ -186,13 +234,14 @@ const CallAgentPage = () => {
           body: JSON.stringify(payload),
         }
       );
-
+  
       const data = await res.json();
       if (!res.ok) {
         console.error("Xatolik:", data);
-        alert(data.message || "Yuborishda xatolik yuz berdi");
+        toast.error(data.message || "Yuborishda xatolik yuz berdi");
       } else {
         toast.success("Forma muvaffaqiyatli yuborildi!");
+        setSubmitted(true);
         setSelectedLead(null);
         setFormData({
           leadName: "",
@@ -206,16 +255,11 @@ const CallAgentPage = () => {
         });
       }
     } catch (error) {
+      toast.error("Server bilan aloqa qilishda xatolik!");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
     }
-  };
-
-  const handleCountryChange = (country: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      country,
-      service: "", // Reset service when country changes
-    }));
   };
 
   const isFormValid =
@@ -385,6 +429,8 @@ const CallAgentPage = () => {
                     <div>
                       <Label htmlFor="leadRegion">Region</Label>
                       <Input
+                        value={formData.leadRegion}
+                        onChange={(e) => setFormData((prev) => ({...prev, leadRegion: e.target.value}))}
                         type="text"
                         id="leadRegion"
                         placeholder="Enter lead region"
@@ -395,35 +441,40 @@ const CallAgentPage = () => {
                 </Card>
 
                 {/* Study Information */}
+
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5" />
-                      Study Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <Label>Type of Study *</Label>
-                      <Select
-                        value={formData.studyType}
-                        onValueChange={(value) =>
-                          setFormData((prev) => ({ ...prev, studyType: value }))
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select study type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {studyTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </CardContent>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <GraduationCap className="w-5 h-5" />
+                        Study Information
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <Label>Type of Study *</Label>
+                        <Select
+                          value={formData.studyType}
+                          onValueChange={(value) =>
+                            setFormData((prev) => ({ ...prev, studyType: value }))
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select study type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {loadingServices ? (
+                              <p className="p-2 text-sm text-gray-500">Yuklanmoqda...</p>
+                            ) : (
+                              studyTypes.map((type) => (
+                                <SelectItem key={type.id} value={type.id}>
+                                  {type.title.uz}
+                                </SelectItem>
+                              ))
+                            )}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
                 </Card>
 
                 {/* Country & Services */}
@@ -461,27 +512,27 @@ const CallAgentPage = () => {
                       <div>
                         <Label>Available Services *</Label>
                         <Select
-                          value={formData.service}
-                          onValueChange={(value) =>
-                            setFormData((prev) => ({ ...prev, service: value }))
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select available service" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableServices.map((service) => {
-                              const serviceLabel =
-                                studyTypes.find((s) => s.value === service)
-                                  ?.label || service;
-                              return (
-                                <SelectItem key={service} value={service}>
-                                  {serviceLabel}
-                                </SelectItem>
-                              );
-                            })}
-                          </SelectContent>
-                        </Select>
+    value={formData.service || undefined}
+    onValueChange={(value) =>
+      setFormData((prev) => ({ ...prev, service: value }))
+    }
+  >
+    <SelectTrigger className="w-full">
+      <SelectValue placeholder="Xizmat turini tanlang" />
+    </SelectTrigger>
+    <SelectContent>
+      {loadingServices ? (
+        <p className="p-2 text-sm text-gray-500">Yuklanmoqda...</p>
+      ) : (
+        availableServices.map((service) => (
+          <SelectItem key={service.id} value={service.id}>
+            {service.title?.uz || service.title?.en || service.title?.ru}
+          </SelectItem>
+        ))
+      )}
+    </SelectContent>
+  </Select>
+
                         <p className="text-sm text-muted-foreground mt-1">
                           Services available in{" "}
                           {
@@ -491,6 +542,7 @@ const CallAgentPage = () => {
                         </p>
                       </div>
                     )}
+                    
                   </CardContent>
                 </Card>
 

@@ -37,11 +37,11 @@ interface Testimonial {
   image: string
 }
 
-interface Partners {
-  id: string // UUID string sifatida
-  name: string // name.en dan olinadi
-  image: string // logo_url dan olinadi
-}
+// interface Partners {
+//   id: string // UUID string sifatida
+//   name: string // name.en dan olinadi
+//   image: string // logo_url dan olinadi
+// }
 
 const icons = {
   FileText, Users, Globe, Star, TrendingUp, Award, CheckCircle,
@@ -170,15 +170,15 @@ const Home: React.FC = () => {
     loadAllData()
   }, [language])
 
-  // if (loading) {
-  //   return (
-  //     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-  //       <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-  //     </div>
-  //   )
-  // }
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
   
-  if (error) return <div className="text-center py-20 text-red-600">Xatolik: {error}</div>
+  if (error) return <div className="text-center py-32 my-auto text-red-600">Ma'lumotlarni olishda xatolik yuz berdi!!! </div>
 
   return (
     <div className="min-h-screen">
