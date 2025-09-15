@@ -16,7 +16,7 @@ import {
 
 const tabs = [
   // { id: 'dashboard', name: 'Boshqaruv paneli', icon: BarChart3 },
-  { id: "clients", name: "Mijozlar", icon: Users },
+  { id: "client", name: "Mijozlar", icon: Users },
   { id: "applications", name: "Arizalar", icon: FileText },
   { id: "services", name: "Xizmatlar", icon: Settings },
   { id: "stories", name: "Hikoyalar", icon: MessageSquare },

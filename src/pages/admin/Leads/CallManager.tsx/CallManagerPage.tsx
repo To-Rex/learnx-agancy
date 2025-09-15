@@ -1,12 +1,9 @@
 import React, { useState } from "react";
-import { BsPeople } from "react-icons/bs";
-import { Instagram } from "lucide-react";
 import Footer from "./Footer";
 import CallManager from "./CallManager";
 
 
 const CallManagerPage: React.FC = () => {
-    const [active, setActive] = useState("incoming");
 
 
     return (

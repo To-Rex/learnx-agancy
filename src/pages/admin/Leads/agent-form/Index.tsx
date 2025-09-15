@@ -28,10 +28,15 @@ import {
   RadioGroupItem,
 } from "../../../../components/ui/radio-group";
 // import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
+<<<<<<< HEAD
 import { Button } from "../../../../components/ui/button"
 import toast from "react-hot-toast"
 // import { Button } from "../../../../components/ui/button";
 // import toast from "react-hot-toast";
+=======
+import { Button } from "../../../../components/ui/button";
+import toast from "react-hot-toast";
+>>>>>>> 5f33c657608d329a229d5b58754dbe517cb591c3
 // import { cn } from "../../../../lib copy/utils"
 // import {format} from 'date-fns'
 
@@ -80,6 +85,7 @@ const countryServices = {
 };
 
 const CallAgentPage = () => {
+<<<<<<< HEAD
 // <<<<<<< HEAD
     // const [leads, setLeads] = useState([])
     // const [loading, setloading] = useState(false);
@@ -91,6 +97,11 @@ const CallAgentPage = () => {
   const [loading, setloading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
 // >>>>>>> 0402513b4a98e90f0e1a8daf48076f86a1a2ce19
+=======
+  const [leads, setLeads] = useState([]);
+  const [loading, setloading] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
+>>>>>>> 5f33c657608d329a229d5b58754dbe517cb591c3
 
   const fetchLeads = async () => {
     setloading(true);

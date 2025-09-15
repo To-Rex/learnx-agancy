@@ -27,7 +27,7 @@ const AdminLogin: React.FC = () => {
       toast.error(error.message);
     } else if (data) {
       toast.success('Admin panelga xush kelibsiz!');
-      navigate('/admin/clients');
+      navigate('/admin');
     }
   } catch (err) {
     console.error('Login xatosi:', err);
