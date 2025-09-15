@@ -25,7 +25,9 @@ const Applications = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-    const [deleteAppModalOpen, setDeleteAppModalOpen] = useState(false); // 🔹 qo‘shildi
+  const [deleteAppModalOpen, setDeleteAppModalOpen] = useState(false); // 🔹 qo‘shildi
+  const [addAppModalOpen, setAddAppModalOpen] = useState(false);
+  const [services, setServices] = useState<any[]>([]);
 
 
 
@@ -66,6 +68,19 @@ const Applications = () => {
         return "Noma'lum";
     }
   };
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/services/get-list");
+        const data = await res.json();
+        setServices(data); // API'dan kelgan xizmatlarni saqlash
+      } catch (error) {
+        console.error("Xizmatlarni olishda xatolik:", error);
+      }
+    };
+
+    fetchServices();
+  }, []);
 
   const handleOpenStatusModal = (id: string, currentStatus: string) => {
     setSelectedAppId(id);
@@ -165,37 +180,72 @@ const Applications = () => {
   };
 
   // DELETE HANDLER
-  const handleDeleteApp = () => {
+  const handleDeleteApp = async () => {
     if (selectedIds.length === 0) return;
-    setDeleteAppModalOpen(true); // modal ochiladi
+
+    try {
+      for (const id of selectedIds) {
+        const res = await fetch(
+          `https://learnx-crm-production.up.railway.app/api/v1/applications/delete/${id}`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("admin_access_token")}`,
+            },
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Delete xatolik: ${res.status}`);
+        }
+      }
+
+      // 🔄 Frontend state’dan ham o‘chirish
+      setApplication((prev: any[]) =>
+        prev.filter((app) => !selectedIds.includes(app.id))
+      );
+
+      toast.success("Tanlangan arizalar muvaffaqiyatli o‘chirildi!");
+      setDeleteAppModalOpen(false);
+      setSelectedIds([]);
+      fetchApplications()
+    } catch (err) {
+      console.error("Delete xatolik:", err);
+      toast.error("O‘chirishda xatolik yuz berdi");
+    }
   };
 
-  const handleConfirmAppDelete = async () => {
+
+  const [newApp, setNewApp] = useState({ client_id: "", service_id: "", status: "pending" });
+
+  const handleAddApp = async () => {
     try {
       const res = await fetch(
-        `https://learnx-crm-production.up.railway.app/api/v1/applications/delete`,
+        `https://learnx-crm-production.up.railway.app/api/v1/applications/create`,
         {
-          method: "DELETE",
+          method: "POST",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("admin_access_token")}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ ids: selectedIds }),
+          body: JSON.stringify(newApp),
         }
       );
 
-      if (!res.ok) throw new Error("O‘chirishda xatolik");
+      if (!res.ok) throw new Error("Ariza qo‘shishda xatolik");
 
-      setApplication((prev) => prev.filter((a) => !selectedIds.includes(a.id)));
-      setSelectedIds([]);
-      toast.success("Tanlangan arizalar o‘chirildi!");
+      const data = await res.json();
+      setApplication((prev) => [data, ...prev]); // yangi arizani ro‘yxatga qo‘shamiz
+      toast.success("Yangi ariza qo‘shildi!");
+      setAddAppModalOpen(false);
+      setNewApp({ client_id: "", service_id: "", status: "pending" });
+      fetchApplications()
     } catch (err) {
       console.error(err);
-      toast.error("O‘chirishda xatolik yuz berdi");
-    } finally {
-      setDeleteAppModalOpen(false);
+      toast.error("Qo‘shishda xatolik");
     }
   };
+
 
 
   const handleAppPrevPage = () => {
@@ -240,39 +290,52 @@ const Applications = () => {
   };
 
   const handleSaveApp = async () => {
-    if (!selectedApp?.id || !selectedApp?.client?.id) {
-      setEditAppModal(false);
+    if (!selectedApp?.id) {
+      console.error("ID topilmadi!", selectedApp);
       return;
     }
 
     try {
-      setApplication((prev) =>
-        prev.map((a) => (a.id === selectedApp.id ? selectedApp : a))
+      const updateId = selectedApp.id;
+
+      const res = await fetch(
+        `https://learnx-crm-production.up.railway.app/api/v1/applications/update/${updateId}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token")}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: selectedApp.id,
+            client_id: selectedApp.client_id,
+            service_id: selectedApp.service_id,
+            status: selectedApp.status,
+          }),
+        }
       );
 
-      toast.success("Mijoz ma’lumoti yangilandi");
-    } catch (e) {
-      console.error(e);
-      toast.error("Saqlashda xatolik");
-    } finally {
+      if (!res.ok) {
+        throw new Error(`Xatolik yuz berdi: ${res.status}`);
+      }
+
+      const updated = await res.json();
+
+      toast.success("Ariza muvaffaqiyatli yangilandi!");
+
+      // 🔄 UI yangilash
+      setApplication((prev: any[]) =>
+        prev.map((app) => (app.id === updateId ? updated : app))
+      );
+      fetchApplications()
       setEditAppModal(false);
-      setIsEditingAppName(false);
-      setSearchResults([]);
+      setSelectedApp(null);
+    } catch (err) {
+      console.error("Arizani yangilashda xatolik:", err);
+      toast.error("Arizani yangilashda xatolik yuz berdi");
     }
   };
 
-  // const handleClientSelect = (clientName: string | null) => {
-  //   setSelectedClient(clientName);
-
-  //   if (clientName) {
-  //     const filtered = applications.filter(app =>
-  //       app.client?.full_name?.toLowerCase().includes(clientName.toLowerCase())
-  //     );
-  //     setFilteredApplications(filtered);
-  //   } else {
-  //     setFilteredApplications([]);
-  //   }
-  // };
 
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedAppId) return;
@@ -309,31 +372,6 @@ const Applications = () => {
     }
   };
 
-  //   const handleStatusUpdate = async (id: string, newStatus: string) => {
-  //     try {
-  //       const res = await fetch(`https://learnx-crm-production.up.railway.app/api/v1/applications/${id}/update-status`,
-  //         {
-  //           method: "PATCH",
-  //           headers: {
-  //             "Authorization": `Bearer ${localStorage.getItem("admin_access_token")}`,
-  //             "Content-Type": "application/json",
-  //           },
-  //           body: JSON.stringify({ status: newStatus }),
-  //         }
-  //       );
-
-  //       if (!res.ok) {
-  //         throw new Error("Status yangilashda xatolik yuz berdi");
-  //       }
-
-  //       const data = await res.json();
-  //       setApplication(data);
-  //       console.log("Arizalar muvaffaqiyatli olindi:", data);
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
-
   return (
     <section className="bg-gray-50 rounded-xl my-3 pb-1">
       <div className="pt-6 px-8 border-b border-white/20">
@@ -342,9 +380,13 @@ const Applications = () => {
             <FileText className="h-6 w-6 mr-3 text-blue-400" /> Arizalar boshqaruvi
           </h2>
           <div>
-            <button className="bg-blue-600 text-white py-2 px-4 rounded-lg">
+            <button
+              onClick={() => setAddAppModalOpen(true)}
+              className="bg-blue-600 text-white py-2 px-4 rounded-lg"
+            >
               + Ariza qo'shish
             </button>
+
           </div>
         </div>
       </div>
@@ -482,94 +524,117 @@ const Applications = () => {
           </tbody>
         </table>
 
-        {selectedApp && editAppModal && (
-          <div onClick={() => setEditAppModal(false)}
-            className="fixed inset-0 flex justify-center items-center bottom-20  bg-black/20 backdrop-blur-sm z-50">
-            <div onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-[500px] p-6 backdrop-blur-md rounded-2xl bg-gradient-to-br from-slate-800 via-purple-900 to-slate-800 shadow-2xl space-y-2">
-              <div className="flex justify-between items-center rounded-xl border border-white/50 py-1 px-3">
-                {isEditingAppName ? (
-                  <div className="relative w-full">
-                    <div className="flex items-center gap-1 py-2">
-                      <input type="text" placeholder="Ism qidiring..." value={nameQuery}
-                        onChange={(e) => handleSearchAppClients(e.target.value)}
-                        className="w-full bg-transparent border border-white/45 text-white rounded-lg p-2" />
-                      <button onClick={handleSaveApp}
-                        className="px-4 py-2 mx-1 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        Save
-                      </button>
-                      <Edit2 onClick={() => setIsEditingAppName(false)}
-                        className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-10 h-10 mr-1" />
-                    </div>
+        {(editAppModal || addAppModalOpen) && (
+          <div
+            onClick={() => {
+              setEditAppModal(false);
+              setAddAppModalOpen(false);
+              setSelectedApp(null);
+              setNewApp({ client_id: "", service_id: "", status: "pending" });
+            }}
+            className="fixed inset-0 flex justify-center items-center bg-black/30 backdrop-blur-sm z-50"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white p-6 rounded-lg shadow-lg w-[450px] space-y-4"
+            >
+              <h2 className="text-xl font-semibold text-gray-700">
+                {selectedApp ? "Arizani tahrirlash" : "Yangi ariza qo‘shish"}
+              </h2>
 
-                    {isSearching && (
-                      <div className="absolute w-full mt-1 bg-slate-700 rounded-lg shadow-lg p-2 text-white">
-                        Qidirilmoqda...
-                      </div>
-                    )}
-
-                    {searchResults.length > 0 && (
-                      <div className="absolute text-white bg-white/10 backdrop-blur-sm rounded-lg shadow-lg max-h-48 w-[310px] overflow-y-auto z-10">
-                        {searchResults.map((client) => (
-                          <div key={client.id} onClick={() => {
-                            setNameQuery(client.full_name);
+              {/* Client qidirish */}
+              <div>
+                <input
+                  type="text"
+                  value={nameQuery}
+                  onChange={(e) => handleSearchAppClients(e.target.value)}
+                  placeholder="Mijozni qidiring..."
+                  className="w-full border rounded-lg p-2"
+                />
+                {isSearching && <p className="text-sm text-gray-500">Qidirilmoqda...</p>}
+                {searchResults.length > 0 && (
+                  <div className="border rounded-lg mt-2 max-h-40 overflow-y-auto">
+                    {searchResults.map((client) => (
+                      <div
+                        key={client.id}
+                        onClick={() => {
+                          if (selectedApp) {
                             setSelectedApp((prev: any) => ({
-                              ...prev, client: { ...(prev?.client || {}), id: client.id, full_name: client.full_name, avatar_url: client.avatar_url, },
+                              ...prev,
+                              client_id: client.id,
+                              client,
                             }));
-                            setSearchResults([]);
-                          }}
-                            className="flex items-center gap-3 p-2 hover:bg-white/20 cursor-pointer">
-                            <img src={client.avatar_url || adminlogo}
-                              alt={client.full_name}
-                              className="w-8 h-8 rounded-full" />
-                            <span>{client.full_name}</span>
-                          </div>
-                        ))}
+                          } else {
+                            setNewApp((prev) => ({
+                              ...prev,
+                              client_id: client.id,
+                            }));
+                          }
+                          setSelectedClient(client);
+                          setSearchResults([]);
+                          setNameQuery(client.full_name);
+                        }}
+                        className="p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        {client.full_name} ({client.phone})
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={selectedApp.client?.avatar_url || adminlogo}
-                      alt={selectedApp.client?.full_name || "Client avatar"}
-                      className="rounded-full h-16 w-16" />
-                    <input value={selectedApp.client?.full_name || ""}
-                      readOnly
-                      className="text-white border border-white/45 rounded-lg bg-transparent p-2" />
-                    <button onClick={() => {
-                      setIsEditingAppName(true);
-                      setNameQuery("");
-                      setSearchResults([]);
-                    }}
-                      className="ml-2 px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                      <Edit2 />
-                    </button>
+                    ))}
                   </div>
                 )}
               </div>
 
-              <div className="border border-white/50 flex justify-between items-center gap-4 py-3 px-4 rounded-lg ">
-                {isEditingApp ? (
-                  <div className="flex items-center gap-3 w-full">
-                    <input type="search" placeholder="Application qidiring..."
-                      className="flex-1 bg-transparent text-white border border-white/40 rounded-lg py-2 px-3" />
-                    <button onClick={() => setIsEditingApp(false)}
-                      className="bg-blue-600 px-4 py-2 rounded-lg text-white">
-                      Save
-                    </button>
-                  </div>
-                ) : (
-                  <input type="text" value={selectedApp?.id || ""}
-                    placeholder="Application Id"
-                    className="w-[300px] border border-white/40 bg-transparent py-2 px-3 rounded-lg text-white" />
-                )}
-                <Edit2Icon onClick={() => setIsEditingApp(!isEditingApp)}
-                  className="text-yellow-400 hover:bg-white/40 p-2 cursor-pointer rounded-lg w-9 h-9 mr-1" />
+              {/* Service select */}
+              <select
+                value={selectedApp ? selectedApp.service_id : newApp.service_id}
+                onChange={(e) => {
+                  if (selectedApp) {
+                    setSelectedApp((prev: any) => ({
+                      ...prev,
+                      service_id: e.target.value,
+                    }));
+                  } else {
+                    setNewApp((prev) => ({
+                      ...prev,
+                      service_id: e.target.value,
+                    }));
+                  }
+                }}
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="">Xizmatni tanlang</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.title.uz}
+                  </option>
+                ))}
+              </select>
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setEditAppModal(false);
+                    setAddAppModalOpen(false);
+                    setSelectedApp(null);
+                  }}
+                  className="bg-gray-400 px-4 py-2 rounded-lg text-white"
+                >
+                  Bekor qilish
+                </button>
+                <button
+                  onClick={selectedApp ? handleSaveApp : handleAddApp}
+                  className="bg-blue-600 px-4 py-2 rounded-lg text-white"
+                >
+                  Saqlash
+                </button>
               </div>
             </div>
           </div>
         )}
+
+
+
+
+
         {deleteAppModalOpen && (
           <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50">
             <div className="bg-gray-50 shadow-2xl p-6 rounded-lg max-w-[570px]">
