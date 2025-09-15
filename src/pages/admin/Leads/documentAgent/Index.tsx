@@ -30,7 +30,7 @@ const DocumentAgentPage = () => {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/get-list?stage_in=initial&status_in=new",
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/get-list",
         {
           headers: {
             Authorization: `Bearer ${
@@ -142,27 +142,27 @@ const DocumentAgentPage = () => {
               <div className="space-y-4">
                 {checklistData.map((item) => (
                   <LeadFileUpload
-                    key={item.service_input_id}
-                    leadId={selectedLead.id}
-                    serviceInputId={item.service_input_id}
-                    label={
-                      item.name?.uz ||
-                      item.name?.en ||
-                      item.name?.ru ||
-                      "Nomsiz hujjat"
-                    }
-                    required={!!item.required}
-                    currentFile={item.uploaded_doc?.file_url || ""}
-                    onUploaded={(url) => {
-                      setChecklistData((prev) =>
-                        prev.map((i) =>
-                          i.service_input_id === item.service_input_id
-                            ? { ...i, uploaded_doc: { file_url: url } }
-                            : i
-                        )
-                      );
-                    }}
-                  />
+                  key={item.service_input_id}
+                  leadId={selectedLead.id}
+                  serviceInputId={item.service_input_id}
+                  label={
+                    item.name?.uz ||
+                    item.name?.en ||
+                    item.name?.ru ||
+                    "Nomsiz hujjat"
+                  }
+                  required={!!item.required}
+                  currentFile={item.uploaded_doc?.file_url || ""}
+                  onUploaded={(url) => {
+                    setChecklistData((prev) =>
+                      prev.map((i) =>
+                        i.service_input_id === item.service_input_id
+                          ? { ...i, uploaded_doc: { file_url: url } }
+                          : i
+                      )
+                    );
+                  }}
+                />
                 ))}
               </div>
             ) : (
