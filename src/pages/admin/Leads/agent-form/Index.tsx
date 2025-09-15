@@ -148,7 +148,7 @@ const CallAgentPage = () => {
     setloading(true);
     try {
       const res = await fetch(
-        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads",
+        "https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads?stage_in=initial",
         {
           method: "GET",
           headers: {
