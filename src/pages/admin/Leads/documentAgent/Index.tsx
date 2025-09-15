@@ -18,7 +18,7 @@ interface ChecklistItem {
   name: { uz?: string; en?: string; ru?: string };
   required?: boolean;
   uploaded_doc?: { file_url: string } | null;
-}
+} 
 
 const DocumentAgentPage = () => {
   const [leads, setLeads] = useState<LeadType[]>([]);

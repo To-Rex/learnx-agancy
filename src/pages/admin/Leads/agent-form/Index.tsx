@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -7,7 +8,6 @@ import {
   Send,
   User,
 } from "lucide-react";
-// import { Calendar } from "../../../../components/ui/calendar"
 import {
   Card,
   CardContent,
@@ -27,11 +27,9 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from "../../../../components/ui/radio-group";
-// import { Popover, PopoverContent, PopoverTrigger } from "../../../../components/ui/popover"
-import { Button } from "../../../../components/ui/button";
-import toast from "react-hot-toast";
-// import { cn } from "../../../../lib copy/utils"
-// import {format} from 'date-fns'
+
+import { Button } from "../../../../components/ui/button"
+import toast from "react-hot-toast"
 
 interface FormData {
   leadName: string;
@@ -52,14 +50,19 @@ interface leadType {
   source: string;
   passport_number: string;
   region: string;
+  birhday: number;
+
 }
 
-const studyTypes = [
-  { value: "master", label: "Master's Degree" },
-  { value: "bachelor", label: "Bachelor's Degree" },
-  { value: "professional", label: "Professional Training" },
-  { value: "language", label: "Language Course" },
-];
+interface ServiceType {
+  id: string;
+  title: {
+    uz?: string;
+    en?: string;
+    ru?: string;
+  };
+}
+
 
 const countries = [
   { value: "korea", label: "Korea" },
@@ -69,18 +72,77 @@ const countries = [
   { value: "dubai", label: "Dubai" },
 ];
 
-const countryServices = {
-  korea: ["master", "bachelor", "professional"],
-  australia: ["language", "professional", "bachelor", "master"],
-  malaysia: ["language", "professional", "bachelor", "master"],
-  singapore: ["language", "professional", "bachelor", "master"],
-  dubai: ["language", "bachelor", "master"],
-};
+
 
 const CallAgentPage = () => {
   const [leads, setLeads] = useState([]);
   const [loading, setloading] = useState(false);
   const [selectedLead, setSelectedLead] = useState<leadType | null>(null);
+  const [studyTypes, setStudyTypes] = useState<ServiceType[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  const [formData, setFormData] = useState<FormData>({
+    leadName: "",
+    leadPhone: "",
+    studyType: "",
+    country: "",
+    service: "",
+    transactionType: "online",
+    meetingDate: undefined,
+    leadRegion: "",
+  });
+
+  const fetchServices = async () => {
+    setLoadingServices(true);
+    try {
+      const res = await fetch(
+        "https://learnx-crm-production.up.railway.app/api/v1/services/get-list",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const data = await res.json();
+      setStudyTypes(data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error("Xizmatlarni olishda xatolik!");
+    } finally {
+      setLoadingServices(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+    fetchServices();
+  }, []);
+
+  const availableServices = studyTypes.filter((s) => !!s.id);
+
+  const handleLeadSelect = (lead: leadType) => {
+    setSelectedLead(lead);
+    setFormData({
+      leadName: lead.name || "",
+      leadPhone: String(lead.phone) || "",
+      leadRegion: lead.region || "",
+      studyType: "",
+      country: "",
+      service: "",
+      transactionType: "online",
+    });
+  };
+
+  const handleCountryChange = (country: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      country,
+      service: "", // reset service
+    }));
+  };
 
   const fetchLeads = async () => {
     setloading(true);
@@ -106,45 +168,13 @@ const CallAgentPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchLeads();
-  }, []);
-
-  const handleLeadSelect = (lead: leadType) => {
-    setSelectedLead(lead);
-    setFormData({
-      leadName: lead.name || "",
-      leadPhone: lead.phone || "",
-      leadRegion: lead.region || "",
-      studyType: "",
-      country: "",
-      service: "",
-      transactionType: "online",
-      // meetingDate: null
-    });
-  };
-
-  const [formData, setFormData] = useState<FormData>({
-    leadName: "",
-    leadPhone: "",
-    studyType: "",
-    country: "",
-    service: "",
-    transactionType: "online",
-    meetingDate: undefined,
-  });
-
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-
-  const availableServices = formData.country
-    ? countryServices[formData.country as keyof typeof countryServices]
-    : [];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLead?.id) {
-      alert("Lead tanlanmadi!");
+      toast.error("Lead tanlanmadi!");
       return;
     }
 
@@ -156,7 +186,7 @@ const CallAgentPage = () => {
       source: selectedLead.source,
       passport_number: selectedLead.passport_number,
       note: "",
-      service_id: formData.service || "",
+      service_id: formData.service,
       country: formData.country || "",
       meeting_type: formData.transactionType || "online",
       meeting_time: formData.meetingDate
@@ -177,20 +207,28 @@ const CallAgentPage = () => {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
-              }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
         }
       );
 
-      const data = await res.json();
+      // Avval text ko‘rib olamiz
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch (err) {
+        data = null; // noto‘g‘ri JSON bo‘lsa
+      }
+
       if (!res.ok) {
         console.error("Xatolik:", data);
-        alert(data.message || "Yuborishda xatolik yuz berdi");
+        toast.error(data?.message || "Yuborishda xatolik yuz berdi");
       } else {
         toast.success("Forma muvaffaqiyatli yuborildi!");
+        setSubmitted(true);
         setSelectedLead(null);
         setFormData({
           leadName: "",
@@ -204,16 +242,13 @@ const CallAgentPage = () => {
         });
       }
     } catch (error) {
+      toast.error("Server bilan aloqa qilishda xatolik!");
       console.error(error);
+    } finally {
+      setIsSubmitting(false);
+      fetchLeads()
     }
-  };
 
-  const handleCountryChange = (country: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      country,
-      service: "", // Reset service when country changes
-    }));
   };
 
   const isFormValid =
@@ -294,14 +329,14 @@ const CallAgentPage = () => {
               {loading ? (
                 <div className="flex justify-center items-center mt-10">
                   <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
-                </div>) : (
-                leads &&
+                </div>
+              ) : (
                 leads.map((lead: leadType, index) => (
-                  <div>
+                  <div key={lead.id || index}>
                     <div
                       onClick={() => handleLeadSelect(lead)}
                       className={`cursor-pointer border border-gray-200 p-2 rounded-xl w-[500px] text-gray-700 transition 
-                    ${selectedLead?.id === lead.id
+          ${selectedLead?.id === lead.id
                           ? "bg-blue-100"
                           : "bg-white/5 hover:bg-gray-300/30"
                         }`}
@@ -335,6 +370,7 @@ const CallAgentPage = () => {
                   </div>
                 ))
               )}
+
             </div>
           </div>
 
@@ -383,6 +419,8 @@ const CallAgentPage = () => {
                     <div>
                       <Label htmlFor="leadRegion">Region</Label>
                       <Input
+                        value={formData.leadRegion}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, leadRegion: e.target.value }))}
                         type="text"
                         id="leadRegion"
                         placeholder="Enter lead region"
@@ -393,6 +431,7 @@ const CallAgentPage = () => {
                 </Card>
 
                 {/* Study Information */}
+
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -413,11 +452,15 @@ const CallAgentPage = () => {
                           <SelectValue placeholder="Select study type" />
                         </SelectTrigger>
                         <SelectContent>
-                          {studyTypes.map((type) => (
-                            <SelectItem key={type.value} value={type.value}>
-                              {type.label}
-                            </SelectItem>
-                          ))}
+                          {loadingServices ? (
+                            <p className="p-2 text-sm text-gray-500">Yuklanmoqda...</p>
+                          ) : (
+                            studyTypes.map((type) => (
+                              <SelectItem key={type.id} value={type.id}>
+                                {type.title.uz}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -459,27 +502,27 @@ const CallAgentPage = () => {
                       <div>
                         <Label>Available Services *</Label>
                         <Select
-                          value={formData.service}
+                          value={formData.service || undefined}
                           onValueChange={(value) =>
                             setFormData((prev) => ({ ...prev, service: value }))
                           }
                         >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select available service" />
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Xizmat turini tanlang" />
                           </SelectTrigger>
                           <SelectContent>
-                            {availableServices.map((service) => {
-                              const serviceLabel =
-                                studyTypes.find((s) => s.value === service)
-                                  ?.label || service;
-                              return (
-                                <SelectItem key={service} value={service}>
-                                  {serviceLabel}
+                            {loadingServices ? (
+                              <p className="p-2 text-sm text-gray-500">Yuklanmoqda...</p>
+                            ) : (
+                              availableServices.map((service) => (
+                                <SelectItem key={service.id} value={service.id}>
+                                  {service.title?.uz || service.title?.en || service.title?.ru}
                                 </SelectItem>
-                              );
-                            })}
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
+
                         <p className="text-sm text-muted-foreground mt-1">
                           Services available in{" "}
                           {
@@ -489,6 +532,7 @@ const CallAgentPage = () => {
                         </p>
                       </div>
                     )}
+
                   </CardContent>
                 </Card>
 
@@ -591,3 +635,4 @@ const CallAgentPage = () => {
 };
 
 export default CallAgentPage;
+

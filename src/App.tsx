@@ -128,10 +128,7 @@ function App() {
                 <Route path="stories" element={<StoriesAdmin />} />
                 <Route path="partners" element={<Partners />} />
                 <Route path="contacts" element={<Contacts />} />
-                <Route
-                  path="/admin/clients/:id"
-                  element={<ClientDetailsPage />}
-                />
+                <Route path="/admin/clients/:id" element={<ClientDetailsPage />}/>
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="user" element={<Admins />} />
                 <Route path="leads" element={<Leads />}>

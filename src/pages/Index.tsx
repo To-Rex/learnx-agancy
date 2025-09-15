@@ -30,7 +30,7 @@ type FullApplication = {
 };
 
 export default function UserFilesPage() {
-  const { id } = useParams(); // application_id
+  const { id } = useParams();
   const { t } = useLanguage();
   const { handleSubmit } = useForm();
   const navigate = useNavigate()
