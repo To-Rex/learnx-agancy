@@ -17,6 +17,12 @@ interface LeadType {
   source: string;
   passport_number: string;
   region: string;
+  studyType?: string;
+  country?: string;
+  service?: string;
+  transactionType?: "online" | "offline";
+  meetingDate?: string;
+  leadRegion?: string;
 }
 
 interface ConsultingFormData {
@@ -73,39 +79,38 @@ const ConsultingAgentPage = () => {
     setComment("");
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!selectedLead) return;
-    // Update note field from input
-    const updatedLead = {
-      ...selectedLead,
-      note: formData.notes,
-    };
-    // Make API request
-    fetch(
-      "https://learnx-crm-production.up.railway.app/api/v1/leads/complete-as-consulting-agent",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem("admin_access_token") || ""
-          }`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedLead),
-      }
-    ).then(async (res) => {
+
+    try {
+      const res = await fetch(
+        "https://learnx-crm-production.up.railway.app/api/v1/leads/complete-as-consulting-agent",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${
+              localStorage.getItem("admin_access_token") || ""
+            }`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...selectedLead,
+            note: formData.notes,
+          }),
+        }
+      );
+
       if (!res.ok) throw new Error("Failed to submit");
-      const data = await res.json();
-      // alert("Lead submitted successfully!");
-      setAction(null);
-      setComment("");
+
+      setLeads((prev) => prev.filter((lead) => lead.id !== selectedLead.id));
+
       setSelectedLead(null);
       setFormData({ notes: "" });
-      fetchLeads();
-    });
-    // .catch((err) => {
-    //   alert("Error submitting lead: " + err.message);
-    // });
+      setAction(null);
+      setComment("");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
@@ -168,6 +173,36 @@ const ConsultingAgentPage = () => {
                       <div>
                         <b>Region:</b> {selectedLead.region}
                       </div>
+                      {selectedLead.studyType && (
+                        <div>
+                          <b>Study Type:</b> {selectedLead.studyType}
+                        </div>
+                      )}
+                      {selectedLead.country && (
+                        <div>
+                          <b>Country:</b> {selectedLead.country}
+                        </div>
+                      )}
+                      {selectedLead.service && (
+                        <div>
+                          <b>Service:</b> {selectedLead.service}
+                        </div>
+                      )}
+                      {selectedLead.transactionType && (
+                        <div>
+                          <b>Transaction:</b> {selectedLead.transactionType}
+                        </div>
+                      )}
+                      {selectedLead.meetingDate && (
+                        <div>
+                          <b>Meeting Date:</b> {selectedLead.meetingDate}
+                        </div>
+                      )}
+                      {selectedLead.leadRegion && (
+                        <div>
+                          <b>Lead Region:</b> {selectedLead.leadRegion}
+                        </div>
+                      )}
                     </div>
                     <Label htmlFor="notes">Notes</Label>
                     <Input
