@@ -160,6 +160,8 @@ const CallManager: React.FC = () => {
         <div className="flex justify-center items-center mt-10">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
         </div>
+      ) : leads.length === 0 ? (
+        <div>No leads found.</div>
       ) : !assigned ? (
         <>
           <div className="mt-5">

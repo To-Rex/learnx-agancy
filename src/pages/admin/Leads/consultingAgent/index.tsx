@@ -41,9 +41,8 @@ const ConsultingAgentPage = () => {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("admin_access_token") || ""
-            }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
             "Content-Type": "application/json",
           },
         }
@@ -86,9 +85,8 @@ const ConsultingAgentPage = () => {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${
-            localStorage.getItem("admin_access_token") || ""
-          }`,
+          Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+            }`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(updatedLead),
@@ -101,7 +99,7 @@ const ConsultingAgentPage = () => {
       setComment("");
       setSelectedLead(null);
       setFormData({ notes: "" });
-      fetchLeads();
+      fetchLeads()
     });
     // .catch((err) => {
     //   alert("Error submitting lead: " + err.message);
@@ -119,7 +117,9 @@ const ConsultingAgentPage = () => {
             </h2>
             <div className="flex flex-col gap-2">
               {loading ? (
-                <div>Loading...</div>
+                <div className="flex justify-center items-center mt-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
+                </div>
               ) : leads.length === 0 ? (
                 <div>No leads found.</div>
               ) : (
@@ -127,11 +127,10 @@ const ConsultingAgentPage = () => {
                   <div
                     key={lead.id}
                     onClick={() => handleLeadSelect(lead)}
-                    className={`p-3 border rounded cursor-pointer ${
-                      selectedLead?.id === lead.id
+                    className={`p-3 border rounded cursor-pointer ${selectedLead?.id === lead.id
                         ? "bg-blue-100"
                         : "bg-white hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     <div className="font-bold">{lead.name}</div>
                     <div className="text-sm text-gray-600">{lead.phone}</div>

@@ -41,12 +41,12 @@ import AdminProfile from "./pages/admin/AdminProfile";
 import Admins from "./pages/admin/Admins";
 import ServicesInput from "./pages/admin/ServicesInput";
 import Leads from "./pages/admin/Leads/Leads";
-import CallManager from "./pages/admin/Leads/CallManager.tsx/CallManager";
 import ConsultingManager from "./pages/admin/Leads/consultingmanager/Index";
 import DocumentManager from "./pages/admin/Leads/documentManager/Index";
 import CallAgentPage from "./pages/admin/Leads/agent-form/Index";
 import DocumentAgentPage from "./pages/admin/Leads/documentAgent/Index";
 import ConsultingAgentPage from "./pages/admin/Leads/consultingAgent";
+import CallManagerPage from "./pages/admin/Leads/CallManager.tsx/CallManagerPage";
 
 // Admin himoyalangan route komponenti
 const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -135,7 +135,7 @@ function App() {
                 <Route path="profile" element={<AdminProfile />} />
                 <Route path="user" element={<Admins />} />
                 <Route path="leads" element={<Leads />}>
-                  <Route index element={<CallManager />} />{" "}
+                  <Route index element={<CallManagerPage />} />{" "}
                   {/* <-- default chiqadi */}
                   <Route path="call-agent" element={<CallAgentPage />} />
                   <Route

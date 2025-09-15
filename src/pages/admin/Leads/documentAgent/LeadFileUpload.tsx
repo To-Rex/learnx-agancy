@@ -1,22 +1,30 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import toast from "react-hot-toast";
+import { Upload, CheckCircle, FileIcon } from "lucide-react";
 
-interface LeadInput {
-  service_input_id: string;
-  name: { en: string; ru: string; uz: string };
-  description: { en: string; ru: string; uz: string };
-  uploaded_doc: string | null;
+interface LeadFileUploadProps {
+  leadId: string;
+  serviceInputId: string;
+  label: string;
+  required: boolean;
+  currentFile: string;
+  onUploaded: (url: string) => void;
+  onClose?: () => void;        // ✅ optional
+  refreshLeads?: () => void;   // ✅ optional qilib qo‘ydim
 }
 
 export default function LeadFileUpload({
   leadId,
-  input,
-}: {
-  leadId: string;
-  input: LeadInput;
-}) {
+  serviceInputId,
+  label,
+  required,
+  currentFile,
+  onUploaded,
+  onClose,
+}: LeadFileUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
 
   const handleUpload = async () => {
     if (!file) {
@@ -30,7 +38,7 @@ export default function LeadFileUpload({
 
     try {
       const res = await fetch(
-        `https://learnx-crm-production.up.railway.app/api/v1/leads/upload-doc/${leadId}/${input.service_input_id}`,
+        `https://learnx-crm-production.up.railway.app/api/v1/leads/upload-doc/${leadId}/${serviceInputId}`,
         {
           method: "POST",
           headers: {
@@ -41,9 +49,20 @@ export default function LeadFileUpload({
       );
 
       if (!res.ok) throw new Error("Yuklashda xatolik!");
+      const data = await res.json();
+      const fileUrl = data?.file_url || "";
 
-      toast.success(`${input.name.uz} hujjati yuklandi!`);
+      toast.success(`${label} hujjati yuklandi!`);
+      onUploaded(fileUrl);
+
+      // ✅ inputni tozalash
       setFile(null);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+
+      // ✅ FileUpload yopiladi (agar berilgan bo‘lsa)
+      onClose?.();
     } catch (error) {
       console.error(error);
       toast.error("Faylni yuklashda muammo!");
@@ -53,30 +72,47 @@ export default function LeadFileUpload({
   };
 
   return (
-    <div className="p-4 border rounded shadow-sm">
-      <h4 className="font-medium mb-2">{input.name.uz}</h4>
-      <p className="text-sm text-gray-500 mb-2">{input.description.uz}</p>
+    <div className="w-full max-w-md bg-white border rounded-2xl shadow p-5 flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <h4 className="font-semibold text-gray-800">
+          {label} {required && <span className="text-red-500">*</span>}
+        </h4>
+        {currentFile && (
+          <a
+            href={currentFile}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1 text-green-600 text-sm"
+          >
+            <CheckCircle size={16} /> Yuklangan faylni ochish
+          </a>
+        )}
+      </div>
 
-      {input.uploaded_doc && (
-        <p className="text-green-600 text-sm mb-2">
-          ✅ Yuklangan: {input.uploaded_doc}
-        </p>
-      )}
-
-      <div className="flex gap-2 items-center">
+      <label
+        htmlFor={`file-${serviceInputId}`}
+        className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition"
+      >
+        <Upload size={28} className="text-blue-500 mb-2" />
+        <span className="text-gray-600 text-sm">
+          {file ? file.name : "Faylni shu yerga tashlang yoki tanlang"}
+        </span>
         <input
+          id={`file-${serviceInputId}`}
+          ref={inputRef}
           type="file"
           onChange={(e) => setFile(e.target.files?.[0] || null)}
-          className="border rounded p-1"
+          className="hidden"
         />
-        <button
-          onClick={handleUpload}
-          disabled={uploading}
-          className="px-3 py-1 bg-blue-600 text-white rounded disabled:opacity-50"
-        >
-          {uploading ? "⏳ Yuklanmoqda..." : "⬆️ Yuklash"}
-        </button>
-      </div>
+      </label>
+
+      <button
+        onClick={handleUpload}
+        disabled={uploading}
+        className="w-full py-2 rounded-xl bg-blue-600 text-white font-medium flex items-center justify-center gap-2 hover:bg-blue-700 transition disabled:opacity-50"
+      >
+        {uploading ? "⏳ Yuklanmoqda..." : (<><FileIcon size={18} /> Yuklash</>)}
+      </button>
     </div>
   );
 }

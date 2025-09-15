@@ -90,9 +90,8 @@ const CallAgentPage = () => {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("admin_access_token") || ""
-            }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
             "Content-Type": "application/json",
           },
         }
@@ -178,9 +177,8 @@ const CallAgentPage = () => {
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("admin_access_token") || ""
-            }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify(payload),
@@ -294,19 +292,19 @@ const CallAgentPage = () => {
             </h2>
             <div className="border border-white/5 flex flex-col space-y-3">
               {loading ? (
-                <p className="loader flex justify-center items-center m-10"></p>
-              ) : (
+                <div className="flex justify-center items-center mt-10">
+                  <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
+                </div>) : (
                 leads &&
                 leads.map((lead: leadType, index) => (
                   <div>
                     <div
                       onClick={() => handleLeadSelect(lead)}
                       className={`cursor-pointer border border-gray-200 p-2 rounded-xl w-[500px] text-gray-700 transition 
-                    ${
-                      selectedLead?.id === lead.id
-                        ? "bg-blue-100"
-                        : "bg-white/5 hover:bg-gray-300/30"
-                    }`}
+                    ${selectedLead?.id === lead.id
+                          ? "bg-blue-100"
+                          : "bg-white/5 hover:bg-gray-300/30"
+                        }`}
                     >
                       <p className="p-1 text-red-500 text-lg">{index + 1}</p>
                       <span className="flex gap-2">

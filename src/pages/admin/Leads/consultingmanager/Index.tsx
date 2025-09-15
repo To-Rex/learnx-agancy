@@ -155,16 +155,15 @@ const ConsultingManager: React.FC = () => {
     <>
       <div>
         <h1 className="text-3xl font-bold">Consulting Manager Dashboard</h1>
-        <p className="text-md font-medium text-gray-500">
-          Manage lead workflow from Instagram targeting to agent assignment
-        </p>
       </div>
       <div className="border rounded-lg shadow-lg mt-3 p-4">
         {loadingLeads || loadingAgents ? (
           <div className="flex justify-center items-center mt-10">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
           </div>
-        ) : !assigned ? (
+        ) : leads.length === 0 ? (
+          <div>No leads found.</div>
+        ) :  !assigned ? (
           <>
             <div className="mt-5">
               {leads.map((lead) => (

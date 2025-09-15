@@ -24,7 +24,7 @@ interface Agent {
   CurrentLeads: number;
 }
 
-const DocumentManager: React.FC = () => {
+const DocumentingManager: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
@@ -35,7 +35,7 @@ const DocumentManager: React.FC = () => {
   // Default qiymatlar
   const [stage, setStage] = useState<string>("documenting");
   const [status, setStatus] = useState<string>("new");
-  const [agentRole, agentSetRole] = useState<string>("document_agent");
+  const [agentRole, agentSetRole] = useState<string>("documenting_agent");
 
   // Leadlarni olish funksiyasi
   const fetchLeads = async () => {
@@ -154,13 +154,15 @@ const DocumentManager: React.FC = () => {
   return (
     <>
       <div>
-        <h1 className="text-3xl font-bold">Document Manager Dashboard</h1>
+        <h1 className="text-3xl font-bold">Documenting Manager Dashboard</h1>
       </div>
       <div className="border rounded-lg shadow-lg mt-3 p-4">
         {loadingLeads || loadingAgents ? (
           <div className="flex justify-center items-center mt-10">
             <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
           </div>
+        ) : leads.length === 0 ? (
+          <div>No leads found.</div>
         ) : !assigned ? (
           <>
             <div className="mt-5">
@@ -241,4 +243,4 @@ const DocumentManager: React.FC = () => {
   );
 };
 
-export default DocumentManager;
+export default DocumentingManager;

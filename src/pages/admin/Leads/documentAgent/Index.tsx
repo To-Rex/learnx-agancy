@@ -30,12 +30,11 @@ const DocumentAgentPage = () => {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/get-list?stage_in=initial&status_in=new",
+      const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/leads/get-agent-leads?stage_in=documenting",
         {
           headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("admin_access_token") || ""
-            }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
           },
         }
       );
@@ -58,9 +57,8 @@ const DocumentAgentPage = () => {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${
-              localStorage.getItem("admin_access_token") || ""
-            }`,
+            Authorization: `Bearer ${localStorage.getItem("admin_access_token") || ""
+              }`,
           },
         }
       );
@@ -86,6 +84,7 @@ const DocumentAgentPage = () => {
       setChecklistData([]);
     } finally {
       setChecklistLoading(false);
+
     }
   };
 
@@ -107,7 +106,9 @@ const DocumentAgentPage = () => {
         <div className="w-1/3 border rounded-lg p-4 bg-white shadow">
           <h2 className="text-lg font-semibold mb-4">Leadlar</h2>
           {loading ? (
-            <p className="mx-auto my-6 loader"></p>
+            <div className="flex justify-center items-center mt-10">
+            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-blue-400"></div>
+          </div>
           ) : leads.length === 0 ? (
             <p className="text-gray-500">Leadlar topilmadi</p>
           ) : (
@@ -116,11 +117,10 @@ const DocumentAgentPage = () => {
                 <div
                   key={lead.id}
                   onClick={() => handleLeadSelect(lead)}
-                  className={`p-3 rounded cursor-pointer border transition ${
-                    selectedLead?.id === lead.id
-                      ? "bg-blue-100 border-blue-500"
-                      : "hover:bg-gray-100"
-                  }`}
+                  className={`p-3 rounded cursor-pointer border transition ${selectedLead?.id === lead.id
+                    ? "bg-blue-100 border-blue-500"
+                    : "hover:bg-gray-100"
+                    }`}
                 >
                   <p className="font-semibold">{lead.name}</p>
                   <p className="text-sm text-gray-600">{lead.phone}</p>
@@ -145,26 +145,21 @@ const DocumentAgentPage = () => {
                     key={item.service_input_id}
                     leadId={selectedLead.id}
                     serviceInputId={item.service_input_id}
-                    label={
-                      item.name?.uz ||
-                      item.name?.en ||
-                      item.name?.ru ||
-                      "Nomsiz hujjat"
-                    }
-                    required={!!item.required}
+                    label={item.name.uz || "Hujjat"}
+                    required={item.required || false}
                     currentFile={item.uploaded_doc?.file_url || ""}
                     onUploaded={(url) => {
-                      setChecklistData((prev) =>
-                        prev.map((i) =>
-                          i.service_input_id === item.service_input_id
-                            ? { ...i, uploaded_doc: { file_url: url } }
-                            : i
-                        )
-                      );
+                      console.log("✅ Yangi file URL:", url);
+                      fetchLeads();          // chap panelni qayta yuklash
+                      setSelectedLead(null); // ong panelni yopish
                     }}
+                    onClose={() => setSelectedLead(null)}   // 🔹 endi mavjud bo‘ladi
                   />
+
                 ))}
               </div>
+
+
             ) : (
               <p className="text-gray-500">❌ Bu lead uchun hujjat topilmadi</p>
             )
