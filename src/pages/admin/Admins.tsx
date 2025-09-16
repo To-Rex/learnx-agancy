@@ -9,6 +9,7 @@ const Admins = () => {
   const [editingItem, setEditingItem] = useState<any>(null);
   const [usersToDelete, setUsersToDelete] = useState<string | null>(null);
   const [deleteUsersModalOpen, setUsersDeleteModalOpen] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   // Rollar ro‘yxati
   const [roles] = useState<string[]>([
@@ -37,8 +38,8 @@ const Admins = () => {
     branch_id: ""
   });
 
-  // --- API dan foydalanuvchilarni olish ---
   const fetchUsers = async () => {
+    setLoading(true)
     try {
       const token = localStorage.getItem("admin_access_token") || "";
       const res = await fetch(
@@ -50,6 +51,8 @@ const Admins = () => {
     } catch (err) {
       console.error(err);
       setUsers([]);
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -57,7 +60,6 @@ const Admins = () => {
     fetchUsers();
   }, []);
 
-  // --- Yangi user qo‘shish ---
   const handleAddUsers = () => {
     setEditingItem(null);
     setUsersForm({
@@ -74,7 +76,6 @@ const Admins = () => {
     setShowUsersModal(true);
   };
 
-  // --- Mavjud userni tahrirlash ---
   const handleEditUsers = (user: any) => {
     setUsersForm({
       id: user.id || "",
@@ -91,7 +92,6 @@ const Admins = () => {
     setShowUsersModal(true);
   };
 
-  // --- Saqlash (yangi yoki update) ---
   const handleSaveUsers = async () => {
     try {
       const token = localStorage.getItem("admin_access_token") || "";
@@ -144,7 +144,6 @@ const Admins = () => {
     }
   };
 
-  // --- O‘chirish ---
   const handleDeleteUsersClick = (id: string) => {
     setUsersToDelete(id);
     setUsersDeleteModalOpen(true);
@@ -175,7 +174,7 @@ const Admins = () => {
 
   return (
     <>
-      <div className="bg-white/10 border shadow-2xl mt-10 rounded-2xl p-6">
+      <div className="bg-white/10 border shadow-md mt-10 rounded-2xl p-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-700">Users List</h2>
@@ -190,7 +189,8 @@ const Admins = () => {
 
         {/* Users list */}
         <div className="space-y-3 overflow-y-auto max-h-[70vh] pr-1">
-          {users.length > 0 ? (
+          {loading ? <p className='loader1'></p> : 
+          users.length > 0 ? (
             users.map((user, index) => (
               <motion.div
                 key={user.id}

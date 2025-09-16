@@ -26,3 +26,22 @@ input, textarea{
     animation:l4 1s infinite steps(10);
   }
   @keyframes l4 {to{transform: rotate(1turn)}}
+
+.loader1 {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  margin: auto;
+  max-width: 50px;
+  width: 50px;
+  position: absolute;
+  top: 60%;
+  left: 56%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 8px solid;
+  border-color: #000 #0000;
+  animation: l1 1s infinite;
+}
+@keyframes l1 {to{transform: rotate(.5turn)}}

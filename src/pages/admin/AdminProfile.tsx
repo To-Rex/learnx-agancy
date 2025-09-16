@@ -1,12 +1,23 @@
 import { ChevronDown } from "lucide-react"
 import adminlogo from '../../../public/76.jpg'
+import { useEffect, useState } from "react"
 
 const AdminProfile = () => {
+    const [loading, setLoading] = useState(true)
 
-
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false)
+        }, 1200)
+        return()=> clearTimeout(timer)
+    }, [])
 
 return (
-    <section className="border border-white/5 bg-gray-100 p-4 my-3 rounded-xl ">
+   <>
+    {loading ?
+      (<p className="loader1"></p>)
+       :
+      <section className="border border-white/5 bg-gray-100 p-4 my-3 rounded-xl ">
         <div className=" min-h-[72vh] backdrop-blur-sm text-gray-800">
             <div className="flex justify-between items-center px-8 py-4">
                 <h2 className="text-3xl font-semibold">Admin profil</h2>
@@ -56,7 +67,9 @@ return (
                 </div>
             </div>
         </div>
-    </section>
+      </section>
+     }
+   </>
 )
 }
 

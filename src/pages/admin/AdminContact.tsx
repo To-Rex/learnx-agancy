@@ -17,7 +17,6 @@ const AdminContact = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedContact, setSelectedContact] = useState<any | null>(null);
 
-  // Contact get 
   const fetchContacts = async () => {
     setLoading(true)
     try {
@@ -90,9 +89,7 @@ const AdminContact = () => {
 
         {/* Bu yerda scrollable qism */}
         <div className="overflow-y-auto flex-grow px-6 pb-6 w-full">
-          {loading ? (
-            <div className="p-4 text-gray-800">Yuklanmoqda...</div>
-          ) : (
+          {
             <table className="w-full">
               <thead>
                 <tr>
@@ -107,8 +104,10 @@ const AdminContact = () => {
                 </tr>
               </thead>
 
-              <tbody className="divide-y divide-white/10">
-                {contacts.length === 0 ? (
+              <tbody className="divide-y divide-white/10 text-sm">
+                {loading ? 
+                 (<p className='loader1'></p>) :
+                  contacts.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="text-center text-gray-500 py-8">
                       Ma'lumot topilmadi
@@ -151,23 +150,21 @@ const AdminContact = () => {
                           {contact?.message || '-'}
                         </div>
                       </td>
-
-
                       {/* Sana */}
                       <td className="px-6 py-4 text-gray-500 text-sm">
                         {contact?.created_at
                           ? new Date(contact?.created_at).toLocaleDateString('uz-UZ')
                           : '-'}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center space-x-2">
+                      <td className="">
+                        <div className="flex items-center gap-2 justify-center w-[120px]">
                           <button onClick={() => setSelectedContact(contact)}
                             className="p-2 text-blue-400 hover:bg-blue-500/20 rounded-lg transition-all duration-300">
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleDeleteContactClick(contact.id)} className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300">
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-5 w-5" />
                           </button>
                         </div>
                       </td>
@@ -200,12 +197,11 @@ const AdminContact = () => {
                   ))
                 )}
               </tbody>
-            </table>
+            </table>}
 
-          )}
           {deleteModalOpen && (
             <div className='fixed inset-0 backdrop-blur-sm flex justify-center items-center rounded-md '>
-              <div className='bg-gray-50 shadow-2xl p-6 rounded-lg  ml-24 max-w-[570px]'>
+              <div className='bg-gray-100 shadow-lg p-6 rounded-lg ml-24 max-w-[570px]'>
                 <h1 className='text-2xl text-center text-gray-600 font-600 pb-4'>Haqiqatdan ham o'chirmoqchimisiz</h1>
                 <div className='flex justify-center items-center gap-4 pt-4 ml-36'>
                   <button
