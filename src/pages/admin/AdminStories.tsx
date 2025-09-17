@@ -191,8 +191,8 @@ const AdminStories = () => {
 
         <div className="p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? <p className="loader1"></p> :
-            stories.map((story: any) => (
+            {
+            (stories.map((story: any) => (
               <div className="bg-white/5  shadow-sm border-2 border-white/10 rounded-2xl overflow-hidden hover:bg-white/10 transition-all duration-300 group">
                 {story.image && (
                   <div className="h-48 overflow-hidden">
@@ -232,7 +232,7 @@ const AdminStories = () => {
                   </div>
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       </div>

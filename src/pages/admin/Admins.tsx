@@ -158,7 +158,7 @@ const Admins = () => {
         { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
-        toast.success("User o‘chirildi");
+        toast.success("Admin o‘chirildi");
         setUsers(prev => prev.filter(u => u.id !== usersToDelete));
         setUsersDeleteModalOpen(false);
         setUsersToDelete(null);
@@ -178,10 +178,8 @@ const Admins = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6 gap-4">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-700">Users List</h2>
-          <button
-            onClick={handleAddUsers}
-            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg"
-          >
+          <button onClick={handleAddUsers}
+            className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-300"> 
             <Plus className="h-4 w-4" />
             <span>Yangi admin</span>
           </button>

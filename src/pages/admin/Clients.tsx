@@ -291,8 +291,6 @@ const Clients = () => {
                     <Eye className="h-4 w-4" />
                   </button>
 
-
-
                   <button
                     onClick={() => handleDeleteClientsClick(client.id)}
                     className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"

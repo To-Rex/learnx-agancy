@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Phone, Calendar, User, FileText, Compass, Building } from "lucide-react";
+import { Mail, Phone, Calendar, User, FileText, Compass, Building, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 interface Client {
   id: string;
@@ -36,6 +37,7 @@ const ClientDetailsPage: React.FC<Props> = ({ clientId }) => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loadingClient, setLoadingClient] = useState(true);
   const [loadingApp, setLoadingApp] = useState(false);
+  const navigate = useNavigate()
 
   useEffect(() => {
     const storedClientId = localStorage.getItem("clientId"); // faqat kalit
@@ -112,13 +114,17 @@ const ClientDetailsPage: React.FC<Props> = ({ clientId }) => {
 
   return (
     <>
+    <div onClick={() => navigate(`/admin/client`)}
+       className="flex justify-center items-center gap-2 font-semibold cursor-pointer ml-10 mt-10 py-3 text-left border bg-gray-100/40 hover:bg-gray-200/50 rounded-lg w-[110px]">
+      <ArrowLeft />
+      <p>orqaga</p>
+    </div>
       {/* Client Card */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-8 max-w-3xl mx-auto mt-6"
-      >
+        className="bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl rounded-2xl p-8 max-w-3xl mx-auto mt-6">
         <div className="flex items-center space-x-6 mb-8">
           {client.avatar_url ? (
             <img src={client.avatar_url} alt={client.full_name} className="w-20 h-20 rounded-full object-cover border-2 border-white/30" />

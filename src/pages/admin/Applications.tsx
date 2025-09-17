@@ -72,7 +72,7 @@ const Applications = () => {
       try {
         const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/services/get-list");
         const data = await res.json();
-        setServices(data); // API'dan kelgan xizmatlarni saqlash
+        setServices(data); 
       } catch (error) {
         console.error("Xizmatlarni olishda xatolik:", error);
       }
@@ -407,12 +407,12 @@ const Applications = () => {
           </div>
 
           {isOpen && (
-            <div className="absolute top-full  left-0 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+            <div className="absolute top-full left-0 bg-gray-100 shadow-md backdrop:blur-2xl text-black/70 rounded-lg overflow-hidden w-full z-50">
               {statuses.map((status) => (
                 <div
                   key={status.value}
                   onClick={() => handleSelect(status.value)}
-                  className="p-2 hover:bg-slate-300/20 cursor-pointer">
+                  className="p-2 hover:bg-gray-200/80 cursor-pointer">
                   {status.label}
                 </div>
               ))}
@@ -490,21 +490,18 @@ const Applications = () => {
                   {new Date(app.created_at).toLocaleDateString()}
                 </td>
 
-                <td
-                  className="px-3 py-4"
-                  onClick={() => handleOpenStatusModal(app.id, app.status)}
-                >
+                <td className="px-3 py-4"
+                  onClick={() => handleOpenStatusModal(app.id, app.status)}>
                   <button
                     className={`rounded-2xl px-3 py-1 text-sm font-medium ${getStatusColorApp(
                       app.status
-                    )} shadow`}
-                  >
+                    )} shadow`}>
                     {getStatusLabelApp(app.status)}
                   </button>
                 </td>
 
                 <td
-                  className=" text-yellow-500 w-4"
+                  className="text-yellow-500 w-4"
                   onClick={() => {
                     setEditAppModal(true);
                     setSelectedApp(app);
