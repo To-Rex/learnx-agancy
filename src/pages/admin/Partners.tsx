@@ -33,6 +33,7 @@ const Partners = () => {
 
 
   const loadPartners = async () => {
+    setLoading(true)
     try {
       const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/partners/get-list", {
         method: 'GET',
@@ -202,7 +203,7 @@ const Partners = () => {
 
       <div className="p-4 m-2">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? <span className='loader'></span> :
+          {loading ? <p className='loader1'></p> :
             partners && partners.map((partner: Partner, index: number) => (
               <div className="bg-gray-200/30 border border-black/10 rounded-xl p-4 transition-all duration-300 group ">
                 {partner.image && (

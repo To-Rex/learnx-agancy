@@ -3,18 +3,14 @@ import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { motion } from 'framer-motion'
 
-
-
 const Services = () => {
-  const [selectedService, setSelectedService] = useState<any>(null);
+  // const [selectedService, setSelectedService] = useState<any>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
   const [services, setServices] = useState([])
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState<string | null>(null);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [loading, setLoading] = useState(true)
-
-
   const iconMap: Record<string, React.FC<React.SVGProps<SVGSVGElement>>> = {
     Plus,
     Edit,
@@ -23,9 +19,6 @@ const Services = () => {
     FileText,
 
   };
-
-
-
   const [features, setFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
   const [newFeatures, setNewFeatures] = useState<{ uz: string; en: string; ru: string }[]>([]);
   const [serviceForm, setServiceForm] = useState({
@@ -89,8 +82,6 @@ const Services = () => {
     }
   };
 
-
-
   // --- EDIT SERVICE ---
   const handleEditService = (service: any) => {
     setServiceForm({
@@ -107,8 +98,6 @@ const Services = () => {
     setEditingItem(service);
     setShowServiceModal(true);
   };
-
-
 
   // Inputlardan massivga yig‘ish
   const handleSaveService = async () => {
@@ -245,26 +234,27 @@ const Services = () => {
 
 
 
-  const getStatusColor = (status: string) => {
+  // const getStatusColor = (status: string) => {
 
-  }
+  // }
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Kutilmoqda'
-      case 'approved':
-        return 'Tasdiqlangan'
-      case 'rejected':
-        return 'Rad etilgan'
-      default:
-        return 'Noma\'lum'
-    }
-  }
+  // const getStatusText = (status: string) => {
+  //   switch (status) {
+  //     case 'pending':
+  //       return 'Kutilmoqda'
+  //     case 'approved':
+  //       return 'Tasdiqlangan'
+  //     case 'rejected':
+  //       return 'Rad etilgan'
+  //     default:
+  //       return 'Noma\'lum'
+  //   }
+  // }
+
   return (
     <>
       {/* Header va Yangi Xizmat tugmasi */}
-      <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-lg mt-10 mb-6">
+      <div className="p-8 border-b flex justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-md mt-10 mb-6">
         <h2 className="text-2xl font-bold text-gray-600 flex items-center">
           <Settings className="h-6 w-6 mr-3 text-blue-400" />
           Xizmatlar boshqaruvi
@@ -280,11 +270,10 @@ const Services = () => {
 
       {/* Services ro'yxati */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 ">
-        {services.length === 0 ? (
-          <p className="text-gray-500">Hech qanday xizmat topilmadi</p>
-        ) : (
+        {
+          loading ? <p className="loader1"></p> :
           services.map((service, index) => {
-            const IconComponent = iconMap[service.icon.name] || FileText;
+            // const IconComponent = iconMap[service.icon.name] || FileText;
             const iconColor = service.icon.color?.toLowerCase() || "blue";
 
             return (
@@ -293,8 +282,7 @@ const Services = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="bg-white/5 border shadow-xl rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105"
-              >
+                className="bg-white/5 border shadow-xl rounded-2xl p-6 hover:bg-white/10 transition-all duration-300 group hover:scale-105">
                 <div className="flex justify-end items-start mb-4">
                   <div className="flex items-center space-x-2">
                     <button
@@ -333,7 +321,7 @@ const Services = () => {
               </motion.div>
             );
           })
-        )}
+        }
       </div>
 
       {/* Service Modal */}

@@ -15,6 +15,7 @@ const ServicesInput = () => {
   const [active, setActive] = useState("connection");
   const [selectedService, setSelectedService] = useState<any>(null);
   const [services, setServices] = useState([])
+
   const loadServices = async () => {
     setLoading(true);
     try {
@@ -100,7 +101,6 @@ const ServicesInput = () => {
 
     setShowServiceInputModal(true);
   };
-
 
   // --- SAVE SERVICE ---
   const handleSaveServiceInput = async (id?: string) => {
@@ -207,6 +207,7 @@ const ServicesInput = () => {
       console.error("Xizmatni o'chirishda xatolik:", error);
     }
   };
+
   const loadServicesInput = async () => {
     setLoading(true);
     try {
@@ -246,7 +247,7 @@ const ServicesInput = () => {
 
   return (
     <>
-      <div className="border  rounded-2xl p-6 mt-10 shadow-2xl">
+      <div className="border rounded-2xl p-4 pb-14 mt-10 shadow-lg">
         {/* Header */}
         <div className="p-5 border-b flex justify-between items-center">
           <h2 className="text-2xl font-bold text-gray-800 flex items-center">
@@ -301,14 +302,9 @@ const ServicesInput = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {services.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="text-center text-gray-700 py-8">
-                        Ma'lumot topilmadi
-                      </td>
-                    </tr>
-                  ) : (
-                    services.map((service) => (
+                  {loading ? <p className="loader1"></p> : 
+                    services.length > 0 ? 
+                     (services.map((service) => (
                       <motion.tr
                         key={service.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -328,8 +324,13 @@ const ServicesInput = () => {
                           </div>
                         </td>
                       </motion.tr>
-                    ))
-                  )}
+                    ))) : (
+                      <tr>
+                        <td colSpan={6} className="text-center text-gray-700 py-8">
+                          Ma'lumot topilmadi
+                        </td>
+                      </tr>
+                    )}
                 </tbody>
               </table>
             </div>
@@ -401,6 +402,7 @@ const ServicesInput = () => {
             </table>
           </div>
         )}
+
         {deleteInputModalOpen && (
           <div className='fixed inset-0 backdrop-blur-sm flex justify-center items-center rounded-md '>
             <div className='bg-gray-50 shadow-2xl p-6 rounded-lg  ml-24 max-w-[570px]'>

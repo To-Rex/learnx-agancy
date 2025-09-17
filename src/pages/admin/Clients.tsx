@@ -8,10 +8,11 @@ const Clients = () => {
   const [clientsToDelete, setClientsToDelete] = useState<string | null>(null);
   const [deleteClientsModalOpen, setClientsDeleteModalOpen] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false)
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  // const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const [clients, setClients] = useState<any[]>([]);
   const limit = 10
   const [sortField, setSortField] = useState("full_name");
+  const [loading, setLoading] = useState(false)
   const [sortDesc, setSortDesc] = useState(true);
   const [searchField, setSearchField] = useState("email");
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,13 +20,9 @@ const Clients = () => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('dashboard')
+  // const [activeTab, setActiveTab] = useState('dashboard')
 
 
-
-
-
-  // Sort uchun select
   const handleSortFieldChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
     setSortField(value);
@@ -53,6 +50,7 @@ const Clients = () => {
     sortDesc = true,
     page = 1
   ) => {
+    setLoading(true)
     try {
       const token = localStorage.getItem("admin_access_token") || "";
       const offset = (page - 1) * limit;
@@ -89,6 +87,8 @@ const Clients = () => {
       setClients([]);
       setCurrentPage(1);
       setHasNextPage(false);
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -103,8 +103,6 @@ const Clients = () => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-
 
   // useEffect — dastlabki yuklash
   useEffect(() => {
@@ -152,8 +150,6 @@ const Clients = () => {
       toast("Xizmatni o'chirishda xatolik yuz berdi");
     }
   };
-
-
 
   // vaqtni hisoblash helper
   function getLastContact(createdAt: string): string {
@@ -244,7 +240,8 @@ const Clients = () => {
       </div>
 
       <div className="space-y-4 overflow-y-auto max-h-[66vh]">
-        {clients.length > 0 ? (
+        {loading ? <p className="loader1"></p> :  
+         clients.length > 0 ? (
           clients.map((client: any, index: number) => (
             <motion.div
               key={client.id}
@@ -294,8 +291,6 @@ const Clients = () => {
                     <Eye className="h-4 w-4" />
                   </button>
 
-
-
                   <button
                     onClick={() => handleDeleteClientsClick(client.id)}
                     className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition-all duration-300"
@@ -339,6 +334,7 @@ const Clients = () => {
           Keyingi
         </button>
       </div>
+      
       {deleteClientsModalOpen && (
         <div className='fixed inset-0 backdrop-blur-sm flex justify-center items-center rounded-md '>
           <div className='bg-gray-50 shadow-2xl p-6 rounded-lg  ml-24 max-w-[570px]'>

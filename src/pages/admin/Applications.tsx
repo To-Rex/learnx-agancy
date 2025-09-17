@@ -1,7 +1,6 @@
-import { Edit, Edit2, Edit2Icon, FileText, Search, Trash2 } from "lucide-react";
+import { Edit, FileText, Search, Trash2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
-import adminlogo from '../../../public/76.jpg'
 
 const Applications = () => {
 
@@ -15,20 +14,19 @@ const Applications = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [appCurrentPage, setAppCurrentPage] = useState(1);
   const [appHasNextPage, setAppHasNextPage] = useState(false);
-  //   const [filteredApplications, setFilteredApplications] = useState<any[]>([]); // Qidiruv natijasi
   const [editAppModal, setEditAppModal] = useState(false);
-  const [isEditingApp, setIsEditingApp] = useState(false);
   const [selectedApp, setSelectedApp] = useState<any>(null);
   const [isEditingAppName, setIsEditingAppName] = useState(false);
+  const [loading, setLoading] = useState(false)
   const [nameQuery, setNameQuery] = useState("");
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedClient, setSelectedClient] = useState<{ id: string; full_name: string } | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const [deleteAppModalOpen, setDeleteAppModalOpen] = useState(false); // 🔹 qo‘shildi
+  const [deleteAppModalOpen, setDeleteAppModalOpen] = useState(false);
   const [addAppModalOpen, setAddAppModalOpen] = useState(false);
   const [services, setServices] = useState<any[]>([]);
-
+  const [newApp, setNewApp] = useState({ client_id: "", service_id: "", status: "pending" });
 
 
   const statuses = [
@@ -68,12 +66,13 @@ const Applications = () => {
         return "Noma'lum";
     }
   };
+
   useEffect(() => {
     const fetchServices = async () => {
       try {
         const res = await fetch("https://learnx-crm-production.up.railway.app/api/v1/services/get-list");
         const data = await res.json();
-        setServices(data); // API'dan kelgan xizmatlarni saqlash
+        setServices(data); 
       } catch (error) {
         console.error("Xizmatlarni olishda xatolik:", error);
       }
@@ -98,6 +97,7 @@ const Applications = () => {
     status = "",
     partner_id = ""
   ) => {
+    setLoading(true)
     try {
       const offsetValue = (appPage - 1) * appLimit;
 
@@ -137,6 +137,8 @@ const Applications = () => {
     } catch (error) {
       console.error("Arizalarni olishda xatolik:", error);
       toast.error("Arizalarni olishda xatolik yuz berdi");
+    }finally{
+      setLoading(false)
     }
   };
 
@@ -215,9 +217,6 @@ const Applications = () => {
     }
   };
 
-
-  const [newApp, setNewApp] = useState({ client_id: "", service_id: "", status: "pending" });
-
   const handleAddApp = async () => {
     try {
       const res = await fetch(
@@ -245,8 +244,6 @@ const Applications = () => {
       toast.error("Qo‘shishda xatolik");
     }
   };
-
-
 
   const handleAppPrevPage = () => {
     setAppCurrentPage((p) => (p > 1 ? p - 1 : p));
@@ -336,7 +333,6 @@ const Applications = () => {
     }
   };
 
-
   const handleStatusChange = async (newStatus: string) => {
     if (!selectedAppId) return;
 
@@ -411,12 +407,12 @@ const Applications = () => {
           </div>
 
           {isOpen && (
-            <div className="absolute top-full  left-0 bg-gradient-to-br from-blue-300 via-blue-400 to-blue-300 text-white rounded-lg shadow-lg overflow-hidden w-full z-50">
+            <div className="absolute top-full left-0 bg-gray-100 shadow-md backdrop:blur-2xl text-black/70 rounded-lg overflow-hidden w-full z-50">
               {statuses.map((status) => (
                 <div
                   key={status.value}
                   onClick={() => handleSelect(status.value)}
-                  className="p-2 hover:bg-slate-300/20 cursor-pointer">
+                  className="p-2 hover:bg-gray-200/80 cursor-pointer">
                   {status.label}
                 </div>
               ))}
@@ -451,9 +447,9 @@ const Applications = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-500 text-sm">
-            {filterApp.map((app: any, index: number) => (
-              <tr
-                key={app.id || index}
+            {loading ? <p className="loader1"></p> :
+             filterApp.map((app: any, index: number) => (
+              <tr key={app.id || index}
                 className="hover:bg-gray-400/10 transition-colors duration-200 text-gray-600">
                 <td className="px-3 py-4">
                   <input type="checkbox" checked={selectedIds.includes(app.id)}
@@ -494,21 +490,18 @@ const Applications = () => {
                   {new Date(app.created_at).toLocaleDateString()}
                 </td>
 
-                <td
-                  className="px-3 py-4"
-                  onClick={() => handleOpenStatusModal(app.id, app.status)}
-                >
+                <td className="px-3 py-4"
+                  onClick={() => handleOpenStatusModal(app.id, app.status)}>
                   <button
                     className={`rounded-2xl px-3 py-1 text-sm font-medium ${getStatusColorApp(
                       app.status
-                    )} shadow`}
-                  >
+                    )} shadow`}>
                     {getStatusLabelApp(app.status)}
                   </button>
                 </td>
 
                 <td
-                  className=" text-yellow-500 w-4"
+                  className="text-yellow-500 w-4"
                   onClick={() => {
                     setEditAppModal(true);
                     setSelectedApp(app);
@@ -631,10 +624,6 @@ const Applications = () => {
           </div>
         )}
 
-
-
-
-
         {deleteAppModalOpen && (
           <div className="fixed inset-0 backdrop-blur-sm flex justify-center items-center z-50">
             <div className="bg-gray-50 shadow-2xl p-6 rounded-lg max-w-[570px]">
@@ -658,7 +647,6 @@ const Applications = () => {
             </div>
           </div>
         )}
-
 
         {statusModal && (
           <div onClick={() => setStatusModal(false)}
@@ -702,6 +690,7 @@ const Applications = () => {
             </div>
           </div>
         )}
+
       </div>
 
       <div className="flex justify-center items-center my-4">
@@ -714,7 +703,9 @@ const Applications = () => {
         >
           Oldingi
         </button>
+
         <span className="text-gray-800 mx-4">{appCurrentPage}</span>
+
         <button
           onClick={handleAppNextPage}
           disabled={!appHasNextPage}
@@ -723,6 +714,7 @@ const Applications = () => {
         >
           Keyingi
         </button>
+
       </div>
     </section>
   )

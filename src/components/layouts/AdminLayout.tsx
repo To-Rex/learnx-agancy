@@ -22,7 +22,7 @@ const AdminLayout: React.FC = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <header className="fixed right-0 left-[256px] z-50 flex justify-between items-center bg-gray-300 shadow px-6 py-4">
+        <header className="fixed right-0 left-[256px] z-50 flex justify-between items-center bg-gray-200 shadow px-6 py-4">
             <div className='text-[34px] text-gray-800 font-bold cursor-pointer'>
                 <BiMenuAltLeft className='font-bold'/>
             </div>
@@ -40,26 +40,23 @@ const AdminLayout: React.FC = () => {
 
             {openProfil && (
             <div onClick={() => setOpenProfil(false)} className='flex items-center justify-end fixed z-50 right-6 top-20 '>
-                <div onClick={(e) => e.stopPropagation()} className='border border-gray-400 rounded-lg overflow-hidden text-center bg-gray-400 w-[180px] text-white'>
-                    <h2 className='py-3 bg-gray-500 font-semibold'>Admin Full name</h2>
-                    <span onClick={() => {navigate('/admin/profile') ; setOpenProfil(false)}}
-                        className='flex justify-center items-center gap-1 mx-auto cursor-pointer hover:bg-slate-500/40 py-3'>
-                        <Settings className='h-5' />
-                        <p>Profil sozlamari</p>
-                    </span>
-                    <button onClick={handleLogout} className='py-2 w-full hover:bg-red-500'>
-                    <span className='flex items-center gap-1'>
-                        <LogOut className='h-5 font-bold ml-5' />
-                        Chiqish
-                    </span>
-                    </button>
-                </div>
+              <div onClick={(e) => e.stopPropagation()} 
+                className='border border-gray-300 rounded-lg overflow-hidden text-center bg-gray-200 w-[180px] text-slate-700'>
+                  <h2 className='py-3 font-semibold'>Admin Full name</h2>
+                  <span onClick={() => {navigate('/admin/profile') ; setOpenProfil(false)}}
+                      className='flex justify-center items-center gap-1 mx-auto border-t border-b border-gray-400 cursor-pointer hover:bg-gray-400/20 py-3'>
+                      <Settings className='h-5' />
+                      <p>Profil sozlamari</p>
+                  </span>
+                  <button onClick={handleLogout} className='py-2 w-full hover:bg-red-500 hover:text-white'>
+                  <span className='flex items-center gap-1'>
+                      <LogOut className='h-5 font-bold ml-5' />
+                      Chiqish
+                  </span>
+                  </button>
+              </div>
             </div>
             )}
-
-            {/* <span className="text-gray-600">
-              {location.pathname.replace('/admin', '') || '/dashboard'}
-            </span> */}
         </header>
 
         {/* Page content */}

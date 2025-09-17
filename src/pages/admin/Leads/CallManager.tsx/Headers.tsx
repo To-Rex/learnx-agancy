@@ -34,10 +34,6 @@ const Headers: React.FC = () => {
 
   return (
     <div className="flex items-center justify-between mt-4 ">
-      <div className="flex items-center ">
-        <Users className="text-blue-600 mr-3" size={22} />
-        <h1 className="text-lg font-semibold">Lead Management System</h1>
-      </div>
 
       {/* Navigation buttons */}
       <div className="flex items-center gap-2">
@@ -47,7 +43,7 @@ const Headers: React.FC = () => {
             <Link
               key={path}
               to={path}
-              className={`flex items-center gap-1 px-2 py-[1px] rounded-md font-medium transition ${
+              className={`flex items-center gap-1 px-2 py-[4px] rounded-md font-medium transition ${
                 isActive
                   ? "bg-gray-800 text-white"
                   : "text-gray-700 hover:bg-gray-200"

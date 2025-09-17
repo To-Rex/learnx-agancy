@@ -174,10 +174,12 @@ const translations = {
       "ctaText": "Bugun biz bilan bog'laning va o'zingizning muvaffaqiyat hikoyangizni yarating",
       "apply": "Ariza topshirish",
       "consultation": "Bepul maslahat",
-      "stories.stat.successfulStudents" : 'salom',
-      "stories.stat.partnerCountries": '1',
-      "stories.stat.successRate": '1',
-      "stories.stat.yearsExperience": '1'
+      "stat" : {
+        "successfulStudents" : 'Muvaffaqiyatli talabalar',
+        "partnerCountries": 'Hamkor Davlatlar',
+        "successRate": 'Muvaffaqiyat darajasi',
+        "yearsExperience": 'Yillik tajriba'
+      }
     },
 
     contact: {
@@ -551,7 +553,13 @@ const translations = {
       "nextStory": "Let your story be the next!",
       "ctaText": "Contact us today and create your own success story",
       "apply": "Apply Now",
-      "consultation": "Free Consultation"
+      "consultation": "Free Consultation",
+      "stat": {
+        "successfulStudents" : 'Successful Students',
+        "partnerCountries": 'Partner Countries',
+        "successRate": 'Success Rate',
+        "yearsExperience": 'Year Experience'
+      }
 
     },
 
@@ -924,7 +932,13 @@ const translations = {
       "nextStory": "Ваша история может быть следующей!",
       "ctaText": "Свяжитесь с нами сегодня и создайте свою историю успеха",
       "apply": "Подать заявку",
-      "consultation": "Бесплатная консультация"
+      "consultation": "Бесплатная консультация",
+      "stat" : {
+        "successfulStudents": "Успешные студенты",
+        "partnerCountries": "Страны партнеры",
+        "successRate": "Показатель успешности",
+        "yearsExperience": "Лет опыта",
+      }
     },
 
     contact: {
