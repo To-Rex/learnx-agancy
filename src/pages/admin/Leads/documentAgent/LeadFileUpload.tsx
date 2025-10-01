@@ -9,8 +9,8 @@ interface LeadFileUploadProps {
   required: boolean;
   currentFile: string;
   onUploaded: (url: string) => void;
-  onClose?: () => void;        // ✅ optional
-  refreshLeads?: () => void;   // ✅ optional qilib qo‘ydim
+  onClose?: () => void; // ✅ optional
+  refreshLeads?: () => void; // ✅ optional qilib qo‘ydim
 }
 
 export default function LeadFileUpload({
@@ -32,6 +32,19 @@ export default function LeadFileUpload({
       return;
     }
 
+    // ✅ Validate leadId and serviceInputId
+    if (!leadId || !serviceInputId) {
+      console.error("❌ Missing parameters:", { leadId, serviceInputId });
+      toast.error("Xatolik: Lead ID yoki Service Input ID topilmadi!");
+      return;
+    }
+
+    console.log("📤 Uploading file:", {
+      leadId,
+      serviceInputId,
+      fileName: file.name,
+    });
+
     setUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -42,7 +55,9 @@ export default function LeadFileUpload({
         {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("admin_access_token")}`,
+            Authorization: `Bearer ${localStorage.getItem(
+              "admin_access_token"
+            )}`,
           },
           body: formData,
         }
@@ -111,9 +126,14 @@ export default function LeadFileUpload({
         disabled={uploading}
         className="w-full py-2 rounded-xl bg-blue-600 text-white font-medium flex items-center justify-center gap-2 hover:bg-blue-700 transition disabled:opacity-50"
       >
-        {uploading ? "⏳ Yuklanmoqda..." : (<><FileIcon size={18} /> Yuklash</>)}
+        {uploading ? (
+          "⏳ Yuklanmoqda..."
+        ) : (
+          <>
+            <FileIcon size={18} /> Yuklash
+          </>
+        )}
       </button>
     </div>
   );
 }
- 
